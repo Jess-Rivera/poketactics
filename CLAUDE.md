@@ -65,7 +65,7 @@ The assistant MAY:
 - Stage and commit on the branch Jess has checked out (add, commit), at slice boundaries once checks are clean, and at
   session end. Never --amend, never --no-verify.
 - GitHub through gh: create, edit, comment on, label, close and reopen issues; create labels; add and edit board
-  items; open a PR from a branch Jess has pushed; read anything.
+  items; read anything. No pull requests: Jess merges slice branches into main by hand.
 
 The assistant MUST NOT (Jess runs these; the assistant gives the exact, paste-ready commands and explains them):
 - push, pull, merge, rebase, reset, checkout, switch, branch create/delete/rename, stash, cherry-pick, revert, tag,

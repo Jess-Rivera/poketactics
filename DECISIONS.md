@@ -25,3 +25,4 @@ One file per ruling in docs/decisions/. Each file's `Canonical:` line names the 
 - [2026-11-15-unit-stats-and-moves](docs/decisions/2026-11-15-unit-stats-and-moves.md): Mainline stat formula, 4 moves per unit, no PP in M1
 - [2026-11-15-movement-range](docs/decisions/2026-11-15-movement-range.md): Every unit moves a fixed 4 tiles for now
 - [2026-11-15-turn-structure](docs/decisions/2026-11-15-turn-structure.md): Units act one at a time in Speed order
+- [2026-11-15-move-and-facing](docs/decisions/2026-11-15-move-and-facing.md): Choose facing before the walk; pass allies, enemies block; zoom 1x to 3x

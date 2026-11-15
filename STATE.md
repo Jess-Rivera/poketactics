@@ -19,14 +19,15 @@ Updated 2026-11-15.
 - Test battle (#6): rules/battle.gd (grid plus units by side), rules/test_battle_setup.gd (20 by 20 map, 4 a
   side at level 30); every unit and transformation has a sprite_set in the pack (45 units, 81 transformations
   have none upstream). Camera pans with WASD or arrows; Tab shows a temporary unit panel.
-- Tests: 47 gdUnit4 tests plus the pack rerun check, `tools\run-tests.cmd` (needs Python 3; see CONTEXT.md).
+- Select and move (#7, awaiting feel test): rules/movement.gd, facing chosen before the walk, cell picker, tile
+  highlight, zoom 1x to 3x.
+- Tests: 56 gdUnit4 tests plus the pack rerun check, `tools\run-tests.cmd` (needs Python 3; see CONTEXT.md).
 
 ## Next
 Plan: docs/discussion-outputs/development-plan.md (M0 foundation, M1 first playable battle, then M2 to M5).
-Rulings so far: 20 by 20 maps, 4 a side in M1, one unit at a time by Speed, mainline stats and damage (no roll;
-accuracy and crit random), 4 moves, no PP, move 4 (climb 1, drop 2), moves via a translation schema.
-1. #7 select and move: write its plan (needs a zoom ruling, since zooming out breaks crisp pixels).
-2. Then #8 to #12 in order. #5 and #6 shipped on slice/m1-build.
+Rulings: see DECISIONS.md (latest: 2026-11-15-move-and-facing).
+1. Jess feel-tests #7 (selection, path, facing, walk on flat, climb and drop, zoom, four rotations).
+2. Then #8 to #12 in order. #5 to #7 are on slice/m1-build.
 
 ## Open decisions
 | Decision | Blocks | Note |

@@ -37,3 +37,10 @@
   45 units and 81 transformations have no sprite upstream (listed in data/README).
 - rules/battle.gd and a 20 by 20 test battle, 4 a side at level 30; camera pan; temporary Tab unit panel.
 - 6 new relation tests, 47 in all. Godot would not pass Battle.Side as Side, so side parameters are ints.
+
+## 2026-11-15, select and move (#7)
+- rules/movement.gd: reachable cells and shortest paths (4 steps, climb 1, drop 2, pass allies, enemies block);
+  Battle.move_unit to a chosen facing. Jess added a facing choice between picking the tile and the walk.
+- view/cell_picker.gd picks by ray against cell columns (the map mesh has no collision); tile highlight, Walk
+  with a hop on height changes, zoom 1x to 3x on wheel and + / -.
+- 9 new relation tests, 56 in all.

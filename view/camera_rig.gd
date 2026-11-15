@@ -1,7 +1,8 @@
 class_name CameraRig
 extends Node3D
 ## Isometric camera: orthographic, tilted down, turned in 90 degree steps with Q (left) and E (right), panned with
-## WASD or the arrow keys (relative to the screen, kept inside map_bounds, in whole sprite pixels).
+## WASD or the arrow keys (relative to the screen, kept inside map_bounds, in whole sprite pixels), zoomed in whole
+## steps (1x to 3x) with the mouse wheel or + and -, so a sprite pixel is always a whole number of screen pixels.
 ## Place the rig at the map centre. It announces the new view step halfway through each turn, which is when unit
 ## sprites switch to their new facing row.
 
@@ -20,12 +21,19 @@ const PAN_KEYS := {
 	KEY_A: Vector2.LEFT, KEY_LEFT: Vector2.LEFT,
 	KEY_D: Vector2.RIGHT, KEY_RIGHT: Vector2.RIGHT,
 }
+## 1x shows one sprite pixel per screen pixel; zooming out further would split pixels, so 1x is the floor.
+const MIN_ZOOM_LEVEL := 1
+const MAX_ZOOM_LEVEL := 3
+const ZOOM_IN_KEYS := [KEY_EQUAL, KEY_PLUS, KEY_KP_ADD]
+const ZOOM_OUT_KEYS := [KEY_MINUS, KEY_KP_SUBTRACT]
 
 ## The ground area (world x and z) the camera's focus may move over; set it to the map's extent.
 var map_bounds := Rect2(0, 0, 0, 0)
 var _unspent_pan_pixels := 0.0
 
 var view_step := 0
+var zoom_level := MIN_ZOOM_LEVEL
+var camera: Camera3D
 var _turn_tween: Tween
 
 
@@ -37,10 +45,10 @@ func _ready() -> void:
 	pitch.name = "Pitch"
 	pitch.rotation_degrees.x = PITCH_DEGREES
 	add_child(pitch)
-	var camera := Camera3D.new()
+	camera = Camera3D.new()
 	camera.name = "Camera"
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = ORTHOGRAPHIC_HEIGHT_UNITS
+	camera.size = orthographic_height_for(zoom_level)
 	camera.position.z = CAMERA_DISTANCE
 	camera.near = 0.1
 	camera.far = CAMERA_DISTANCE * 3.0
@@ -56,7 +64,8 @@ func _process(delta: float) -> void:
 	if screen_direction == Vector2.ZERO:
 		_unspent_pan_pixels = 0.0
 		return
-	_unspent_pan_pixels += PAN_PIXELS_PER_SECOND * delta
+	# Pan speed is in screen pixels, so it feels the same at every zoom; the focus still moves in sprite pixels.
+	_unspent_pan_pixels += PAN_PIXELS_PER_SECOND / zoom_level * delta
 	var whole_pixels := floori(_unspent_pan_pixels)
 	if whole_pixels == 0:
 		return
@@ -78,7 +87,29 @@ static func panned_focus(focus: Vector3, screen_direction: Vector2, yaw_degrees:
 	return moved.snapped(Vector3.ONE / PIXELS_PER_UNIT)
 
 
+## The zoom level after zooming in (+1) or out (-1), kept between MIN_ZOOM_LEVEL and MAX_ZOOM_LEVEL.
+static func zoomed_level(current_level: int, zoom_direction: int) -> int:
+	return clampi(current_level + zoom_direction, MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL)
+
+
+## The orthographic camera height (world units) that shows zoom_level screen pixels per sprite pixel.
+static func orthographic_height_for(level: int) -> float:
+	return ORTHOGRAPHIC_HEIGHT_UNITS / level
+
+
+func zoom(zoom_direction: int) -> void:
+	zoom_level = zoomed_level(zoom_level, zoom_direction)
+	camera.size = orthographic_height_for(zoom_level)
+
+
 func _unhandled_input(event: InputEvent) -> void:
+	var mouse_button := event as InputEventMouseButton
+	if mouse_button != null and mouse_button.pressed:
+		if mouse_button.button_index == MOUSE_BUTTON_WHEEL_UP:
+			zoom(1)
+		elif mouse_button.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			zoom(-1)
+		return
 	var key_event := event as InputEventKey
 	if key_event == null or not key_event.pressed or key_event.echo:
 		return
@@ -86,6 +117,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		turn(-1)
 	elif key_event.keycode == KEY_E:
 		turn(1)
+	elif key_event.keycode in ZOOM_IN_KEYS:
+		zoom(1)
+	elif key_event.keycode in ZOOM_OUT_KEYS:
+		zoom(-1)
+
+
+func is_turning() -> bool:
+	return _turn_tween != null and _turn_tween.is_running()
 
 
 ## Starts a 90 degree turn left (-1) or right (+1). Ignored while a turn is still running.

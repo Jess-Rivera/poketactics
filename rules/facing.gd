@@ -16,3 +16,11 @@ static func grid_step(direction: Direction) -> Vector2i:
 			return Vector2i(0, 1)
 		_:
 			return Vector2i(-1, 0)
+
+
+## The direction of a one-cell grid step (the inverse of grid_step). Steps that are not one orthogonal cell fall
+## back to the nearest axis, x first on a tie.
+static func direction_of_step(step: Vector2i) -> Direction:
+	if absi(step.x) >= absi(step.y):
+		return Direction.EAST if step.x > 0 else Direction.WEST
+	return Direction.SOUTH if step.y > 0 else Direction.NORTH

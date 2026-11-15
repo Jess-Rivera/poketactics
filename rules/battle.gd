@@ -32,3 +32,10 @@ func unit_at(cell: Vector2i) -> BattleUnit:
 		if unit.cell == cell:
 			return unit
 	return null
+
+
+## Walks a unit along a path (from Movement.reachable_paths) and turns it to the chosen facing.
+func move_unit(unit: BattleUnit, path: Array[Vector2i], end_facing: Facing.Direction) -> void:
+	assert(not path.is_empty(), "a move needs at least one step")
+	unit.cell = path.back()
+	unit.facing = end_facing

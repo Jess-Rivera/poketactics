@@ -34,6 +34,7 @@ flowchart LR
 | 7 | All of a unit's learnset comes from one game; that game is Scarlet/Violet whenever the unit has level-up data there, and never Legends Arceus or Champions | 2026-11-15-learnset-game |
 | 8 | Every unit, move and ability has an English name | English only |
 | 9 | Rerunning the export gives byte-identical files | determinism |
+| 10 | A regional unit evolves into the same region's form of its target species when one exists (added 2026-11-15, data-pack-plan.md decision 5) | 2026-11-15-unit-is-pokemon-variant |
 
 ## Questions before the plan (one at a time)
 1. Answered 2026-11-15: two slices, pack first. The wiki is the next slice, with its own opening and issue.

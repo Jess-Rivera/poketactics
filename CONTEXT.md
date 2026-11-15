@@ -19,9 +19,9 @@ All agent rules live in CLAUDE.md. This file is the ritual and the pointers.
 3. Commit, and remind Jess to push.
 
 ## Running the tests
-Headless, from the repo root, with GODOT_BIN set to Godot 4.6.2 (Jess's home machine:
-C:\Users\boric\OneDrive\Desktop\Godot.exe): `tools\run-tests.cmd`. It imports the project, then runs every gdUnit4
-suite in tests/. Exit code 0 means all passed; reports land in reports/ (ignored by git).
+Headless, from the repo root, with Python 3 on the path and GODOT_BIN set to Godot 4.6.2 (Jess's home machine:
+C:\Users\boric\OneDrive\Desktop\Godot.exe): `tools\run-tests.cmd`. It checks the data pack is current
+(`python tools/export_pack.py --check`), imports the project, then runs every gdUnit4 suite in tests/. Exit code 0 means all passed; reports land in reports/ (ignored by git).
 
 ## Where things live
 - Rules: CLAUDE.md. Current handoff: STATE.md. Next session: TODO.md. Rulings: DECISIONS.md and docs/decisions/.

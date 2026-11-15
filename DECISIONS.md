@@ -18,3 +18,4 @@ One file per ruling in docs/decisions/. Each file's `Canonical:` line names the 
 - [2026-11-15-animation-set](docs/decisions/2026-11-15-animation-set.md): Core 11 animations plus tactics extras where present; flavor left out; Specials pending a look
 - [2026-11-15-isometric-rotating-view](docs/decisions/2026-11-15-isometric-rotating-view.md): Isometric battle view, rotatable in four 90 degree steps
 - [2026-11-15-godot-layout-and-tests](docs/decisions/2026-11-15-godot-layout-and-tests.md): Folders by role (rules, view, tests, data, assets); gdUnit4 for tests
+- [2026-11-15-data-pack-shape](docs/decisions/2026-11-15-data-pack-shape.md): Data pack is four JSON files keyed by name; excluded-base transformations and Shadow moves left out

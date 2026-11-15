@@ -77,6 +77,11 @@ func _step_between(progress: float, from_position: Vector3, to_position: Vector3
 	_feet_position = position_now
 
 
+## Shows the unit's own facing (after the rules turned it without a walk).
+func show_unit_facing() -> void:
+	_face(_unit.facing)
+
+
 func _face(direction: Facing.Direction) -> void:
 	_shown_facing = direction
 	_show_current_frame()

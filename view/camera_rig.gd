@@ -15,6 +15,7 @@ const ORTHOGRAPHIC_HEIGHT_UNITS := 360.0 / 24.0
 const TURN_SECONDS := 0.25
 const PIXELS_PER_UNIT := 24.0
 const PAN_PIXELS_PER_SECOND := 240.0
+const PAN_TO_SECONDS := 0.35
 const PAN_KEYS := {
 	KEY_W: Vector2.UP, KEY_UP: Vector2.UP,
 	KEY_S: Vector2.DOWN, KEY_DOWN: Vector2.DOWN,
@@ -35,6 +36,7 @@ var view_step := 0
 var zoom_level := MIN_ZOOM_LEVEL
 var camera: Camera3D
 var _turn_tween: Tween
+var _pan_tween: Tween
 
 
 func _ready() -> void:
@@ -64,6 +66,9 @@ func _process(delta: float) -> void:
 	if screen_direction == Vector2.ZERO:
 		_unspent_pan_pixels = 0.0
 		return
+	# Key panning takes over from a pan to a unit.
+	if _pan_tween != null and _pan_tween.is_running():
+		_pan_tween.kill()
 	# Pan speed is in screen pixels, so it feels the same at every zoom; the focus still moves in sprite pixels.
 	_unspent_pan_pixels += PAN_PIXELS_PER_SECOND / zoom_level * delta
 	var whole_pixels := floori(_unspent_pan_pixels)
@@ -121,6 +126,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		zoom(1)
 	elif key_event.keycode in ZOOM_OUT_KEYS:
 		zoom(-1)
+
+
+## Eases the focus to a world point (kept inside map_bounds), landing on the sprite pixel grid at every step.
+func pan_to(world_point: Vector3) -> void:
+	if _pan_tween != null and _pan_tween.is_running():
+		_pan_tween.kill()
+	var target := Vector3(
+		clampf(world_point.x, map_bounds.position.x, map_bounds.end.x),
+		position.y,
+		clampf(world_point.z, map_bounds.position.y, map_bounds.end.y)
+	)
+	_pan_tween = create_tween()
+	_pan_tween.tween_method(_set_focus_between.bind(position, target), 0.0, 1.0, PAN_TO_SECONDS) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+func _set_focus_between(progress: float, from_focus: Vector3, to_focus: Vector3) -> void:
+	position = from_focus.lerp(to_focus, progress).snapped(Vector3.ONE / PIXELS_PER_UNIT)
 
 
 func is_turning() -> bool:

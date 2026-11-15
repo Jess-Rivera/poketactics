@@ -23,6 +23,11 @@ func _init(start_cell: Vector2i = Vector2i.ZERO, start_facing: Facing.Direction 
 	facing = start_facing
 
 
+## A fainted unit has no hit points left; it no longer takes turns.
+func has_fainted() -> bool:
+	return hit_points <= 0
+
+
 ## A battle-ready unit from a pack unit at a level: stats by the mainline formula, full HP, and the 4 most
 ## recently learned level-up moves (docs/decisions/2026-11-15-unit-stats-and-moves.md).
 static func from_pack(

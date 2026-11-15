@@ -44,3 +44,10 @@
 - view/cell_picker.gd picks by ray against cell columns (the map mesh has no collision); tile highlight, Walk
   with a hop on height changes, zoom 1x to 3x on wheel and + / -.
 - 9 new relation tests, 56 in all. Jess feel-tested it and closed #7.
+
+## 2026-11-15, turn order by Speed (#8)
+- Talked through a RuneQuest strike rank clock (Speed and size set SR, actions cost SR, replacing PP); parked as
+  #13 with notes in docs/discussion-outputs/strike-rank-turns.md. M1 keeps plain Speed rounds.
+- rules/turn_order.gd: rounds fastest first, ties drawn once from the battle seed, forecast, move once per turn,
+  end-turn facing. view/turn_bar.gd: slanted bar on the right edge, active entry larger at the bottom.
+- Hotseat until #11; other units inspect only (orange range). 9 new relation tests, 65 in all.

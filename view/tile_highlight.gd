@@ -6,6 +6,9 @@ extends MeshInstance3D
 
 const LIFT_ABOVE_TOP := 0.02
 const REACHABLE_COLOUR := Color(0.35, 0.6, 1.0, 0.35)
+## Another unit's range while inspecting it: read only, so a different colour.
+const INSPECT_COLOUR := Color(1.0, 0.6, 0.25, 0.35)
+const INSPECTED_COLOUR := Color(1.0, 0.6, 0.25, 0.95)
 const PATH_COLOUR := Color(0.45, 0.8, 1.0, 0.7)
 const CURSOR_COLOUR := Color(1.0, 1.0, 1.0, 0.95)
 const SELECTED_COLOUR := Color(1.0, 0.85, 0.3, 0.95)
@@ -20,6 +23,9 @@ var reachable_cells: Array[Vector2i] = []
 var path_cells: Array[Vector2i] = []
 var cursor_cell := CellPicker.NO_CELL
 var selected_cell := CellPicker.NO_CELL
+## True while reachable_cells is an inspected unit's range rather than the active unit's.
+var inspecting := false
+var inspected_cell := CellPicker.NO_CELL
 var facing_target := CellPicker.NO_CELL
 var chosen_facing := Facing.Direction.SOUTH
 
@@ -37,6 +43,8 @@ func clear() -> void:
 	reachable_cells.clear()
 	path_cells.clear()
 	selected_cell = CellPicker.NO_CELL
+	inspecting = false
+	inspected_cell = CellPicker.NO_CELL
 	facing_target = CellPicker.NO_CELL
 	refresh()
 
@@ -47,10 +55,15 @@ func refresh() -> void:
 	var drawn_anything := false
 	for cell in reachable_cells:
 		var colour := PATH_COLOUR if cell in path_cells else REACHABLE_COLOUR
+		if inspecting:
+			colour = INSPECT_COLOUR
 		_add_fill(surface, cell, colour)
 		drawn_anything = true
 	if grid != null and grid.contains(selected_cell):
 		_add_outline(surface, selected_cell, SELECTED_COLOUR)
+		drawn_anything = true
+	if grid != null and grid.contains(inspected_cell):
+		_add_outline(surface, inspected_cell, INSPECTED_COLOUR)
 		drawn_anything = true
 	if grid != null and grid.contains(cursor_cell):
 		_add_outline(surface, cursor_cell, CURSOR_COLOUR)

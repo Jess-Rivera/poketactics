@@ -26,3 +26,4 @@ One file per ruling in docs/decisions/. Each file's `Canonical:` line names the 
 - [2026-11-15-movement-range](docs/decisions/2026-11-15-movement-range.md): Every unit moves a fixed 4 tiles for now
 - [2026-11-15-turn-structure](docs/decisions/2026-11-15-turn-structure.md): Units act one at a time in Speed order
 - [2026-11-15-move-and-facing](docs/decisions/2026-11-15-move-and-facing.md): Choose facing before the walk; pass allies, enemies block; zoom 1x to 3x
+- [2026-11-15-turn-order-m1](docs/decisions/2026-11-15-turn-order-m1.md): Plain Speed turn order for M1; strike rank clock parked; turn bar shape

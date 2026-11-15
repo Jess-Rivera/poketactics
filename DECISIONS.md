@@ -19,3 +19,8 @@ One file per ruling in docs/decisions/. Each file's `Canonical:` line names the 
 - [2026-11-15-isometric-rotating-view](docs/decisions/2026-11-15-isometric-rotating-view.md): Isometric battle view, rotatable in four 90 degree steps
 - [2026-11-15-godot-layout-and-tests](docs/decisions/2026-11-15-godot-layout-and-tests.md): Folders by role (rules, view, tests, data, assets); gdUnit4 for tests
 - [2026-11-15-data-pack-shape](docs/decisions/2026-11-15-data-pack-shape.md): Data pack is four JSON files keyed by name; excluded-base transformations and Shadow moves left out
+- [2026-11-15-battle-scale](docs/decisions/2026-11-15-battle-scale.md): Battle maps up to about 20 by 20
+- [2026-11-15-damage-and-hit](docs/decisions/2026-11-15-damage-and-hit.md): Mainline damage formula; hit from accuracy, reach and environment
+- [2026-11-15-move-grid-translation](docs/decisions/2026-11-15-move-grid-translation.md): Move grid behaviour from a translation schema (defaults plus overrides)
+- [2026-11-15-unit-stats-and-moves](docs/decisions/2026-11-15-unit-stats-and-moves.md): Mainline stat formula, 4 moves per unit, no PP in M1
+- [2026-11-15-movement-range](docs/decisions/2026-11-15-movement-range.md): Every unit moves a fixed 4 tiles for now

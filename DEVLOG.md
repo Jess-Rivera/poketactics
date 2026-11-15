@@ -43,4 +43,4 @@
   Battle.move_unit to a chosen facing. Jess added a facing choice between picking the tile and the walk.
 - view/cell_picker.gd picks by ray against cell columns (the map mesh has no collision); tile highlight, Walk
   with a hop on height changes, zoom 1x to 3x on wheel and + / -.
-- 9 new relation tests, 56 in all.
+- 9 new relation tests, 56 in all. Jess feel-tested it and closed #7.

@@ -16,8 +16,9 @@ Updated 2026-11-15.
 - Tests: 17 gdUnit4 tests, `tools\run-tests.cmd` (see CONTEXT.md).
 
 ## Next
-1. pokeapi JSON pack export (data/) and the offline wiki: understand first, then a slice opening.
-2. Optional: a sprite viewer for judging Special0 to Special26.
+1. Issue #2, data pack export (opening agreed: docs/discussion-outputs/data-pack-opening.md). Next: the build plan.
+2. Offline wiki: its own slice after #2.
+3. Optional: a sprite viewer for judging Special0 to Special26.
 
 ## Open decisions
 | Decision | Blocks | Note |
@@ -29,4 +30,4 @@ Updated 2026-11-15.
 | Shipping sprite credits | First export slice | CC BY-NC needs source/spritecollab/CREDITS.md in builds |
 
 ## Tracking
-Board: https://github.com/users/Jess-Rivera/projects/3. Open issues: none.
+Board: https://github.com/users/Jess-Rivera/projects/3. Open issues: #2 (data pack).

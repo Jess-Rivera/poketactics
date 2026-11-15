@@ -4,3 +4,11 @@ One file per ruling in docs/decisions/. Each file's `Canonical:` line names the 
 
 - [2026-11-15-new-repo-ground-up-tactics](docs/decisions/2026-11-15-new-repo-ground-up-tactics.md): PokeTactics is a new ground-up repo; only raw data and Jess's rules carry over
 - [2026-11-15-project-board](docs/decisions/2026-11-15-project-board.md): Board "PokeTactics" (project 3), PokeSwarm columns, state on the board only, Waiting on field
+- [2026-11-15-engine-godot-4](docs/decisions/2026-11-15-engine-godot-4.md): The engine is Godot 4
+- [2026-11-15-unit-is-pokemon-variant](docs/decisions/2026-11-15-unit-is-pokemon-variant.md): A unit is a pokemon variant (Alolan Vulpix is its own unit), as in mainline
+- [2026-11-15-variant-scope](docs/decisions/2026-11-15-variant-scope.md): Units are default pokemon plus Mega, Gigantamax, Primal and regional forms; other variants left out
+- [2026-11-15-mega-gmax-transform](docs/decisions/2026-11-15-mega-gmax-transform.md): Mega, Gigantamax and Primal are mid-battle transformations of a base unit, not units
+- [2026-11-15-offline-wiki](docs/decisions/2026-11-15-offline-wiki.md): Static HTML wiki built from the pack, pages committed
+- [2026-11-15-learnset-game](docs/decisions/2026-11-15-learnset-game.md): Learnsets come from Scarlet/Violet, else the newest earlier game with level-up data, skipping Legends Arceus
+- [2026-11-15-learn-methods](docs/decisions/2026-11-15-learn-methods.md): Pack keeps level-up, machine, egg and tutor moves; gameplay use decided at design
+- [2026-11-15-pokeapi-source](docs/decisions/2026-11-15-pokeapi-source.md): Raw pokeapi CSVs copied into source/pokeapi, frozen at db06b37dca, with a provenance note

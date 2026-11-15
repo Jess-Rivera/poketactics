@@ -1,42 +1,57 @@
-# Plan: raw data transfer to the new tactics repo
+# Plan: raw data transfer
 
-Status: [Proposed], 2026-11-15. Nothing is built until Jess agrees the slice opening and the decisions below.
+Status: [Proposed], revised 2026-11-15 for Godot 4 (2026-11-15-engine-godot-4). Nothing is built until Jess agrees
+the slice opening and the decisions below.
 
-Principle: carry over only **mainline facts and art**, never survivor tuning. The new repo regenerates its data from pokeapi itself, so it does not depend on this fork's code at all. That also keeps the original owner's code license (PolyForm Noncommercial) out of the new repo; only the sprite license (SpriteCollab, CC BY-NC, with credits) travels.
+Principle: carry over only **mainline facts and art**, never survivor tuning. Data is rebuilt from pokeapi and art is
+fetched from SpriteCollab, each at a pinned commit, so nothing depends on the fork's code or generated files (CLAUDE.md
+"Clean-room rule"). The fork is read once, for a parity check.
 
 ## Slice opening (to agree)
 
 | | Proposal |
 |---|---|
-| Goal | The new repo holds an engine-neutral, English JSON data pack of mainline Pokemon facts plus the sprites, rebuilt from a pinned pokeapi subset by one script |
-| Done when | The pack and sprites are committed, rerunning the script reproduces the pack with no diff, CREDITS is present, and the check below passes |
-| End-goal test | Relations only: every species has six base stats above 0 and one or two known types; every learnset move and evolution target exists in the pack; the type chart is 18 by 18 with only 0, 0.5, 1 and 2; Fire on Grass beats neutral and Normal on Ghost is 0; every species with a sprite folder has its animation metadata; base stats and types match this fork's pokedex for every shared species (a parity check between two sources) |
+| Goal | The repo holds an engine-neutral, English JSON data pack of mainline Pokemon facts plus sprites and their animation metadata, rebuilt by our own scripts from pinned pokeapi and SpriteCollab commits |
+| Done when | Pack, sprites, metadata and CREDITS are committed; rerunning the scripts reproduces them with no diff; the data check passes; the issue is closed by Jess |
+| End-goal test | Relations only (list below), run by one command |
+
+End-goal test relations:
+1. Every species has six base stats above 0 and one or two types, each a known type.
+2. Every learnset move and every evolution target exists in the pack.
+3. The type chart is 18 by 18, every value is one of 0, 0.5, 1, 2. Fire on Grass beats neutral; Normal on Ghost is 0.
+4. Every species with sprites has metadata for each animation sheet it ships, and every sheet's size divides evenly
+   into the frame size the metadata gives.
+5. Every learnset entry names a method (level, egg, machine, tutor) and level entries carry a level.
+6. Rerunning the export gives byte-identical output (determinism).
+7. Parity: base stats and types match the fork's pokedex for every shared species (two sources agree).
 
 ## Flow
 
 ```mermaid
 flowchart LR
-  subgraph OLD["pokesurvivor_fork (read only)"]
-    P[pokeapi-master CSVs]
-    S[assets/pokemon sprites]
-    C[CREDITS.md]
+  subgraph EXT["Pinned upstream (read only)"]
+    PA[pokeapi GitHub, commit id]
+    SC[SpriteCollab GitHub, commit id]
+  end
+  subgraph FORK["pokesurvivor_fork (read only)"]
     D[js/data/pokedex.js]
+    C[CREDITS.md]
   end
-  subgraph NEW["new repo"]
-    PIN[source/pokeapi: pinned CSV subset + commit id]
-    EXP[export script]
+  subgraph NEW["PokeTactics"]
+    PIN[source/pokeapi: CSV subset + PIN file]
+    FETCH[tools: fetch scripts]
+    EXP[tools: export script]
     PACK[data/*.json pack]
-    SPR[sprites + anim metadata]
+    SPR[assets/pokemon: sheets + AnimData]
     CR[CREDITS.md]
-    CHK[data check]
+    CHK[tools: data check]
   end
-  P -->|copy needed CSVs only| PIN
-  PIN --> EXP --> PACK
-  S -->|copy| SPR
-  C -->|copy| CR
+  PA --> FETCH --> PIN --> EXP --> PACK
+  SC --> FETCH --> SPR
+  C -->|carry, then update| CR
   PACK --> CHK
   SPR --> CHK
-  D -.->|parity only, once| CHK
+  D -.->|parity only| CHK
 ```
 
 ## What goes, what stays
@@ -44,44 +59,45 @@ flowchart LR
 | Goes (raw facts) | Source | Note |
 |---|---|---|
 | Species: names, base stats, types, abilities, height, weight, gender rate, EV yield, base XP, generation, legendary flag | pokeapi | Not the fork's derived hp/spd/atk |
-| Evolution chains with triggers and levels | pokeapi | Fork only kept "can evolve" |
-| All mainline moves: type, category, power, accuracy, PP, priority, target, effect chance, short effect text | pokeapi | Not moves-generated.js (survivor axes) |
-| Learnsets with levels and method (level, egg, machine) | pokeapi | Fork's file dropped the levels |
+| Evolution chains with triggers and levels | pokeapi | |
+| All mainline moves: type, category, power, accuracy, PP, priority, target, effect chance, short effect text | pokeapi | |
+| Learnsets with levels and method | pokeapi | Version per decision 3 |
 | Type chart, natures, ability names and text | pokeapi | |
-| Pokemon sprites (966 species, shiny, portraits) | assets/pokemon | About 111 MB |
-| Animation metadata (frame sizes, durations, shadow) | sprites-meta.js or a fresh SpriteCollab fetch | See decision 4 |
-| Item icons sheet and index | assets/items | Optional, decision 5 |
-| CREDITS.md | repo root | Required by the sprite license |
+| Sprite sheets and AnimData per species | SpriteCollab | Animation set per decision 4 |
+| CREDITS.md | fork root, then updated | Required by the sprite license; adds pokeapi and pinned commits |
 
-| Stays behind (survivor or authored) | Why |
+| Stays behind | Why |
 |---|---|
-| moves-generated, move-attributes, overrides, handler, resolver | Real-time move grammar |
-| items.js effects, ground-items, drops, upgrades, missions, achievements | Survivor tuning |
-| enemies.js tiers, enemy-classes, leader-ai-settings | Swarm behavior |
-| gyms.js, starters.js, music.js | Authored content; revisit as a later slice |
-| tileset (308 MB), contact masks | Overworld art, not tactics maps |
-| lang-en.js, changelog, funding | Spanish keys and fork history |
+| All fork js/data files (moves-generated, sprites-meta, items, enemies, gyms and the rest) | Survivor tuning or generated code |
+| Fork sprite folders | Refetched from SpriteCollab so sheets and metadata come from one commit |
+| Tileset, contact masks, lang files, changelog | Not tactics, or fork history |
 
 ## Steps
 
 ```mermaid
 flowchart TD
-  A[0. Jess creates the folder, git init, GitHub repo] --> B[1. Copy the pinned pokeapi CSV subset, record its commit]
-  B --> C[2. Write the export script and the JSON pack]
-  C --> D[3. Copy sprites, metadata, CREDITS]
-  D --> E[4. Write and run the data check]
-  E --> F[5. Commit; Jess pushes]
+  A[1. Fetch the pokeapi CSV subset at a pinned commit, write PIN] --> B[2. Export script writes data/*.json]
+  B --> C[3. Fetch SpriteCollab sheets + AnimData at a pinned commit]
+  C --> D[4. CREDITS updated]
+  D --> E[5. Data check runs the seven relations]
+  E --> F[6. Commit; Jess pushes]
 ```
 
 ## Decisions for Jess
 
 | # | Question | Recommendation |
 |---|---|---|
-| 1 | Repo name and path under C:\dev | Yours |
-| 2 | Bring a minimal CLAUDE.md, CONTEXT.md and the git guard hook in step 0, so the new repo's sessions follow the same rules? | Yes, trimmed to the rules that are not survivor specific |
-| 3 | Learnset version: which game's learnsets | Latest game each species appears in (Scarlet and Violet, falling back to older games) |
-| 4 | Animation metadata: convert the fork's sprites-meta.js, or refetch from SpriteCollab | Refetch: SpriteCollab has extra animations (Sleep, Hop, Swing and more) a tactics game will want, and the 8-direction rows suit facing |
-| 5 | Item icons now or later | Later, with items |
-| 6 | Forms (Alolan, Galarian, Mega) now or later | Default forms only for now |
-| 7 | Script language: Node or Python | Node, matching tools/ here |
-| 8 | Sprites in plain git or Git LFS | Plain git (111 MB is fine; this fork already does it) |
+| 1 | Learnset version | Latest game each species appears in (Scarlet and Violet, falling back to older games) |
+| 2 | pokeapi source: fetch at a pinned GitHub commit, or copy the fork's zip copy (no commit id) | Fetch at a pinned commit, so the pin is a real id |
+| 3 | Sprites: fetch from SpriteCollab, or copy the fork's sheets | Fetch, since metadata only exists in the fork as generated js, and sheets plus metadata must match |
+| 4 | Animation set | The fork's eight (Idle, Walk, Attack, Hurt, Faint, Shoot, Charge, Portrait) plus full AnimData; extras (Sleep, Hop, Swing) are a rerun with a longer list when a feature needs them |
+| 5 | Forms (Alolan, Galarian, Mega) | Default forms only for now |
+| 6 | Script language for tools/ | Node (installed here, v22); tools never ship, so it does not touch the Godot choice |
+| 7 | Sprites in plain git or Git LFS | Plain git (about 111 MB) |
+| 8 | Godot layout: repo root is the Godot project, so data/ and assets/ are res:// paths; source/, tools/ and docs/ carry a .gdignore so Godot skips them | Yes (the project.godot file itself waits for the first engine slice) |
+| 9 | Item icons | Later, with items |
+
+## Risks
+- SpriteCollab fetch is about 8,000 small files; the script throttles and resumes, and can take a while once.
+- Some species lack some animations upstream; relation 4 only checks sheets that ship.
+- pokeapi's newest games (Legends Z-A appears in the fork's copy) may have partial learnsets; decision 1's fallback covers it.

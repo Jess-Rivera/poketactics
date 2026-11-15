@@ -1,0 +1,16 @@
+# Keep every text file LF in the repo and on disk, on every machine, whatever core.autocrlf says.
+# This keeps data files byte-identical across machines, so "rerun the export, no diff" holds. Godot's default too.
+* text=auto eol=lf
+
+# Windows scripts need CRLF to run.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets: never touch.
+*.png binary
+*.jpg binary
+*.wav binary
+*.ogg binary
+*.ttf binary
+*.zip binary

@@ -4,8 +4,8 @@ Updated 2026-11-15.
 
 ## Where we are
 - Repo bootstrapped: CLAUDE.md, CONTEXT.md, the git guard hook, and two skills (grilling, writing-check).
-- Board "PokeTactics" (user project 3) chosen; design in 2026-11-15-project-board. Labels created, triage skill
-  adapted. Jess still finishes the board settings (columns, Waiting on field, repo link, workflows, views).
+- Board "PokeTactics" (user project 3) chosen; design in 2026-11-15-project-board. Board set up and
+  verified (columns, Waiting on, repo link); labels created, triage skill adapted.
 - No game code and no data yet.
 
 ## Next slice

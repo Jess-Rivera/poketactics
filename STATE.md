@@ -22,7 +22,7 @@ Updated 2026-11-15.
 Plan: docs/discussion-outputs/development-plan.md (M0 foundation, M1 first playable battle, then M2 to M5).
 Rulings so far: 20 by 20 maps, 4 a side in M1, one unit at a time by Speed, mainline stats and damage (no roll;
 accuracy and crit random), 4 moves, no PP, move 4 (climb 1, drop 2), moves via a translation schema.
-1. #3 Godot primer (M0), then #4 offline wiki (M0).
+1. #4 offline wiki built (wiki/, `python tools/build_wiki.py`); Jess browses it, then closes. #3 closed (not needed).
 2. M1 slices #5 to #12, in order.
 
 ## Open decisions
@@ -35,4 +35,4 @@ accuracy and crit random), 4 moves, no PP, move 4 (climb 1, drop 2), moves via a
 | Shipping sprite credits | First export slice | CC BY-NC needs source/spritecollab/CREDITS.md in builds; export must also include data/*.json |
 
 ## Tracking
-Board: https://github.com/users/Jess-Rivera/projects/3. Open issues: #3 to #12 (M0 and M1).
+Board: https://github.com/users/Jess-Rivera/projects/3. Open issues: #4 to #12 (M0 and M1).

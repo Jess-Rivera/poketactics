@@ -6,8 +6,9 @@ All agent rules live in CLAUDE.md. This file is the ritual and the pointers.
 1. Read this file and STATE.md (the short current handoff). Nothing else is required.
 2. Say where we left off and the top open items ("catch me up" means exactly this).
 3. Read TODO.md, then pull live state read-only: `gh issue list --state open --json number,title,labels,updatedAt`
-   (and the board once STATE.md names one). The board wins over any file. Report in about 10 lines: suggested for
-   today, what is owed by Jess (feel tests, open decisions and what they block), and any drift between STATE, TODO
+   and the board `gh project item-list 3 --owner Jess-Rivera --format json --limit 200` (board "PokeTactics").
+   The board wins over any file. Report in about 10 lines: suggested for
+   today, what is owed by Jess (cards with Waiting on = Jess: feel tests, open decisions and what they block), and any drift between STATE, TODO
    and GitHub.
 4. Tell Jess how to bring this machine up to date (Jess runs these): `git status` (must be clean),
    `git fetch origin`, then `git pull --ff-only` on the current branch. If ff-only fails, stop and say so.

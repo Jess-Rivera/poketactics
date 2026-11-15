@@ -11,10 +11,10 @@ The folder is created the first time a request is rejected. One file per **conce
 
 ## What belongs here
 
-Only a `feature`, `balance` or `design` request that is *rejected* as `wontfix`. Do not write here for:
+Only a slice or design idea that is *rejected* as `wontfix`. Do not write here for:
 - **Bugs.** Close with an explanation instead.
 - **Already-implemented requests.** That is a built feature, not a rejection. The closing comment points to where it lives.
-- **Deferred work** (cloud, multiplayer, anything for a later phase). Those get the `deferred` label; a deferral is not a rejection.
+- **Deferred work** (online features, anything for a later phase). Those stay in Triage with a reason comment; a deferral is not a rejection.
 - **Rulings that already have a DECISIONS.md entry.** Link the entry from the closing comment instead.
 
 ## File format

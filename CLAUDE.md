@@ -93,7 +93,7 @@ by their file name alone.
 
 ## Output format
 Every non-code output for Jess (plans, concept maps, reviews, reports) is a Markdown file built on Mermaid diagrams,
-saved in docs/ASCII Concept Maps/. Tables are fine; keep prose minimal; plans hold no code.
+saved in docs/discussion-outputs/. Tables are fine; keep prose minimal; plans hold no code.
 
 ## Prose style
 No em-dashes, anywhere. Use commas, parentheses, "since" or "because" instead. All text is English.

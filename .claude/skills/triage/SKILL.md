@@ -1,16 +1,18 @@
 ---
 name: triage
-description: Move GitHub issues through a state machine (needs-triage, needs-info, ready, blocked, wontfix), categorise, verify, grill if needed, and write agent briefs when asked. Keeps labels and the PokeSwarm board in step.
+description: Move PokeTactics GitHub issues through the board's Status columns (Triage, Blocked, Accepted, In Progress, Needs Playtest, Shipped), set type and area labels and Waiting on, verify, grill if needed, and write agent briefs when asked.
 disable-model-invocation: true
 ---
 
-<!-- Adapted from mattpocock/skills (landing-skills/triage, the untouched original). Changes: labels and board mapped
-to this repo, PR handling and the setup-skill dependency removed, domain-modeling step removed, out-of-scope moved to
-docs/out-of-scope/, disclaimer dropped. Hook and permission rules: CLAUDE.md "Git and GitHub". -->
+<!-- Adapted from mattpocock/skills (landing-skills/triage, the untouched original). Changes: board and labels mapped
+to this repo, state kept on the board instead of status labels, PR handling and the setup-skill dependency removed,
+domain-modeling step removed, out-of-scope moved to docs/out-of-scope/, disclaimer dropped. Hook and permission
+rules: CLAUDE.md "Git and GitHub". Board design: 2026-11-15-project-board. -->
 
 # Triage
 
-Move issues on the GitHub tracker (Jess-Rivera/pokesurvivor_fork, board "PokeSwarm" = project 2) through a small state machine. Jess is the maintainer. Playtesters file issues through the templates in .github/ISSUE_TEMPLATE; those arrive labeled `needs-triage` in the board's Triage column. Label vocabulary and board columns: docs/PM-WORKFLOW.md and CONTRIBUTING.md.
+Move issues on the GitHub tracker (Jess-Rivera/poketactics, board "PokeTactics" = project 3) through a small state
+machine. Jess is the maintainer and, for now, the only reporter.
 
 Triage comments carry no AI disclaimer. Follow CLAUDE.md prose style (no em-dashes) in everything posted.
 
@@ -19,76 +21,89 @@ Triage comments carry no AI disclaimer. Follow CLAUDE.md prose style (no em-dash
 - [AGENT-BRIEF.md](AGENT-BRIEF.md): how to write a brief, only when asked (see "Agent briefs")
 - [OUT-OF-SCOPE.md](OUT-OF-SCOPE.md): how docs/out-of-scope/ works
 
-## Roles in this repo
+## Where state lives
 
-One **type** label: `bug`, `feature`, `balance`, `design`.
-One **area** label: `area:moves`, `area:gyms`, `area:enemies`, `area:items`, `area:ui`, `area:engine`.
-One **status** label, and the board Status it sets:
+State lives only in the board's **Status** field. There are no status labels, so labels and board cannot disagree.
 
-| Status label | Meaning | Board Status |
-|---|---|---|
-| `needs-triage` | Jess has not evaluated it | Triage |
-| `needs-info` | Waiting on the reporter | Triage |
-| `ready` | Specified, can be picked up (still needs a prose plan and Jess's OK before game code) | Accepted |
-| `blocked` | Waiting on another issue or a decision | Blocked |
-| `needs-playtest` | Built, awaiting an in-browser check | Needs Playtest |
-| `deferred` | Real but not now (cloud and multiplayer phase) | Triage |
-| `wontfix` | Rejected; the issue is closed | (leave the card) |
+| Board Status | Meaning |
+|---|---|
+| Triage | New, not yet evaluated by Jess (also: real but deferred, with a comment saying so) |
+| Blocked | Waiting on a named decision or issue |
+| Accepted | Slice opening agreed (goal, done-condition, end-goal test in the body). Still needs a prose plan and Jess's OK before game code |
+| In Progress | Being built |
+| Needs Playtest | Checks clean, Jess feel-tests |
+| Shipped | Jess confirmed, issue closed. Only Jess decides this |
 
-`priority:high` is optional and independent. In Progress and Shipped are set outside triage (Shipped only by Jess).
-Every triaged issue carries exactly one type, one area and one status label; the board Status must agree with the status label. If status labels conflict, flag it and ask before doing anything else.
+Board field **Waiting on** (Jess or Assistant) says who acts next. Set it on every move. Session start reads
+"Waiting on = Jess" as the list of what Jess owes.
 
-Transitions: an unlabeled issue goes to `needs-triage` first; from there to `needs-info`, `ready`, `blocked`, `deferred` or `wontfix`. `needs-info` returns to `needs-triage` once the reporter replies. Jess can override at any time; flag unusual transitions and ask.
+Labels: exactly one **type** (`slice`, `decision`, `bug`, `chore`, `documentation`) and at least one **area**
+(`area:data`, `area:combat`, `area:ui`, `area:tooling`; create a new `area:` label when a real area appears).
+`wontfix` marks a rejection and the issue is closed.
 
-`ready` never means approved to build. A change to game code still needs the prose plan and Jess's OK (CLAUDE.md "Edit boundary and workflow").
+Transitions: a new issue sits in Triage until Jess evaluates it, then goes to Accepted, Blocked, or is closed as
+wontfix. Blocked returns to Accepted (or Triage) when the blocker clears. Needs Playtest goes back to In Progress if
+the feel test fails. Jess can override at any time; flag unusual transitions and ask.
 
 ## Invocation
 
-Jess invokes `/triage` and describes what they want in natural language, for example "what needs my attention", "let's look at #42", "move #42 to ready", "what's ready".
+Jess invokes `/triage` and describes what they want in natural language, for example "what needs my attention",
+"let's look at #42", "move #42 to accepted", "what's accepted".
 
 ## Show what needs attention
 
-Query the tracker (`gh issue list`) and present four buckets, oldest first, with counts and a one-line summary per item:
+Read the board (`gh project item-list 3 --owner Jess-Rivera --format json --limit 200`) and present four buckets,
+oldest first, with counts and a one-line summary per item:
 
-1. **Unlabeled**: never triaged.
-2. **`needs-triage`**: evaluation pending.
-3. **`needs-info` with a reply since the last triage note**: needs re-evaluation.
-4. **`blocked` where every blocker is closed**: probably stale. Read the issue body and links for the blockers and check each one's state.
+1. **Not on the board**: open issues missing a card (add them in Triage).
+2. **Triage**: evaluation pending.
+3. **Waiting on Jess**: decisions and feel tests Jess owes.
+4. **Blocked where every blocker is closed or decided**: probably stale. Read the body and links for the blockers and
+   check each one.
 
-Let Jess pick. The "catch me up" briefing in CONTEXT.md runs these same four buckets read-only, so keep the two in step.
+Let Jess pick. The "catch me up" briefing in CONTEXT.md runs these same buckets read-only, so keep the two in step.
 
 ## Triage a specific issue
 
-1. **Gather context.** Read the whole issue (body, comments, labels, author, dates). Parse any prior triage notes so resolved questions are not re-asked. Explore following CLAUDE.md "Efficient repository exploration", using GLOSSARY.md and the relevant spec (MOVE-INTENT, COMBAT-RULES, BOSS-REWORK, GYM-ROSTERS). Run two checks and report where you looked: (a) **redundancy**: search code and specs for an existing implementation or ruling by domain concept, not just the request's wording; if found, it is an already-implemented `wontfix`; (b) **prior rejection**: read docs/out-of-scope/*.md (if the folder exists) and surface any that resembles this request.
-
-2. **Recommend.** Give the type, area and status recommendation with reasoning, plus a short summary of the relevant code and specs (including whether it already exists). Check scope: a cloud or multiplayer request is `deferred`, never `wontfix` (CLAUDE.md "Local-first"). Wait for Jess's direction.
-
-3. **Verify the claim.** For a bug, try to reproduce it before any grilling: use the headless harnesses or dev.html where feasible (memory: test on file:// too; skip flaky smokes). Report confirmed (with the code path), failed, or insufficient detail (a strong `needs-info` signal). If it can only be confirmed by feel in the browser, say so and ask Jess; do not guess.
-
-4. **Grill (if needed).** If the request needs fleshing out, invoke the `grilling` skill and work it into shape a round at a time. Decisions are recorded per grilling's wrap-up rules.
-
-5. **Apply the outcome** (all label, comment and board changes use the `gh` commands allowed by the hook):
-   - `ready`: apply the label and set the board Status. Post a brief only if asked (see "Agent briefs").
-   - `needs-info`: post triage notes (template below), apply the label.
-   - `blocked`: name the blocker issue or decision in a comment, apply the label.
-   - `deferred`: apply the label with a one-line reason.
-   - `wontfix`: only after Jess says so. Close the issue, with the comment depending on why:
+1. **Gather context.** Read the whole issue (body, comments, labels, dates). Parse prior triage notes so resolved
+   questions are not re-asked. Explore following CLAUDE.md "Exploration". Run two checks and report where you looked:
+   (a) **redundancy**: search code, docs and DECISIONS.md for an existing implementation or ruling by concept, not
+   just the request's wording; if found, it is an already-implemented wontfix; (b) **prior rejection**: read
+   docs/out-of-scope/*.md (if the folder exists) and surface any match.
+2. **Recommend.** Give the type, area and Status recommendation with reasoning, plus a short summary of what exists.
+   Check scope: an online feature (accounts, cloud saves, multiplayer, leaderboards) stays in Triage as deferred,
+   never wontfix (CLAUDE.md "Scope"). Wait for Jess's direction.
+3. **Verify the claim.** For a bug, try to reproduce it before any grilling, headless where feasible. Report
+   confirmed (with the code path), failed, or insufficient detail. If it can only be confirmed by feel, say so and
+   ask Jess; do not guess.
+4. **Grill (if needed).** If the request needs fleshing out, invoke the `grilling` skill and work it into shape a
+   round at a time. A slice is not Accepted until its body holds the goal, done-condition and end-goal test.
+5. **Apply the outcome** with the `gh` commands the hook allows:
+   - Accepted: set Status and Waiting on. Post a brief only if asked.
+   - Blocked: name the blocker issue or decision in a comment, set Status and Waiting on.
+   - Deferred: leave in Triage with a one-line reason comment.
+   - Wontfix: only after Jess says so. Apply `wontfix` and close, with the comment depending on why:
      - **Already implemented**: point to where it lives; do not write to docs/out-of-scope/.
-     - **Rejected (bug)**: a polite explanation, then close.
-     - **Rejected (feature, balance or design)**: write to docs/out-of-scope/, link it in a comment, then close (OUT-OF-SCOPE.md).
-   - `needs-triage`: apply the label. Optional comment if there is partial progress.
+     - **Rejected bug**: a polite explanation, then close.
+     - **Rejected slice or design idea**: write to docs/out-of-scope/, link it in a comment, then close.
 
-Board commands: `gh project item-list 2 --owner Jess-Rivera --format json --limit 200` finds a card's id (add it with `gh project item-add 2 --owner Jess-Rivera --url <issue url>` if missing); `gh project field-list 2 --owner Jess-Rivera --format json` gives the Status field id and option ids; then `gh project item-edit --id <item> --project-id <project> --field-id <status field> --single-select-option-id <option>`.
+Board commands: `gh project item-list 3 --owner Jess-Rivera --format json --limit 200` finds a card's id (add a
+missing one with `gh project item-add 3 --owner Jess-Rivera --url <issue url>`); `gh project field-list 3 --owner
+Jess-Rivera --format json` gives the Status and Waiting on field ids and option ids; then `gh project item-edit --id
+<item> --project-id <project id> --field-id <field> --single-select-option-id <option>`.
 
 ## Quick state override
 
-If Jess says "move #42 to ready", trust them and apply it directly. Confirm what you are about to do (labels, board Status, comment, close), then act. Skip grilling. Only ask about a brief if Jess has not said whether they want one.
+If Jess says "move #42 to accepted", trust them and apply it directly. Confirm what you are about to do (labels,
+Status, Waiting on, comment, close), then act. Skip grilling. Only ask about a brief if Jess has not said.
 
 ## Agent briefs
 
-A brief is a comment that turns an issue into a hand-off contract. Write one only when Jess asks, or when the issue is going to a different tool or session (Quick versus Claude Desktop, or a background run). Format and rules: AGENT-BRIEF.md. The issue templates already cover most issues, so most `ready` issues need no brief.
+A brief is a comment that turns an issue into a hand-off contract. Write one only when Jess asks, or when the issue is
+going to a different tool or session (Amazon Quick versus Claude, or a background run). Format and rules:
+AGENT-BRIEF.md.
 
-## Needs-info template
+## Open-question notes template
 
 ```markdown
 ## Triage Notes
@@ -96,16 +111,16 @@ A brief is a comment that turns an issue into a hand-off contract. Write one onl
 **What we've established so far:**
 
 - point 1
-- point 2
 
-**What we still need from you (@reporter):**
+**What we still need to decide:**
 
 - question 1
-- question 2
 ```
 
-Capture everything resolved during grilling under "established so far" so the work is not lost. Questions must be specific and actionable, not "please provide more info".
+Capture everything resolved during grilling under "established so far" so the work is not lost. Questions must be
+specific and actionable.
 
 ## Resuming a previous session
 
-If prior triage notes exist on the issue, read them, check whether the reporter answered any outstanding question, and present an updated picture before continuing. Do not re-ask resolved questions.
+If prior triage notes exist on the issue, read them and present an updated picture before continuing. Do not re-ask
+resolved questions.

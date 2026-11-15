@@ -25,8 +25,8 @@ Updated 2026-11-15.
 Plan: docs/discussion-outputs/development-plan.md (M0 foundation, M1 first playable battle, then M2 to M5).
 Rulings so far: 20 by 20 maps, 4 a side in M1, one unit at a time by Speed, mainline stats and damage (no roll;
 accuracy and crit random), 4 moves, no PP, move 4 (climb 1, drop 2), moves via a translation schema.
-1. #6 built; Jess feel-tests the test map (run the project), then closes.
-2. Then #7 select and move (with zoom), and on through #12.
+1. #7 select and move: write its plan (needs a zoom ruling, since zooming out breaks crisp pixels).
+2. Then #8 to #12 in order. #5 and #6 shipped on slice/m1-build.
 
 ## Open decisions
 | Decision | Blocks | Note |
@@ -38,4 +38,4 @@ accuracy and crit random), 4 moves, no PP, move 4 (climb 1, drop 2), moves via a
 | Shipping sprite credits | First export slice | CC BY-NC needs source/spritecollab/CREDITS.md in builds; export must also include data/*.json |
 
 ## Tracking
-Board: https://github.com/users/Jess-Rivera/projects/3. Open issues: #6 to #12 (M1).
+Board: https://github.com/users/Jess-Rivera/projects/3. Open issues: #7 to #12 (M1).

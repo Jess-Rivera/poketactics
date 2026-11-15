@@ -83,6 +83,6 @@ Decided: 3D blocks with 2D sprites (2026-11-15-isometric-rotating-view). Open: t
 ## Questions to talk through (one at a time)
 1. Answered: Compatibility (2026-11-15-renderer-compatibility).
 2. Answered: 640x360, integer scaling (2026-11-15-base-resolution).
-3. Folder layout for game code (for example game/ for rules, scenes/ for presentation).
-4. Test tool: a plain headless test runner of our own, or an add-on (GUT, gdUnit4)?
+3. Answered: folders by role (2026-11-15-godot-layout-and-tests).
+4. Answered: gdUnit4 (2026-11-15-godot-layout-and-tests).
 5. Can the work machine run Godot (the open question in STATE.md)?

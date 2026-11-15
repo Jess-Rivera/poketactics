@@ -1,5 +1,6 @@
 # Keep every text file LF in the repo and on disk, on every machine, whatever core.autocrlf says.
 # This keeps data files byte-identical across machines, so "rerun the export, no diff" holds. Godot's default too.
+# Note: Godot's new-project wizard overwrites this file with its one-line default; keep these rules.
 * text=auto eol=lf
 
 # Windows scripts need CRLF to run.

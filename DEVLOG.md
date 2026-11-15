@@ -25,3 +25,9 @@
   damage with no roll, 4 moves, no PP, move 4 (climb 1, drop 2), move translation schema. Issues #3 to #12.
 - #3 Godot primer closed as not needed.
 - #4 built: tools/build_wiki.py writes 2,334 static pages to wiki/ (search, tabs, sortable tables), about 30 MB.
+
+## 2026-11-15, pack loader and stats module (#5)
+- rules/pack_data.gd (pack loaded once, by name, loud on a missing name), rules/battle_stats.gd (all formulas),
+  BattleUnit.from_pack (stats, HP, types, abilities, last 4 level-up moves at a level).
+- 14 new relation tests, 41 in all. Planted bugs (no same-type bonus, always hit, first 4 moves, HP formula)
+  each failed a test.

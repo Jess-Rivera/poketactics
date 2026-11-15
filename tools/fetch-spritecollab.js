@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-// Fetch Pokemon sprites from PMDCollab/SpriteCollab at one commit into assets/pokemon/ (same folder layout).
+// Fetch Pokemon sprites from PMDCollab/SpriteCollab at one commit into source/spritecollab/ (same folder layout).
+// These are the raw sheets; Godot never sees them. tools/pack_sprites.py packs them into assets/pokemon/.
 // Which sets: every species' normal set, the mainline forms (2026-11-15-variant-scope), and the shiny of each.
 // Which files: AnimData.xml, credits.txt, and the Anim, Offsets and Shadow sheets of the agreed animations
 // (2026-11-15-animation-set). Every file is checked against the git blob hash in GitHub's listing.
-// Also writes assets/pokemon/README.md (provenance note), CREDITS.md (artists per sprite set) and the license copy.
+// Also writes source/spritecollab/README.md (provenance note), CREDITS.md (artists per sprite set) and the license copy.
 //
 // Usage: node tools/fetch-spritecollab.js <commit id>
 // Needs a GitHub token for about 1,000 listing calls: GITHUB_TOKEN, or a logged-in gh CLI.
@@ -19,7 +20,7 @@ const { pipeline } = require('node:stream/promises');
 
 const UPSTREAM_REPO = 'PMDCollab/SpriteCollab';
 const REPO_ROOT = path.resolve(__dirname, '..');
-const SPRITE_FOLDER = path.join(REPO_ROOT, 'assets', 'pokemon');
+const SPRITE_FOLDER = path.join(REPO_ROOT, 'source', 'spritecollab');
 const PARALLEL_LISTINGS = 8;
 
 // SpriteCollab form names that are mainline forms we use; '' is the species' normal form.
@@ -295,7 +296,7 @@ async function main() {
   fs.writeFileSync(
     path.join(SPRITE_FOLDER, 'README.md'),
     [
-      '# assets/pokemon (SpriteCollab sprites, do not edit by hand)',
+      '# source/spritecollab (raw SpriteCollab sprites, do not edit by hand)',
       '',
       `Copied byte-exact from sprite/ of https://github.com/${UPSTREAM_REPO}, same folder layout`,
       '(dex number, then form, then 0001 for shiny; tracker.json upstream names every folder).',
@@ -322,7 +323,8 @@ async function main() {
       '',
     ].join('\n'),
   );
-  console.log('Wrote assets/pokemon/README.md, CREDITS.md and LICENSE-SpriteCollab.md');
+  console.log('Wrote source/spritecollab/README.md, CREDITS.md and LICENSE-SpriteCollab.md');
+  console.log('Next: python tools/pack_sprites.py');
   console.log(`Archive kept for reruns: ${archivePath}`);
 }
 

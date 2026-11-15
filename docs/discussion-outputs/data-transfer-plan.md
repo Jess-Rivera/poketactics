@@ -1,4 +1,4 @@
-# Plan: raw data transfer
+# Plan: raw data transfer [Superseded 2026-11-15 by the rulings in DECISIONS.md and the pokeapi, godot and sprites primers]
 
 Status: [Proposed], revised 2026-11-15 for Godot 4 (2026-11-15-engine-godot-4). Nothing is built until Jess agrees
 the slice opening and the decisions below.

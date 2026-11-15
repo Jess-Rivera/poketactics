@@ -11,5 +11,10 @@ not affiliated with Nintendo, Game Freak or The Pokemon Company.
 
 ## Sprites
 Pokemon sprites from [SpriteCollab](https://github.com/PMDCollab/SpriteCollab) by the PMDCollab community and
-Spike Chunsoft (credited as CHUNSOFT), licensed CC BY-NC 4.0 (assets/pokemon/LICENSE-SpriteCollab.md). Every artist
-and the credits for each sprite set: assets/pokemon/CREDITS.md. The exact commit: assets/pokemon/README.md.
+Spike Chunsoft (credited as CHUNSOFT), licensed CC BY-NC 4.0 (source/spritecollab/LICENSE-SpriteCollab.md). Every
+artist and the credits for each sprite set: source/spritecollab/CREDITS.md. The exact commit:
+source/spritecollab/README.md. The game uses packed copies in assets/pokemon/ (tools/pack_sprites.py).
+
+## Development tools (not shipped)
+- [gdUnit4](https://github.com/godot-gdunit-labs/gdUnit4) v6.2.3 by Mike Schulze and contributors, MIT license
+  (addons/gdUnit4/LICENSE). Used for tests only and left out of game builds.

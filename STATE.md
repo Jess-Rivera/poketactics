@@ -3,29 +3,29 @@
 Updated 2026-11-15.
 
 ## Where we are
-- Repo bootstrapped: CLAUDE.md, CONTEXT.md, the git guard hook, and two skills (grilling, writing-check).
-- Board "PokeTactics" (user project 3) chosen; design in 2026-11-15-project-board. Board set up and
-  verified (columns, Waiting on, repo link); labels created, triage skill adapted.
-- Engine decided: Godot 4 (2026-11-15-engine-godot-4). No game code yet.
-- pokeapi raw CSVs (187 files, 41 MB) in source/pokeapi/csv/, byte-exact at db06b37dca, fetched by
-  tools/fetch-pokeapi.js. Data rulings so far: see DECISIONS.md (units, variants, learnsets, methods, source).
-- SpriteCollab sprites in assets/pokemon/ (2,151 sets incl. shinies, 96,189 files, about 600 MB), byte-exact at
-  2f5d22b505, by tools/fetch-spritecollab.js; artists in assets/pokemon/CREDITS.md. 265 wanted sets have no sprite.
-- Godot 4.6.2 (Compatibility, 640x360 integer scaling); isometric view, 4-way rotation, 3D blocks + 2D sprites.
+- Board "PokeTactics" (user project 3) set up and verified; auto-add and close-to-Shipped work.
+- Data: pokeapi raw CSVs in source/pokeapi/csv/ (187 files, byte-exact at db06b37dca, tools/fetch-pokeapi.js).
+  Rulings: units are pokemon variants; Mega, Gigantamax and Primal are mid-battle transformations; learnsets from
+  Scarlet/Violet else the newest earlier level-up game (skip Legends Arceus); all four learn methods kept.
+- Sprites: raw SpriteCollab in source/spritecollab/ (2,151 sets incl. shinies, byte-exact at 2f5d22b505,
+  tools/fetch-spritecollab.js). Packed for Godot in assets/pokemon/: one palette sheet + JSON per set
+  (tools/pack_sprites.py, deterministic). 265 wanted sets have no sprite upstream.
+- Godot 4.6.2 at the repo root: Compatibility, 640x360 integer scaling, folders rules/ view/ tests/, gdUnit4
+  v6.2.3. Isometric view with Q/E 4-way rotation, 3D greybox blocks plus 2D sprites (issue #1, shipped).
+- Tests: 17 gdUnit4 tests, `tools\run-tests.cmd` (see CONTEXT.md).
 
 ## Next
-Going step by step (Jess, 2026-11-15). Done: pokeapi and sprites fetched. Next: Godot project at the repo root
-with a greybox rotating test map (plan first), then the JSON pack export and the offline wiki. Primers in
-docs/discussion-outputs/ (pokeapi, godot, sprites).
+1. Jess squash-merges slice/godot-setup into main (commands given 2026-11-15).
+2. pokeapi JSON pack export (data/) and the offline wiki: understand first, then a slice opening.
 
 ## Open decisions
 | Decision | Blocks | Note |
 |---|---|---|
-| Block art source and style | Map look | Greybox first proposed; godot-primer.md |
+| Block art source and style | Map look | Greybox for now; godot-primer.md |
 | Special0 to Special26 animations | Animation set | Jess looks at them in a viewer |
 | Portraits; fallback for the 265 sets without sprites | Sprites | sprites-primer.md questions 3 and 4 |
-| Godot folder layout, test tool | Godot setup | godot-primer.md questions 3 and 4 |
-| Can the work machine (Amazon Quick) run the engine? | Work-side testing | Check before committing to an engine |
+| Can the work machine run Godot 4.6.2? | Work-side testing | Check there |
+| Shipping sprite credits | First export slice | CC BY-NC needs source/spritecollab/CREDITS.md in builds |
 
 ## Tracking
-Board: https://github.com/users/Jess-Rivera/projects/3 (PokeTactics). No issues yet.
+Board: https://github.com/users/Jess-Rivera/projects/3. Open issues: none.

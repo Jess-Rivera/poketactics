@@ -11,12 +11,13 @@ Updated 2026-11-15.
   tools/fetch-spritecollab.js). Packed for Godot in assets/pokemon/: one palette sheet + JSON per set
   (tools/pack_sprites.py, deterministic). 265 wanted sets have no sprite upstream.
 - Godot 4.6.2 at the repo root: Compatibility, 640x360 integer scaling, folders rules/ view/ tests/, gdUnit4
-  v6.2.3. Isometric view with Q/E 4-way rotation, 3D greybox blocks plus 2D sprites (issue #1, shipped).
+  v6.2.3. Isometric view with Q/E 4-way rotation, 3D greybox blocks plus 2D sprites (issue #1, shipped,
+  squash-merged to main).
 - Tests: 17 gdUnit4 tests, `tools\run-tests.cmd` (see CONTEXT.md).
 
 ## Next
-1. Jess squash-merges slice/godot-setup into main (commands given 2026-11-15).
-2. pokeapi JSON pack export (data/) and the offline wiki: understand first, then a slice opening.
+1. pokeapi JSON pack export (data/) and the offline wiki: understand first, then a slice opening.
+2. Optional: a sprite viewer for judging Special0 to Special26.
 
 ## Open decisions
 | Decision | Blocks | Note |

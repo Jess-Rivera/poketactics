@@ -3,4 +3,4 @@
 Date: 2026-11-15. Owner: Jess. Canonical: docs/discussion-outputs/development-plan.md
 
 - Every unit moves up to 4 tiles a turn, for now; not derived from Speed or species.
-- Still open: how many height steps a unit can climb or drop.
+- Within those 4 tiles a unit can step up 1 height level or drop 2 at a time.

@@ -52,12 +52,12 @@ flowchart LR
 
 | # | Question | Answer (Jess, 2026-11-15) | Ruling |
 |---|---|---|---|
-| 1 | Battle scale | Big: up to about 20 by 20 | 2026-11-15-battle-scale |
-| 2 | Turn structure | Open: two options, below | none yet |
-| 3 | Damage | Mainline formula; only accuracy and reach or environment decide a hit | 2026-11-15-damage-and-hit |
+| 1 | Battle scale | Big: up to about 20 by 20; 4 units a side in M1 | 2026-11-15-battle-scale |
+| 2 | Turn structure | One unit at a time in Speed order (Option 2) | 2026-11-15-turn-structure |
+| 3 | Damage | Mainline formula, no damage roll; only accuracy and crits are random; reach and environment also decide a hit | 2026-11-15-damage-and-hit |
 | 4 | Moves on the grid | Derived defaults plus overrides, through a translation schema like the fork's | 2026-11-15-move-grid-translation |
 | 5, 6, 7 | Moves, stats, PP | 4 moves from the level-up learnset; mainline stat formula; no PP in M1 | 2026-11-15-unit-stats-and-moves |
-| 8 | Movement | Fixed 4 tiles | 2026-11-15-movement-range |
+| 8 | Movement | Fixed 4 tiles; climb 1 up, drop 2 down | 2026-11-15-movement-range |
 
 What the answers change in M1:
 - 20 by 20 does not fit one 640x360 screen, so slice 3 adds camera pan and zoom, and the test map grows.
@@ -65,7 +65,7 @@ What the answers change in M1:
   from Jess's fork docs (MOVE-AXIS-SCHEMA.md), then the defaults and the M1 move overrides.
 - "Reach and environment" means slice 5 needs line of sight and height rules for hitting, not only range.
 
-### Turn structure: the two options
+### Turn structure: the two options (Option 2 chosen)
 
 ```mermaid
 flowchart LR

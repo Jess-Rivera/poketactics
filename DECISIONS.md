@@ -12,3 +12,8 @@ One file per ruling in docs/decisions/. Each file's `Canonical:` line names the 
 - [2026-11-15-learnset-game](docs/decisions/2026-11-15-learnset-game.md): Learnsets come from Scarlet/Violet, else the newest earlier game with level-up data, skipping Legends Arceus
 - [2026-11-15-learn-methods](docs/decisions/2026-11-15-learn-methods.md): Pack keeps level-up, machine, egg and tutor moves; gameplay use decided at design
 - [2026-11-15-pokeapi-source](docs/decisions/2026-11-15-pokeapi-source.md): Raw pokeapi CSVs copied into source/pokeapi, frozen at db06b37dca, with a provenance note
+- [2026-11-15-renderer-compatibility](docs/decisions/2026-11-15-renderer-compatibility.md): Godot uses the Compatibility renderer
+- [2026-11-15-base-resolution](docs/decisions/2026-11-15-base-resolution.md): Base resolution 640x360 with integer scaling
+- [2026-11-15-sprite-sources](docs/decisions/2026-11-15-sprite-sources.md): Pokemon sprites from SpriteCollab (pinned); RawAsset later for tiles, items, effects
+- [2026-11-15-animation-set](docs/decisions/2026-11-15-animation-set.md): Core 11 animations plus tactics extras where present; flavor left out; Specials pending a look
+- [2026-11-15-isometric-rotating-view](docs/decisions/2026-11-15-isometric-rotating-view.md): Isometric battle view, rotatable in four 90 degree steps

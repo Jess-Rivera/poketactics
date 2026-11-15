@@ -9,15 +9,22 @@ Updated 2026-11-15.
 - Engine decided: Godot 4 (2026-11-15-engine-godot-4). No game code yet.
 - pokeapi raw CSVs (187 files, 41 MB) in source/pokeapi/csv/, byte-exact at db06b37dca, fetched by
   tools/fetch-pokeapi.js. Data rulings so far: see DECISIONS.md (units, variants, learnsets, methods, source).
+- SpriteCollab sprites in assets/pokemon/ (2,151 sets incl. shinies, 96,189 files, about 600 MB), byte-exact at
+  2f5d22b505, by tools/fetch-spritecollab.js; artists in assets/pokemon/CREDITS.md. 265 wanted sets have no sprite.
+- Godot 4.6.2 (Compatibility, 640x360 integer scaling); isometric view, 4-way rotation, 3D blocks + 2D sprites.
 
 ## Next
-Going step by step (Jess, 2026-11-15): pokeapi understood and fetched; next Godot set up at the repo root, then
-sprites, then the export to a JSON pack and the offline wiki. Primer: docs/discussion-outputs/pokeapi-primer.md.
+Going step by step (Jess, 2026-11-15). Done: pokeapi and sprites fetched. Next: Godot project at the repo root
+with a greybox rotating test map (plan first), then the JSON pack export and the offline wiki. Primers in
+docs/discussion-outputs/ (pokeapi, godot, sprites).
 
 ## Open decisions
 | Decision | Blocks | Note |
 |---|---|---|
-| Sprite source and animation set, Godot layout | Sprites, Godot setup | Listed with recommendations in the data transfer plan |
+| Block art source and style | Map look | Greybox first proposed; godot-primer.md |
+| Special0 to Special26 animations | Animation set | Jess looks at them in a viewer |
+| Portraits; fallback for the 265 sets without sprites | Sprites | sprites-primer.md questions 3 and 4 |
+| Godot folder layout, test tool | Godot setup | godot-primer.md questions 3 and 4 |
 | Can the work machine (Amazon Quick) run the engine? | Work-side testing | Check before committing to an engine |
 
 ## Tracking

@@ -17,3 +17,4 @@
 
 # Raw upstream data is stored byte-exact, never converted (some pokeapi files are CRLF upstream).
 source/pokeapi/csv/** -text
+assets/pokemon/** -text

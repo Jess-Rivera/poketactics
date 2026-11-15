@@ -10,5 +10,6 @@ Pokemon and Pokemon character names are trademarks of Nintendo. PokeTactics is a
 not affiliated with Nintendo, Game Freak or The Pokemon Company.
 
 ## Sprites
-To be added with the sprite slice: [SpriteCollab](https://github.com/PMDCollab/SpriteCollab), CC BY-NC 4.0, with
-per-sprite artist credits.
+Pokemon sprites from [SpriteCollab](https://github.com/PMDCollab/SpriteCollab) by the PMDCollab community and
+Spike Chunsoft (credited as CHUNSOFT), licensed CC BY-NC 4.0 (assets/pokemon/LICENSE-SpriteCollab.md). Every artist
+and the credits for each sprite set: assets/pokemon/CREDITS.md. The exact commit: assets/pokemon/README.md.

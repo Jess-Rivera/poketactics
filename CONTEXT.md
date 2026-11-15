@@ -19,6 +19,6 @@ All agent rules live in CLAUDE.md. This file is the ritual and the pointers.
 
 ## Where things live
 - Rules: CLAUDE.md. Current handoff: STATE.md. Next session: TODO.md. Rulings: DECISIONS.md and docs/decisions/.
-- Plans and concept maps: docs/ASCII Concept Maps/.
+- Plans and concept maps: docs/discussion-outputs/.
 - The remote is https://github.com/Jess-Rivera/poketactics.git.
 - Reference only (never a code source, see CLAUDE.md "Clean-room rule"): C:\dev\pokesurvivor_fork.

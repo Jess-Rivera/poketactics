@@ -3,30 +3,30 @@
 Updated 2026-11-15.
 
 ## Where we are
-- Board "PokeTactics" (user project 3) set up and verified; auto-add and close-to-Shipped work.
 - Data: pokeapi raw CSVs in source/pokeapi/csv/ (187 files, byte-exact at db06b37dca, tools/fetch-pokeapi.js).
   Rulings: units are pokemon variants; Mega, Gigantamax and Primal are mid-battle transformations; learnsets from
   Scarlet/Violet else the newest earlier level-up game (skip Legends Arceus); all four learn methods kept.
 - Sprites: raw SpriteCollab in source/spritecollab/ (2,151 sets incl. shinies, byte-exact at 2f5d22b505,
   tools/fetch-spritecollab.js). Packed for Godot in assets/pokemon/: one palette sheet + JSON per set
   (tools/pack_sprites.py, deterministic). 265 wanted sets have no sprite upstream.
-- Godot 4.6.2 at the repo root: Compatibility, 640x360 integer scaling, folders rules/ view/ tests/, gdUnit4
-  v6.2.3. Isometric view with Q/E 4-way rotation, 3D greybox blocks plus 2D sprites (issue #1, shipped,
-  squash-merged to main).
-- Data pack in data/ (#2, shipped): units, moves, abilities, types JSON keyed by name,
-  from tools/export_pack.py (Python, deterministic). 1,082 units, 919 moves, 314 abilities, 18 types; 127
-  transformations attached to base units. Parity with the fork: 0 differences over 966 species.
+- Godot 4.6.2 at the repo root: Compatibility, 640x360 integer scaling, gdUnit4 v6.2.3. Isometric view, Q/E
+  4-way rotation, 3D greybox blocks plus 2D sprites (#1).
+- Data pack in data/ (#2): units, moves, abilities, types keyed by name, from tools/export_pack.py. Offline
+  wiki in wiki/ (#4, tools/build_wiki.py).
 - Rules: rules/pack_data.gd loads the pack once by name; rules/battle_stats.gd holds every formula (mainline
   stats with IVs and EVs 0, damage with no spread, accuracy and Gen 6 crit rolls on a passed-in seed);
   BattleUnit.from_pack builds a unit at a level with its last 4 level-up moves (#5).
-- Tests: 41 gdUnit4 tests plus the pack rerun check, `tools\run-tests.cmd` (needs Python 3; see CONTEXT.md).
+- Test battle (#6): rules/battle.gd (grid plus units by side), rules/test_battle_setup.gd (20 by 20 map, 4 a
+  side at level 30); every unit and transformation has a sprite_set in the pack (45 units, 81 transformations
+  have none upstream). Camera pans with WASD or arrows; Tab shows a temporary unit panel.
+- Tests: 47 gdUnit4 tests plus the pack rerun check, `tools\run-tests.cmd` (needs Python 3; see CONTEXT.md).
 
 ## Next
 Plan: docs/discussion-outputs/development-plan.md (M0 foundation, M1 first playable battle, then M2 to M5).
 Rulings so far: 20 by 20 maps, 4 a side in M1, one unit at a time by Speed, mainline stats and damage (no roll;
 accuracy and crit random), 4 moves, no PP, move 4 (climb 1, drop 2), moves via a translation schema.
-1. #5 built (rules only, nothing on screen changes); Jess approves and closes.
-2. Then #6 units from the pack on a large test map, and on through #12. Wiki (#4) shipped.
+1. #6 built; Jess feel-tests the test map (run the project), then closes.
+2. Then #7 select and move (with zoom), and on through #12.
 
 ## Open decisions
 | Decision | Blocks | Note |
@@ -38,4 +38,4 @@ accuracy and crit random), 4 moves, no PP, move 4 (climb 1, drop 2), moves via a
 | Shipping sprite credits | First export slice | CC BY-NC needs source/spritecollab/CREDITS.md in builds; export must also include data/*.json |
 
 ## Tracking
-Board: https://github.com/users/Jess-Rivera/projects/3. Open issues: #5 to #12 (M1).
+Board: https://github.com/users/Jess-Rivera/projects/3. Open issues: #6 to #12 (M1).

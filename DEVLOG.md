@@ -31,3 +31,9 @@
   BattleUnit.from_pack (stats, HP, types, abilities, last 4 level-up moves at a level).
 - 14 new relation tests, 41 in all. Planted bugs (no same-type bonus, always hit, first 4 moves, HP formula)
   each failed a test.
+
+## 2026-11-15, units on a large test map (#6)
+- Kept SpriteCollab tracker.json (fetch --tracker-only) so the export matches units to sprite sets by form name;
+  45 units and 81 transformations have no sprite upstream (listed in data/README).
+- rules/battle.gd and a 20 by 20 test battle, 4 a side at level 30; camera pan; temporary Tab unit panel.
+- 6 new relation tests, 47 in all. Godot would not pass Battle.Side as Side, so side parameters are ints.

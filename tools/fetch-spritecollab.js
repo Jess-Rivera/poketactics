@@ -6,7 +6,11 @@
 // (2026-11-15-animation-set). Every file is checked against the git blob hash in GitHub's listing.
 // Also writes source/spritecollab/README.md (provenance note), CREDITS.md (artists per sprite set) and the license copy.
 //
-// Usage: node tools/fetch-spritecollab.js <commit id>
+// Also keeps tracker.json (SpriteCollab's names for every folder), byte-exact, so tools/export_pack.py can match
+// units to sprite sets.
+//
+// Usage: node tools/fetch-spritecollab.js <commit id> [--tracker-only]
+//   --tracker-only refreshes just tracker.json at that commit, without re-fetching any sprite.
 // Needs a GitHub token for about 1,000 listing calls: GITHUB_TOKEN, or a logged-in gh CLI.
 // Decision: docs/decisions/2026-11-15-sprite-sources.md
 
@@ -179,7 +183,12 @@ async function main() {
   const commitDate = commitInfo.commit.committer.date;
   console.log(`Commit ${commitId} (${commitDate})`);
 
-  const tracker = JSON.parse(await fetchRawText(commitId, 'tracker.json'));
+  const trackerText = await fetchRawText(commitId, 'tracker.json');
+  fs.mkdirSync(SPRITE_FOLDER, { recursive: true });
+  fs.writeFileSync(path.join(SPRITE_FOLDER, 'tracker.json'), trackerText);
+  console.log('tracker.json written');
+  if (process.argv.includes('--tracker-only')) return;
+  const tracker = JSON.parse(trackerText);
   const creditNamesText = await fetchRawText(commitId, 'credit_names.txt');
   const licenseText = await fetchRawText(commitId, 'LICENSE.md');
   const nameById = parseCreditNames(creditNamesText);
@@ -236,7 +245,7 @@ async function main() {
   console.log(`${wantedFiles.length} files verified and written`);
 
   // Remove sprite files from an earlier pin that are no longer wanted (only file types this script writes).
-  const generatedTopFiles = new Set(['README.md', 'CREDITS.md', 'LICENSE-SpriteCollab.md']);
+  const generatedTopFiles = new Set(['README.md', 'CREDITS.md', 'LICENSE-SpriteCollab.md', 'tracker.json']);
   let removedCount = 0;
   function sweep(folder) {
     for (const entry of fs.readdirSync(folder, { withFileTypes: true })) {

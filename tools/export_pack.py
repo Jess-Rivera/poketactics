@@ -31,6 +31,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CSV_FOLDER = REPO_ROOT / "source" / "pokeapi" / "csv"
 PIN_NOTE = REPO_ROOT / "source" / "pokeapi" / "README.md"
 PACK_FOLDER = REPO_ROOT / "data"
+SPRITE_TRACKER = REPO_ROOT / "source" / "spritecollab" / "tracker.json"
+PACKED_SPRITE_FOLDER = REPO_ROOT / "assets" / "pokemon"
 PACK_FILES = ["units.json", "moves.json", "abilities.json", "types.json", "README.md"]
 
 ENGLISH = "9"
@@ -38,6 +40,10 @@ REGIONS = ["alola", "galar", "hisui", "paldea"]
 REGIONAL_NAME = re.compile(r"-(" + "|".join(REGIONS) + r")(-|$)")
 TRANSFORMATION_SUFFIX = re.compile(r"-(mega(-[xyz])?|gmax|primal)$")
 TRANSFORMATION_KIND = {"mega": "mega", "gmax": "gigantamax", "primal": "primal"}
+# SpriteCollab form name for a transformation suffix (tracker.json names every form folder).
+TRANSFORMATION_SPRITE_FORM = {"mega": "Mega", "mega-x": "Mega_X", "mega-y": "Mega_Y", "mega-z": "Mega_Z", "gmax": "Gigantamax", "primal": "Primal"}
+# Name parts that only say "the usual one" in pokeapi and have no SpriteCollab form name of their own.
+PLAIN_FORM_WORDS = {"standard", "combat", "breed"}
 # Non-default regional-looking names that are not regional forms (variant-scope ruling).
 NOT_REGIONAL_WORDS = ["totem", "cap"]
 PREFERRED_LEARNSET_GAME = "scarlet-violet"
@@ -187,6 +193,37 @@ class Source:
         self.type_efficacy = read_table("type_efficacy")
 
 
+class SpriteSets:
+    """Which packed sprite set (assets/pokemon/) draws a unit or transformation, matched by SpriteCollab form name."""
+
+    def __init__(self):
+        tracker = json.loads(SPRITE_TRACKER.read_text(encoding="utf-8"))
+        self.form_folder = {
+            dex: {form["name"]: folder for folder, form in species.get("subgroups", {}).items()} for dex, species in tracker.items()
+        }
+        self.packed = {path.stem for path in PACKED_SPRITE_FOLDER.glob("*.json")}
+
+    def set_for(self, dex_number, form_name):
+        """The packed set id for a dex number and SpriteCollab form name ("" is the normal form), or None."""
+        dex = f"{dex_number:04d}"
+        if form_name == "":
+            return dex if dex in self.packed else None
+        folder = self.form_folder.get(dex, {}).get(form_name)
+        set_id = f"{dex}-{folder}" if folder else None
+        return set_id if set_id in self.packed else None
+
+    def for_unit(self, pokemon_row, regional_form, dex_number):
+        if not regional_form:
+            return self.set_for(dex_number, "")
+        name_parts = pokemon_row["identifier"].split("-")
+        extra_words = name_parts[name_parts.index(regional_form) + 1 :]
+        extra_words = [word.capitalize() for word in extra_words if word not in PLAIN_FORM_WORDS]
+        return self.set_for(dex_number, "_".join([regional_form.capitalize(), *extra_words]))
+
+    def for_transformation(self, suffix, dex_number):
+        return self.set_for(dex_number, TRANSFORMATION_SPRITE_FORM[suffix])
+
+
 def regional_form_of(pokemon_row, source):
     """The region a non-default pokemon is a regional form of, or None if it is not one."""
     name = pokemon_row["identifier"]
@@ -328,7 +365,7 @@ def evolutions(unit_row, unit_names, source, dropped):
     return [found[key] for key in sorted(found)]
 
 
-def build_units(source):
+def build_units(source, sprite_sets):
     unit_rows = [row for row in source.pokemon if row["is_default"] == "1" or regional_form_of(row, source)]
     unit_names = {row["identifier"] for row in unit_rows}
     default_unit_of_species = {row["species_id"]: row["identifier"] for row in unit_rows if row["is_default"] == "1"}
@@ -352,6 +389,7 @@ def build_units(source):
         kind = TRANSFORMATION_KIND[match.group(1).split("-")[0]]
         transformation = battle_facts(row, source)
         del transformation["ev_yield"]
+        transformation["sprite_set"] = sprite_sets.for_transformation(match.group(1), int(row["species_id"]))
         transformation["kind"] = kind
         transformation["name"] = row["identifier"]
         transformations[base].append(transformation)
@@ -368,6 +406,7 @@ def build_units(source):
                 "generation": int(species["generation_id"]),
                 "is_species_default": row["is_default"] == "1",
                 "regional_form": regional_form_of(row, source),
+                "sprite_set": sprite_sets.for_unit(row, regional_form_of(row, source), int(species["id"])),
                 "base_experience": number_or_none(row["base_experience"]),
                 "gender_rate": int(species["gender_rate"]),
                 "capture_rate": int(species["capture_rate"]),
@@ -541,6 +580,16 @@ def readme(units, moves, abilities, types, left_out, dropped, flavor_count):
         "- types.json `against`: damage multiplier of the attacking type (the entry) on each defending type.",
         "- A learnset entry's level is present only for level-up moves; 0 means learned on evolution.",
         "",
+        "## Units and transformations without a sprite set",
+        "",
+        "Matched by SpriteCollab form name (source/spritecollab/tracker.json); none upstream, or a form not fetched.",
+        "The fallback is an open decision (STATE.md).",
+        "",
+        *[f"- {name}" for name in sorted(
+            [name for name, unit in units.items() if unit["sprite_set"] is None]
+            + [t["name"] for unit in units.values() for t in unit["transformations"] if t["sprite_set"] is None]
+        )],
+        "",
         "## Left out on purpose",
         "",
         "Transformations whose base form is an excluded variant (data-pack-plan.md decision 2):",
@@ -557,7 +606,7 @@ def readme(units, moves, abilities, types, left_out, dropped, flavor_count):
 
 def write_pack(folder):
     source = Source()
-    units, left_out, dropped = build_units(source)
+    units, left_out, dropped = build_units(source, SpriteSets())
     moves, flavor_count = build_moves(source)
     abilities = build_abilities(source)
     types = build_types(source)

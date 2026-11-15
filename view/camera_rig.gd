@@ -1,6 +1,7 @@
 class_name CameraRig
 extends Node3D
-## Isometric camera: orthographic, tilted down, turned in 90 degree steps with Q (left) and E (right).
+## Isometric camera: orthographic, tilted down, turned in 90 degree steps with Q (left) and E (right), panned with
+## WASD or the arrow keys (relative to the screen, kept inside map_bounds, in whole sprite pixels).
 ## Place the rig at the map centre. It announces the new view step halfway through each turn, which is when unit
 ## sprites switch to their new facing row.
 
@@ -12,6 +13,17 @@ const CAMERA_DISTANCE := 30.0
 const ORTHOGRAPHIC_HEIGHT_UNITS := 360.0 / 24.0
 const TURN_SECONDS := 0.25
 const PIXELS_PER_UNIT := 24.0
+const PAN_PIXELS_PER_SECOND := 240.0
+const PAN_KEYS := {
+	KEY_W: Vector2.UP, KEY_UP: Vector2.UP,
+	KEY_S: Vector2.DOWN, KEY_DOWN: Vector2.DOWN,
+	KEY_A: Vector2.LEFT, KEY_LEFT: Vector2.LEFT,
+	KEY_D: Vector2.RIGHT, KEY_RIGHT: Vector2.RIGHT,
+}
+
+## The ground area (world x and z) the camera's focus may move over; set it to the map's extent.
+var map_bounds := Rect2(0, 0, 0, 0)
+var _unspent_pan_pixels := 0.0
 
 var view_step := 0
 var _turn_tween: Tween
@@ -34,6 +46,36 @@ func _ready() -> void:
 	camera.far = CAMERA_DISTANCE * 3.0
 	pitch.add_child(camera)
 	camera.make_current()
+
+
+func _process(delta: float) -> void:
+	var screen_direction := Vector2.ZERO
+	for keycode in PAN_KEYS:
+		if Input.is_key_pressed(keycode):
+			screen_direction += PAN_KEYS[keycode]
+	if screen_direction == Vector2.ZERO:
+		_unspent_pan_pixels = 0.0
+		return
+	_unspent_pan_pixels += PAN_PIXELS_PER_SECOND * delta
+	var whole_pixels := floori(_unspent_pan_pixels)
+	if whole_pixels == 0:
+		return
+	_unspent_pan_pixels -= whole_pixels
+	position = panned_focus(position, screen_direction, rotation_degrees.y, whole_pixels, map_bounds)
+
+
+## Where the focus lands after panning distance_pixels toward a screen direction (up is away from the viewer) at
+## a camera yaw. The result stays inside bounds (world x and z) and on the sprite pixel grid.
+static func panned_focus(focus: Vector3, screen_direction: Vector2, yaw_degrees: float, distance_pixels: int, bounds: Rect2) -> Vector3:
+	var yaw := deg_to_rad(yaw_degrees)
+	var camera_right := Vector3(cos(yaw), 0.0, -sin(yaw))
+	var camera_forward := Vector3(-sin(yaw), 0.0, -cos(yaw))
+	var direction := screen_direction.normalized()
+	var world_step := (camera_right * direction.x - camera_forward * direction.y) * (distance_pixels / PIXELS_PER_UNIT)
+	var moved := focus + world_step
+	moved.x = clampf(moved.x, bounds.position.x, bounds.end.x)
+	moved.z = clampf(moved.z, bounds.position.y, bounds.end.y)
+	return moved.snapped(Vector3.ONE / PIXELS_PER_UNIT)
 
 
 func _unhandled_input(event: InputEvent) -> void:

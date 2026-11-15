@@ -1,0 +1,34 @@
+class_name Battle
+extends RefCounted
+## A battle as rules see it: the grid and every unit on it, by side. No nodes and no drawing, so turns, moves and
+## AI (later slices) can run headless on it.
+
+enum Side { PLAYER, ENEMY }
+
+var grid: BattleGrid
+var units: Array[BattleUnit] = []
+
+
+func _init(battle_grid: BattleGrid = null) -> void:
+	grid = battle_grid
+
+
+func add_unit(unit: BattleUnit, unit_side: int) -> void:
+	unit.side = unit_side
+	units.append(unit)
+
+
+func units_on_side(unit_side: int) -> Array[BattleUnit]:
+	var on_side: Array[BattleUnit] = []
+	for unit in units:
+		if unit.side == unit_side:
+			on_side.append(unit)
+	return on_side
+
+
+## The unit standing on a cell, or null.
+func unit_at(cell: Vector2i) -> BattleUnit:
+	for unit in units:
+		if unit.cell == cell:
+			return unit
+	return null

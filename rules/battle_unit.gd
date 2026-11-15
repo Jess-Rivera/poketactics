@@ -5,6 +5,8 @@ extends RefCounted
 
 var cell: Vector2i
 var facing: Facing.Direction
+## Which side the unit fights for (a Battle.Side value); set when it joins a battle.
+var side: int = 0
 ## The pack unit it was built from (pokeapi name, for example vulpix-alola); empty for a bare unit.
 var unit_name: String
 var level: int

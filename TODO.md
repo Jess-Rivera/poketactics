@@ -1,5 +1,6 @@
 # TODO (next-session handoff)
 
-1. #2 data pack: built and tested. Jess spot-checks a few units in data/units.json against pokeapi.co, then closes.
-2. Next slice: offline wiki from the pack (2026-11-15-offline-wiki), its own opening and issue.
-3. Optional: a sprite viewer so Jess can judge Special0 to Special26 (2026-11-15-animation-set).
+1. #3 M0 Godot primer: write it, Jess reads and asks questions before any more game code.
+2. #4 M0 offline wiki: agree its opening, then build.
+3. Then M1 in order: #5 loader and stats, #6 units on a large map, #7 select and move, #8 turn order,
+   #9 move translation schema, #10 use a move, #11 enemy turn, #12 win, lose, restart.

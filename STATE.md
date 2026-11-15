@@ -13,15 +13,17 @@ Updated 2026-11-15.
 - Godot 4.6.2 at the repo root: Compatibility, 640x360 integer scaling, folders rules/ view/ tests/, gdUnit4
   v6.2.3. Isometric view with Q/E 4-way rotation, 3D greybox blocks plus 2D sprites (issue #1, shipped,
   squash-merged to main).
-- Data pack in data/ (#2, built, awaiting Jess's spot check): units, moves, abilities, types JSON keyed by name,
+- Data pack in data/ (#2, shipped): units, moves, abilities, types JSON keyed by name,
   from tools/export_pack.py (Python, deterministic). 1,082 units, 919 moves, 314 abilities, 18 types; 127
   transformations attached to base units. Parity with the fork: 0 differences over 966 species.
 - Tests: 27 gdUnit4 tests plus the pack rerun check, `tools\run-tests.cmd` (needs Python 3; see CONTEXT.md).
 
 ## Next
-1. #2: Jess spot-checks a few units against pokeapi.co (for example vulpix, vulpix-alola), then closes it.
-2. Offline wiki: its own slice after #2.
-3. Optional: a sprite viewer for judging Special0 to Special26.
+Plan: docs/discussion-outputs/development-plan.md (M0 foundation, M1 first playable battle, then M2 to M5).
+Rulings so far: 20 by 20 maps, 4 a side in M1, one unit at a time by Speed, mainline stats and damage (no roll;
+accuracy and crit random), 4 moves, no PP, move 4 (climb 1, drop 2), moves via a translation schema.
+1. #3 Godot primer (M0), then #4 offline wiki (M0).
+2. M1 slices #5 to #12, in order.
 
 ## Open decisions
 | Decision | Blocks | Note |
@@ -33,4 +35,4 @@ Updated 2026-11-15.
 | Shipping sprite credits | First export slice | CC BY-NC needs source/spritecollab/CREDITS.md in builds; export must also include data/*.json |
 
 ## Tracking
-Board: https://github.com/users/Jess-Rivera/projects/3. Open issues: #2 (data pack).
+Board: https://github.com/users/Jess-Rivera/projects/3. Open issues: #3 to #12 (M0 and M1).

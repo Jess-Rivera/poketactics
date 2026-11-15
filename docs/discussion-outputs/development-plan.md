@@ -1,4 +1,4 @@
-# Development plan [Proposed]
+# Development plan [Approved]
 
 Date: 2026-11-15. Where we are: Godot project with a greybox rotating test map (#1), full data pack in data/ (#2).
 No game rules exist yet. Each slice below still gets its own opening (goal, done-when, end-goal test) before build.

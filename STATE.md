@@ -25,7 +25,7 @@ Updated 2026-11-16.
 - Tests: 65 gdUnit4 tests plus the pack rerun check, `tools\run-tests.cmd` (needs Python 3; see CONTEXT.md).
 
 ## Next
-Design: game-design.md (Kanto run roguelite) and battle-design.md (strike rank clock, facing, push, environment).
+Design: game-design.md (Kanto run roguelite), battle-design.md (strike rank clock, positioning, tiles).
 Roadmap: development-plan.md (M1, M1b hotseat, M2 battle depth, M2b mainline systems, M3 run layer, M4, M5).
 1. #16 test battle at 6 a side, then #9 move schema opening, #10 to #12; then #15 hotseat.
 2. Sub-grillings before their M2 slices: #20 environment rule table, #23 boss AI.

@@ -6,3 +6,5 @@ Date: 2026-11-15. Owner: Jess. Canonical: docs/discussion-outputs/pokeapi-primer
   machine, egg, tutor.
 - Which methods the game uses (and how, for example TMs as rewards) is a design ruling, made when progression is
   designed. Until then nothing in game code assumes a method other than level-up.
+
+Updated by 2026-11-16-moves-and-shops (level-up automatic; shops sell machine, tutor and egg moves).

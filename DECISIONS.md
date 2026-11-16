@@ -27,3 +27,16 @@ One file per ruling in docs/decisions/. Each file's `Canonical:` line names the 
 - [2026-11-15-turn-structure](docs/decisions/2026-11-15-turn-structure.md): Units act one at a time in Speed order
 - [2026-11-15-move-and-facing](docs/decisions/2026-11-15-move-and-facing.md): Choose facing before the walk; pass allies, enemies block; zoom 1x to 3x
 - [2026-11-15-turn-order-m1](docs/decisions/2026-11-15-turn-order-m1.md): Plain Speed turn order for M1; strike rank clock parked; turn bar shape
+- [2026-11-16-design-pillars](docs/decisions/2026-11-16-design-pillars.md): Three equal pillars: tactics rewarded, boss AI like a human, environmental interactions
+- [2026-11-16-run-structure](docs/decisions/2026-11-16-run-structure.md): A run is one region (8 gyms, Elite Four, one legendary) on a branching node map; about 6 hours or more
+- [2026-11-16-saves-and-wipes](docs/decisions/2026-11-16-saves-and-wipes.md): A wipe sends you home and the next run restarts the region; save only at checkpoints; one save
+- [2026-11-16-enemy-levels-fixed](docs/decisions/2026-11-16-enemy-levels-fixed.md): Fixed enemy levels set difficulty; over-levelling allowed
+- [2026-11-16-party-and-battles](docs/decisions/2026-11-16-party-and-battles.md): Carry 6, field 6; enemy count varies by node; catches go to boxes; swap at heal nodes; rout for M1
+- [2026-11-16-fainting-and-recovery](docs/decisions/2026-11-16-fainting-and-recovery.md): In-run revives cancel recovery; still fainted at run end means Recovering for later runs
+- [2026-11-16-catching-by-talk](docs/decisions/2026-11-16-catching-by-talk.md): Catch by talking, nature decides answers; wild only, one offer per battle, ball adds odds
+- [2026-11-16-moves-and-shops](docs/decisions/2026-11-16-moves-and-shops.md): Level-up moves automatic; shops sell machine, tutor and egg moves gated by level
+- [2026-11-16-currencies-and-home](docs/decisions/2026-11-16-currencies-and-home.md): Silver per run, PokeCoins persistent from end-of-run rewards; home is a menu, walkable town in M4
+- [2026-11-16-new-save-start](docs/decisions/2026-11-16-new-save-start.md): New save: pick a region, get its 3 starters, 12 Pokeballs and some PokeCoins
+- [2026-11-16-strike-rank-core](docs/decisions/2026-11-16-strike-rank-core.md): No PP; strike rank is core and settled before #9; Speed order stays until it is built
+- [2026-11-16-multiplayer-horizon](docs/decisions/2026-11-16-multiplayer-horizon.md): Multiplayer is the horizon; hotseat versus in M1b; rules stay deterministic; no online code yet
+- [2026-11-16-first-build-scope](docs/decisions/2026-11-16-first-build-scope.md): First build ships Kanto only; endgame parked

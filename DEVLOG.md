@@ -52,3 +52,10 @@
   end-turn facing. view/turn_bar.gd: slanted bar on the right edge, active entry larger at the bottom.
 - Hotseat until #11; other units inspect only (orange range). 9 new relation tests, 65 in all.
 - Jess feel-tested the turn flow and the bar and closed #8.
+
+## 2026-11-16, top-level design grilling
+- Stepped back before #9 to design the game top-down. Two rounds settled the pitch, three equal pillars, a Kanto
+  region run on a branching map (8 gyms, Elite Four, one legendary), fixed enemy levels, carry and field 6,
+  catching by talk, level-up moves automatic with shops selling the rest, Silver and PokeCoins, recovery, saves.
+- 13 rulings, docs/discussion-outputs/game-design.md, revised roadmap (M1b hotseat versus). CLAUDE.md scope now
+  names multiplayer as the horizon. New issues #14 (battle sub-grilling), #15 (hotseat), #16 (6 a side).

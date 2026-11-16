@@ -30,7 +30,10 @@ unless the task needs it.
 - The fork may be read for reference and for parity checks (comparing two sources), never as a code source.
 
 ## Scope
-Single-player, local first. No online features (accounts, cloud saves, multiplayer, leaderboards) until Jess says so.
+Single-player first, local first. Multiplayer (co-op and versus) is the horizon goal: local hotseat versus comes
+in M1b, and battle rules stay deterministic, seeded and headless so lockstep and replays stay possible. No online
+code (accounts, cloud saves, servers, online multiplayer, leaderboards) until Jess says so
+(2026-11-16-multiplayer-horizon).
 The engine is an open decision (STATE.md); do not start engine code before it is decided.
 
 ## Slice shape

@@ -8,3 +8,5 @@ Date: 2026-11-15. Owner: Jess. Canonical: docs/discussion-outputs/strike-rank-tu
   replacing PP as the limit on strong moves). Questions and recommendations are in the canonical file.
 - Turn bar: on the right edge, active unit at the bottom and slightly larger, a slight slant with the top
   closer to the screen edge.
+
+Updated by 2026-11-16-strike-rank-core (strike rank is core, settled before #9; no PP).

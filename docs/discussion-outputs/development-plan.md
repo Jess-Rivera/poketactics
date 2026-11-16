@@ -3,29 +3,36 @@
 Date: 2026-11-15. Where we are: Godot project with a greybox rotating test map (#1), full data pack in data/ (#2).
 No game rules exist yet. Each slice below still gets its own opening (goal, done-when, end-goal test) before build.
 
-## Roadmap
+## Roadmap (revised 2026-11-16 after the top-level design grilling, see game-design.md)
 
 ```mermaid
 flowchart TD
-    M0["M0 Foundation<br/>Godot primer walkthrough, offline wiki"] --> M1
-    M1["M1 First playable battle<br/>on one large map, win or lose"] --> M2
-    M2["M2 Tactics depth<br/>telegraphs, push, height, status"] --> M3
-    M3["M3 Run layer<br/>battle chain, rewards, recruit, level, evolve, save"] --> M4
-    M4["M4 Content and look<br/>maps, block art, UI, audio"] --> M5
-    M5["M5 First build<br/>export, credits, Jess plays a full run"]
-    M1 -.->|feel test decides| M2
+    M0["M0 Foundation<br/>Godot primer, offline wiki (done)"] --> M1
+    M1["M1 First playable battle<br/>6 a side on one large map, rout ends it"] --> M1b
+    M1b["M1b Hotseat versus<br/>free pick 6 at a set level"] --> M2
+    M2["M2 Battle depth<br/>strike rank, environment and terrain,<br/>objectives, boss AI"] --> M3
+    M3["M3 Run layer (Kanto)<br/>run map and nodes, catching by talk, shops,<br/>Silver and PokeCoins, recovery, checkpoints, home menu"] --> M4
+    M4["M4 Content and look<br/>Kanto gyms and maps, block art, walkable home town, UI, audio"] --> M5
+    M5["M5 First build<br/>export, credits, Jess plays a full Kanto run"]
 ```
 
 | Milestone | Done when | Rough size |
 |---|---|---|
-| M0 Foundation | The offline wiki opens from disk; Jess has read a Godot primer of what is built and had every question answered | 2 slices, docs and tools only |
-| M1 First playable battle | Jess plays a battle on a large test map with real pack units and wins or loses; battles also run headless in tests | 6 to 8 slices, the biggest step |
-| M2 Tactics depth | The battle has the decided signature mechanics (from the M1 feel test) | 4 to 6 slices |
-| M3 Run layer | A run of several battles with rewards, recruiting, levels and evolution, saved between sessions | 5 to 7 slices |
-| M4 Content and look | Several hand-made maps, chosen block art, real menus and sound | Open-ended |
-| M5 First build | An exported build with CREDITS that Jess plays start to finish | 1 to 2 slices |
+| M0 Foundation | Done (#1 to #4) | |
+| M1 First playable battle | Jess plays a 6 a side battle on a large test map with real pack units and wins or loses; battles also run headless in tests | 4 to 5 slices left |
+| M1b Hotseat versus | Two players free-pick 6 units each at one level and play a battle on one machine | 1 to 2 slices |
+| M2 Battle depth | Strike rank, environment interactions, terrain-type bonuses, objectives and a boss AI that feels human | 5 to 8 slices |
+| M3 Run layer | A Kanto run on a branching map with every node type, catching by talk, shops, both currencies, recovery and checkpoint saves | 6 to 9 slices |
+| M4 Content and look | Kanto's 8 gyms, Elite Four and legendary fights; chosen block art; walkable home town; menus and sound | Open-ended |
+| M5 First build | An exported build with CREDITS that Jess plays through a full Kanto run | 1 to 2 slices |
+
+Sub-grillings gate milestones: battle mechanics before #9 and M2; run map, catching and economy before M3; home and
+meta before the home menu; endgame after M5.
 
 ## M1 slices (the part worth planning now)
+
+Revised 2026-11-16: battles are 6 a side (2026-11-16-party-and-battles); slice 5a (#9) waits for the battle
+mechanics sub-grilling, which settles strike rank (#13) first because a move's SR cost is a schema axis.
 
 ```mermaid
 flowchart LR

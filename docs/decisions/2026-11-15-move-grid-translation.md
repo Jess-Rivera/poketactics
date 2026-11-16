@@ -6,3 +6,5 @@ Date: 2026-11-15. Owner: Jess. Canonical: docs/discussion-outputs/development-pl
   from pokeapi facts (target, damage class), with per-move overrides, as the PokeSurvivor fork did.
 - The idea and Jess's docs may be carried over (fork docs/MOVE-AXIS-SCHEMA.md); its code may not (Clean-room rule).
 - The schema's axes for a turn-based grid are designed in their own slice.
+
+Updated by 2026-11-16-move-schema-adaptation.

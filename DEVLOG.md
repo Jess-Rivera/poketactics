@@ -59,3 +59,11 @@
   catching by talk, level-up moves automatic with shops selling the rest, Silver and PokeCoins, recovery, saves.
 - 13 rulings, docs/discussion-outputs/game-design.md, revised roadmap (M1b hotseat versus). CLAUDE.md scope now
   names multiplayer as the horizon. New issues #14 (battle sub-grilling), #15 (hotseat), #16 (6 a side).
+
+## 2026-11-16, battle mechanics sub-grilling (#14)
+- Strike rank settled: size-dominant base SR, a turn is a move or an act, next turn at now + cost + base, 12 SR
+  rounds with an upkeep step, movement 1 SR per 2 flat tiles plus elevation and terrain costs, act cost from PP.
+- Positioning: Jess's facing grid (2:1 rule), height range and damage, line of sight with arcing moves, push by
+  size band with collision; no lock-down yet. Environment: tile material plus state, intuitive rules in upkeep,
+  1.2x terrain-type bonus. Objectives pool; boss AI is GOAP plus utility (Jess's own fork code may be used).
+- Mainline systems all in a new M2b. 12 rulings, battle-design.md; #13 became a slice, #9 unblocked, #17 to #24.

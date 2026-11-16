@@ -10,3 +10,5 @@ Date: 2026-11-15. Owner: Jess. Canonical: docs/discussion-outputs/strike-rank-tu
   closer to the screen edge.
 
 Updated by 2026-11-16-strike-rank-core (strike rank is core, settled before #9; no PP).
+
+Updated by 2026-11-16-strike-rank-clock (the clock as settled).

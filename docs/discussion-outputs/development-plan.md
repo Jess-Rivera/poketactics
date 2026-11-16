@@ -10,7 +10,8 @@ flowchart TD
     M0["M0 Foundation<br/>Godot primer, offline wiki (done)"] --> M1
     M1["M1 First playable battle<br/>6 a side on one large map, rout ends it"] --> M1b
     M1b["M1b Hotseat versus<br/>free pick 6 at a set level"] --> M2
-    M2["M2 Battle depth<br/>strike rank, environment and terrain,<br/>objectives, boss AI"] --> M3
+    M2["M2 Battle depth<br/>strike rank clock, facing, height, push,<br/>environment and terrain, objectives, boss AI"] --> M2b
+    M2b["M2b Mainline systems<br/>status, stat stages, immunities,<br/>weather, abilities, held items"] --> M3
     M3["M3 Run layer (Kanto)<br/>run map and nodes, catching by talk, shops,<br/>Silver and PokeCoins, recovery, checkpoints, home menu"] --> M4
     M4["M4 Content and look<br/>Kanto gyms and maps, block art, walkable home town, UI, audio"] --> M5
     M5["M5 First build<br/>export, credits, Jess plays a full Kanto run"]
@@ -21,12 +22,13 @@ flowchart TD
 | M0 Foundation | Done (#1 to #4) | |
 | M1 First playable battle | Jess plays a 6 a side battle on a large test map with real pack units and wins or loses; battles also run headless in tests | 4 to 5 slices left |
 | M1b Hotseat versus | Two players free-pick 6 units each at one level and play a battle on one machine | 1 to 2 slices |
-| M2 Battle depth | Strike rank, environment interactions, terrain-type bonuses, objectives and a boss AI that feels human | 5 to 8 slices |
+| M2 Battle depth | Strike rank clock, facing, height and line of sight, push, environment, terrain-type bonuses, objectives and a boss AI that feels human (battle-design.md) | 8 to 10 slices |
+| M2b Mainline systems | Every portable mainline battle system works on the grid (2026-11-16-mainline-systems-m2b) | Open, sized at its opening |
 | M3 Run layer | A Kanto run on a branching map with every node type, catching by talk, shops, both currencies, recovery and checkpoint saves | 6 to 9 slices |
 | M4 Content and look | Kanto's 8 gyms, Elite Four and legendary fights; chosen block art; walkable home town; menus and sound | Open-ended |
 | M5 First build | An exported build with CREDITS that Jess plays through a full Kanto run | 1 to 2 slices |
 
-Sub-grillings gate milestones: battle mechanics before #9 and M2; run map, catching and economy before M3; home and
+Sub-grillings gate milestones: battle mechanics (done, battle-design.md); boss AI and the environment rule table before their M2 slices; run map, catching and economy before M3; home and
 meta before the home menu; endgame after M5.
 
 ## M1 slices (the part worth planning now)

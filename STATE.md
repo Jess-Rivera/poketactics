@@ -3,7 +3,7 @@
 Updated 2026-11-16.
 
 ## Where we are
-- Data: pokeapi raw CSVs in source/pokeapi/csv/ (187 files, byte-exact at db06b37dca, tools/fetch-pokeapi.js).
+- Data: pokeapi raw CSVs in source/pokeapi/csv/ (187 files, pinned at db06b37dca).
   Rulings: units are pokemon variants; Mega, Gigantamax and Primal are mid-battle transformations; learnsets from
   Scarlet/Violet else the newest earlier level-up game (skip Legends Arceus); all four learn methods kept.
 - Sprites: raw SpriteCollab in source/spritecollab/ (2,151 sets, pinned at 2f5d22b505). Packed for Godot in assets/pokemon/: one palette sheet + JSON per set
@@ -25,10 +25,10 @@ Updated 2026-11-16.
 - Tests: 65 gdUnit4 tests plus the pack rerun check, `tools\run-tests.cmd` (needs Python 3; see CONTEXT.md).
 
 ## Next
-Design: docs/discussion-outputs/game-design.md (Kanto run roguelite, 6 a side, catch by talk, no PP).
-Roadmap: development-plan.md (M1, M1b hotseat, M2 battle depth, M3 run layer, M4, M5).
-1. #14 battle mechanics sub-grilling (strike rank, environment, objectives, boss AI). Gates #9 and #13.
-2. #16 test battle at 6 a side; then #9 to #12; then #15 hotseat versus.
+Design: game-design.md (Kanto run roguelite) and battle-design.md (strike rank clock, facing, push, environment).
+Roadmap: development-plan.md (M1, M1b hotseat, M2 battle depth, M2b mainline systems, M3 run layer, M4, M5).
+1. #16 test battle at 6 a side, then #9 move schema opening, #10 to #12; then #15 hotseat.
+2. Sub-grillings before their M2 slices: #20 environment rule table, #23 boss AI.
 
 ## Open decisions
 | Decision | Blocks | Note |
@@ -38,7 +38,9 @@ Roadmap: development-plan.md (M1, M1b hotseat, M2 battle depth, M3 run layer, M4
 | Portraits; fallback for the 265 sets without sprites | Sprites | sprites-primer.md questions 3 and 4 |
 | Can the work machine run Godot 4.6.2 and Python 3? | Work-side testing | Check there |
 | Starting PokeCoins, recovery lengths, prices | Economy | Economy sub-grilling |
+| Act cost formula (PP bands) | #13 tuning | 2026-11-16-act-cost |
 | Shipping sprite credits | First export slice | CC BY-NC needs source/spritecollab/CREDITS.md in builds; export includes data/*.json |
 
 ## Tracking
-Board: https://github.com/users/Jess-Rivera/projects/3. Open issues: #9 to #12 and #16 (M1), #13 and #14 (battle design), #15 (M1b).
+Board: https://github.com/users/Jess-Rivera/projects/3. Open: M1 #9 to #12, #16; M1b #15; M2 #13, #17 to #22;
+sub-grillings #20, #23; M2b #24.

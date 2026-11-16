@@ -40,3 +40,15 @@ One file per ruling in docs/decisions/. Each file's `Canonical:` line names the 
 - [2026-11-16-strike-rank-core](docs/decisions/2026-11-16-strike-rank-core.md): No PP; strike rank is core and settled before #9; Speed order stays until it is built
 - [2026-11-16-multiplayer-horizon](docs/decisions/2026-11-16-multiplayer-horizon.md): Multiplayer is the horizon; hotseat versus in M1b; rules stay deterministic; no online code yet
 - [2026-11-16-first-build-scope](docs/decisions/2026-11-16-first-build-scope.md): First build ships Kanto only; endgame parked
+- [2026-11-16-strike-rank-clock](docs/decisions/2026-11-16-strike-rank-clock.md): Size-dominant base SR; a turn is a move or an act; next turn at now + cost + base; 12 SR rounds with upkeep
+- [2026-11-16-movement-cost](docs/decisions/2026-11-16-movement-cost.md): 1 SR per 2 flat tiles, 1 per elevation change, terrain costs; no tile cap
+- [2026-11-16-act-cost](docs/decisions/2026-11-16-act-cost.md): Move SR cost from PP bands with overrides (formula open); push a flat cost
+- [2026-11-16-facing-arcs](docs/decisions/2026-11-16-facing-arcs.md): Front, side and back by the 2:1 offset rule; facing is its own damage factor
+- [2026-11-16-height-and-sight](docs/decisions/2026-11-16-height-and-sight.md): Height adds range and a small damage factor; direct moves need line of sight, arcing ignores units
+- [2026-11-16-push-and-collision](docs/decisions/2026-11-16-push-and-collision.md): Push by size band, collision, fall and tile effects; no lock-down or attacks of opportunity yet
+- [2026-11-16-environment-model](docs/decisions/2026-11-16-environment-model.md): Tile material plus state, intuitive rule table applied in upkeep; moves apply their element by default
+- [2026-11-16-terrain-type-bonus](docs/decisions/2026-11-16-terrain-type-bonus.md): One terrain per type; 1.2x to matching-type attacks while standing on it
+- [2026-11-16-objectives](docs/decisions/2026-11-16-objectives.md): Nodes roll an objective from a pool (rout, leader, hold, rescue, escape); bosses fixed
+- [2026-11-16-boss-ai](docs/decisions/2026-11-16-boss-ai.md): Utility goals plus GOAP, designed ground-up for turns; Jess's fork AI code is exempt from the clean-room rule
+- [2026-11-16-move-schema-adaptation](docs/decisions/2026-11-16-move-schema-adaptation.md): Fork's three move axes as a starting point, redesigned for the grid
+- [2026-11-16-mainline-systems-m2b](docs/decisions/2026-11-16-mainline-systems-m2b.md): Every portable mainline battle system, in its own milestone M2b

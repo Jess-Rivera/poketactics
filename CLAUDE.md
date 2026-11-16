@@ -28,13 +28,15 @@ unless the task needs it.
   copied from PokeSurvivor's generated js/data files.
 - Sprites come from SpriteCollab (CC BY-NC 4.0). CREDITS.md must stay complete and ship with the game.
 - The fork may be read for reference and for parity checks (comparing two sources), never as a code source.
+- Exception: the fork's GOAP and utility AI code is Jess's own work and may be used as a source
+  (2026-11-16-boss-ai). No other fork code is.
 
 ## Scope
 Single-player first, local first. Multiplayer (co-op and versus) is the horizon goal: local hotseat versus comes
 in M1b, and battle rules stay deterministic, seeded and headless so lockstep and replays stay possible. No online
 code (accounts, cloud saves, servers, online multiplayer, leaderboards) until Jess says so
 (2026-11-16-multiplayer-horizon).
-The engine is an open decision (STATE.md); do not start engine code before it is decided.
+The engine is Godot 4.6.2 (2026-11-15-engine-godot-4).
 
 ## Slice shape
 Every slice opens with three things agreed with Jess before any build: its goal, how we know it is done, and the test

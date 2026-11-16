@@ -68,7 +68,7 @@ flowchart TD
 ## Design tree (sub-grillings, just in time)
 ```mermaid
 flowchart TD
-    TOP["Top level (this file)"] --> B["1 Battle mechanics<br/>strike rank, environment and terrain,<br/>objectives, boss AI, move schema axes"]
+    TOP["Top level (this file)"] --> B["1 Battle mechanics (done: battle-design.md)<br/>strike rank, environment and terrain,<br/>objectives, boss AI, move schema axes"]
     TOP --> R["2 Run map and nodes<br/>map shape, node mix, rewards"]
     TOP --> C["3 Catching dialogue<br/>natures, questions, odds, balls"]
     TOP --> E["4 Economy and shops<br/>Silver, PokeCoins, prices, recovery"]
@@ -82,4 +82,4 @@ flowchart TD
     E --> M3
     H --> M3
 ```
-Order: 1 next (it gates #9), then 2 to 4 before M3, 5 before the home menu, 6 after the first build.
+Order: 1 done 2026-11-16 (its own children: boss AI, environment rule table), then 2 to 4 before M3, 5 before the home menu, 6 after the first build.

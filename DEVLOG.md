@@ -74,3 +74,9 @@
   sheet per emotion and colour over one per species, so tools/pack_portraits.py writes 80 sheets sharing one cell
   index. Turn bar shows Normal portraits through view/portrait_loader.gd (per-battle atlas left for later).
 - 6 relation tests, 71 in all; portrait rerun check in run-tests. Not feel-tested yet.
+
+## 2026-11-16, #16 closed, #9 opening drafted
+- Jess feel-tested 6 a side with portraits: passed. #16 closed, board card Shipped.
+- #9 opening drafted in move-schema-opening.md: the fork's three axes adapted to tiles, default rules from
+  pokeapi target, damage class and the contact flag (to be exported), 8 relation tests, the 45 roster moves to
+  review, and six questions (Q1 to Q6) for Jess.

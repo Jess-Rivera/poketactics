@@ -19,15 +19,15 @@ Updated 2026-11-16.
   highlight, zoom 1x to 3x.
 - Turn order (#8, shipped): rules/turn_order.gd rounds by Speed, seeded ties; view/turn_bar.gd;
   hotseat until #11.
-- 6 a side (#16, built, NOT feel-tested): wild, trainer, boss enemy counts (keys 1 to 3); portraits packed
-  one sheet per emotion and colour in assets/portraits/ (tools/pack_portraits.py), shown in the turn bar.
+- 6 a side (#16, shipped): wild, trainer, boss enemy counts (keys 1 to 3); portraits packed one sheet per
+  emotion and colour in assets/portraits/ (tools/pack_portraits.py), shown in the turn bar.
 - Tests: 71 gdUnit4 tests plus the pack and portrait rerun checks, `tools\run-tests.cmd` (needs Python 3; see CONTEXT.md).
 
 ## Next
 Design: game-design.md (Kanto run roguelite), battle-design.md (strike rank clock, positioning, tiles).
 Roadmap: development-plan.md (M1, M1b hotseat, M2 battle depth, M2b mainline systems, M3 run layer, M4, M5).
-1. Jess feel-tests #16 (six-a-side-opening.md checklist), then close it.
-2. #9 move schema opening, #10 to #12; then #15 hotseat. Sub-grillings #20, #23 before their M2 slices.
+1. #9 opening drafted (move-schema-opening.md): Jess answers Q1 to Q6 and approves goal, done-when, test.
+2. Then #10 to #12, then #15 hotseat. Sub-grillings #20, #23 before their M2 slices.
 
 ## Open decisions
 | Decision | Blocks | Note |
@@ -41,5 +41,5 @@ Roadmap: development-plan.md (M1, M1b hotseat, M2 battle depth, M2b mainline sys
 | Shipping sprite credits | First export slice | CC BY-NC needs source/spritecollab/CREDITS.md in builds; export includes data/*.json |
 
 ## Tracking
-Board: https://github.com/users/Jess-Rivera/projects/3. Open: M1 #9 to #12, #16; M1b #15; M2 #13, #17 to #22;
+Board: https://github.com/users/Jess-Rivera/projects/3. Open: M1 #9 to #12; M1b #15; M2 #13, #17 to #22;
 sub-grillings #20, #23; M2b #24.

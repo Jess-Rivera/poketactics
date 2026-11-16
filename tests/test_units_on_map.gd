@@ -1,10 +1,10 @@
 extends GdUnitTestSuite
 ## Issue #6 relations (docs/discussion-outputs/units-on-map-plan.md): every unit and transformation points at a
-## real sprite set of its own species and form, and the test battle is 4 a side on distinct cells, facing each
+## real sprite set of its own species and form, and the test battle is 6 a side on distinct cells, facing each
 ## other, with a camera that pans inside the map in whole sprite pixels.
 
 const PACKED_FOLDER := "res://assets/pokemon"
-const UNITS_PER_SIDE := 4
+const UNITS_PER_SIDE := 6
 const PAN_DIRECTIONS: Array[Vector2] = [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT, Vector2(1, -1), Vector2(-1, 1)]
 
 var pack: PackData
@@ -53,9 +53,9 @@ func test_sprite_sets_belong_to_their_species_and_form() -> void:
 	assert_array(failures).is_empty()
 
 
-## Relation 3: 4 units a side, on different cells inside the grid, each built from the pack with 1 to 4 moves
-## and a sprite set.
-func test_the_test_battle_has_four_drawable_units_a_side_on_distinct_cells() -> void:
+## Relation 3: the default test battle (a boss encounter, #16) is 6 a side, on different cells inside the grid,
+## each unit built from the pack with 1 to 4 moves and a sprite set.
+func test_the_test_battle_has_six_drawable_units_a_side_on_distinct_cells() -> void:
 	var battle := TestBattleSetup.build(pack)
 	assert_int(battle.units_on_side(Battle.Side.PLAYER).size()).is_equal(UNITS_PER_SIDE)
 	assert_int(battle.units_on_side(Battle.Side.ENEMY).size()).is_equal(UNITS_PER_SIDE)

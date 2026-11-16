@@ -2,16 +2,18 @@ class_name TurnBar
 extends CanvasLayer
 ## The turn bar on the right edge (issue #8, docs/discussion-outputs/turn-order-plan.md): the active unit at the
 ## bottom and larger, the turns after it stacked above, leaning so the top sits closer to the screen edge. A thin
-## divider with the round number marks where a new round starts. Each entry is a crop of the unit's idle frame in
-## a frame of its side's colour, with an HP sliver. Hovering an entry or clicking it is announced by signal.
+## divider with the round number marks where a new round starts. Each entry is the unit's Normal portrait (#16),
+## whole in the active entry and a centred crop in the others, never scaled, in a frame of its side's colour, with
+## an HP sliver. Hovering an entry or clicking it is announced by signal.
 
 signal unit_hovered(unit: BattleUnit)
 signal unit_clicked(unit: BattleUnit)
 
 const SCREEN_SIZE := Vector2(640, 360)
 const ENTRY_COUNT := 8
-const ACTIVE_ENTRY_SIZE := 40.0
-const ENTRY_SIZE := 30.0
+## Sized so the inside of the frame is the whole 40x40 portrait (active) or a 30x30 crop of it (the others).
+const ACTIVE_ENTRY_SIZE := 44.0
+const ENTRY_SIZE := 32.0
 const ENTRY_GAP := 3.0
 ## Extra room between two rounds, enough for the round label.
 const ROUND_DIVIDER_GAP := 13.0
@@ -27,12 +29,9 @@ const SIDE_COLOURS := {Battle.Side.PLAYER: Color(0.35, 0.6, 1.0), Battle.Side.EN
 const HIT_POINTS_COLOUR := Color(0.4, 0.9, 0.4)
 const HIT_POINTS_HEIGHT := 2.0
 const DIVIDER_COLOUR := Color(1.0, 1.0, 1.0, 0.5)
-const IDLE_ANIMATION := "Idle"
-## The sheet row facing the viewer (PMD sheets start with the down-facing row).
-const PORTRAIT_ROW := 0
 
 var _pack: PackData
-var _sprite_packs_by_unit := {}
+var _portraits_by_unit := {}
 
 
 func _init() -> void:
@@ -151,24 +150,13 @@ func _add_divider(first_entry_of_round: Rect2, new_round_number: int) -> void:
 	add_child(label)
 
 
-## The middle of the unit's first idle frame, facing the viewer, cut to the entry's inner size at one sprite
-## pixel per screen pixel (no scaling, so it stays crisp).
+## The unit's Normal portrait cut to the entry's inner size, one portrait pixel per screen pixel (stays crisp).
 func _portrait(unit: BattleUnit, inner_size: Vector2) -> AtlasTexture:
-	var sprite_pack: SpritePack = _sprite_packs_by_unit.get(unit)
-	if sprite_pack == null:
+	var full_portrait: AtlasTexture = _portraits_by_unit.get(unit)
+	if full_portrait == null:
 		if _pack == null:
 			return null
-		var sprite_set = _pack.unit(unit.unit_name).get("sprite_set")
-		if sprite_set == null:
-			return null
-		sprite_pack = SpritePack.load_set(sprite_set)
-		_sprite_packs_by_unit[unit] = sprite_pack
-	var animation := sprite_pack.resolved(IDLE_ANIMATION)
-	if animation == null:
-		return null
-	var frame := animation.frame_region(PORTRAIT_ROW, 0)
-	var crop_size := Vector2(minf(inner_size.x, frame.size.x), minf(inner_size.y, frame.size.y))
-	var portrait := AtlasTexture.new()
-	portrait.atlas = sprite_pack.sheet
-	portrait.region = Rect2((frame.get_center() - crop_size / 2.0).floor(), crop_size)
-	return portrait
+		var pack_unit := _pack.unit(unit.unit_name)
+		full_portrait = PortraitLoader.portrait(PortraitLoader.set_id_for(pack_unit, int(pack_unit["dex_number"])))
+		_portraits_by_unit[unit] = full_portrait
+	return PortraitLoader.cropped(full_portrait, inner_size)

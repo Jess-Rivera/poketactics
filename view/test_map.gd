@@ -1,10 +1,12 @@
 extends Node3D
-## Greybox test battle: the 20 by 20 map and 8 pack units from rules/test_battle_setup.gd (issue #6), with select
+## Greybox test battle: the 20 by 20 map and pack units from rules/test_battle_setup.gd (issue #6), with select
 ## and move (issue #7) and turn order (issue #8, docs/discussion-outputs/turn-order-plan.md). Units act one at a
 ## time, fastest first; the active unit is selected and the camera pans to it. Click a lit tile, choose a facing,
 ## and it walks there (once per turn). Click another unit to inspect its range. Space ends the turn after a facing
 ## choice. Until the enemy AI (#11) the player controls both sides.
-## Q and E rotate, WASD or the arrow keys pan, wheel or + and - zoom, Tab shows the unit panel.
+## Q and E rotate, WASD or the arrow keys pan, wheel or + and - zoom, Tab shows the unit panel. Keys 1, 2 and 3
+## restart the battle as a wild, trainer or boss encounter with a new seed (#16): 6 player units against 2 to 4,
+## 3 to 6 or 6 enemies.
 
 enum Mode { READY, INSPECTING, CHOOSING_FACING, WALKING, ENDING_TURN }
 
@@ -12,8 +14,16 @@ const BACKGROUND_COLOUR := Color(0.11, 0.12, 0.15)
 const IDLE_ANIMATION := "Idle"
 ## While choosing a facing, the mouse must be this far (world units) from the target's centre to change it.
 const FACING_DEAD_ZONE := 0.3
-const HINT_TEXT := "Click: move / inspect   Right click, Esc: back   Q / E: rotate   WASD: pan   Wheel, + / -: zoom   Tab: units"
+const HINT_TEXT := "Click: move / inspect   Right click, Esc: back   Q / E: rotate   WASD: pan   Wheel, + / -: zoom   Tab: units   1 / 2 / 3: wild / trainer / boss"
 const SIDE_LABELS := {Battle.Side.PLAYER: "You", Battle.Side.ENEMY: "Foe"}
+const ENCOUNTER_KEYS := {
+	KEY_1: TestBattleSetup.EncounterKind.WILD,
+	KEY_2: TestBattleSetup.EncounterKind.TRAINER,
+	KEY_3: TestBattleSetup.EncounterKind.BOSS,
+}
+
+## Kept across a scene reload, so keys 1 to 3 restart with the chosen encounter kind.
+static var encounter_kind := TestBattleSetup.EncounterKind.TRAINER
 
 var _battle: Battle
 var _pack: PackData
@@ -41,10 +51,10 @@ var _chosen_facing := Facing.Direction.SOUTH
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(BACKGROUND_COLOUR)
 	_pack = PackData.shared()
-	_battle = TestBattleSetup.build(_pack)
 	var random := RandomNumberGenerator.new()
 	random.randomize()
-	print("Battle seed: %d" % random.seed)
+	print("%s battle, seed %d" % [TestBattleSetup.ENCOUNTER_NAMES[encounter_kind], random.seed])
+	_battle = TestBattleSetup.build(_pack, encounter_kind, random.seed)
 	_turn_order = TurnOrder.new(_battle, random)
 
 	_battle_map = BattleMap.new()
@@ -130,7 +140,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	var key_event := event as InputEventKey
 	if key_event == null or not key_event.pressed or key_event.echo:
 		return
-	if key_event.keycode == KEY_ESCAPE:
+	if ENCOUNTER_KEYS.has(key_event.keycode):
+		encounter_kind = ENCOUNTER_KEYS[key_event.keycode]
+		get_tree().reload_current_scene()
+	elif key_event.keycode == KEY_ESCAPE:
 		_step_back()
 	elif key_event.keycode == KEY_SPACE and (_mode == Mode.READY or _mode == Mode.INSPECTING):
 		_start_ending_turn()
@@ -144,7 +157,8 @@ func _begin_turn() -> void:
 		_turn_label.text = "No unit can act"
 		_show_active()
 		return
-	_turn_label.text = "Round %d   %s (%s)   Space: end turn" % [
+	_turn_label.text = "%s   Round %d   %s (%s)   Space: end turn" % [
+		TestBattleSetup.ENCOUNTER_NAMES[encounter_kind],
 		_turn_order.round_number,
 		_pack.unit(_active_unit.unit_name)["english_name"],
 		SIDE_LABELS[_active_unit.side],

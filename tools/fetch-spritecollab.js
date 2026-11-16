@@ -9,8 +9,12 @@
 // Also keeps tracker.json (SpriteCollab's names for every folder), byte-exact, so tools/export_pack.py can match
 // units to sprite sets.
 //
-// Usage: node tools/fetch-spritecollab.js <commit id> [--tracker-only]
+// Portraits: the same sets' portrait/ folders (every emotion, flipped ^ and Special ones included, plus credits.txt)
+// go byte-exact into source/spritecollab-portrait/, with their own README.md and CREDITS.md (#16).
+//
+// Usage: node tools/fetch-spritecollab.js <commit id> [--tracker-only] [--portraits-only]
 //   --tracker-only refreshes just tracker.json at that commit, without re-fetching any sprite.
+//   --portraits-only skips the sprite pass and fetches only the portraits.
 // Needs a GitHub token for about 1,000 listing calls: GITHUB_TOKEN, or a logged-in gh CLI.
 // Decision: docs/decisions/2026-11-15-sprite-sources.md
 
@@ -25,6 +29,7 @@ const { pipeline } = require('node:stream/promises');
 const UPSTREAM_REPO = 'PMDCollab/SpriteCollab';
 const REPO_ROOT = path.resolve(__dirname, '..');
 const SPRITE_FOLDER = path.join(REPO_ROOT, 'source', 'spritecollab');
+const PORTRAIT_FOLDER = path.join(REPO_ROOT, 'source', 'spritecollab-portrait');
 const PARALLEL_LISTINGS = 8;
 
 // SpriteCollab form names that are mainline forms we use; '' is the species' normal form.
@@ -115,9 +120,10 @@ function wantedSpriteSets(tracker) {
   return sets;
 }
 
-// Lists every file under sprite/<dex folder> with its blob hash; one API call per dex folder.
-async function listUpstreamSpriteFiles(commitId) {
-  const topTree = await fetchJson(`https://api.github.com/repos/${UPSTREAM_REPO}/git/trees/${commitId}:sprite`);
+// Lists every file under <tree root>/<dex folder> (root 'sprite' or 'portrait') with its blob hash; one API call
+// per dex folder.
+async function listUpstreamFiles(commitId, treeRoot) {
+  const topTree = await fetchJson(`https://api.github.com/repos/${UPSTREAM_REPO}/git/trees/${commitId}:${treeRoot}`);
   const dexFolders = topTree.tree.filter((entry) => entry.type === 'tree');
   const fileHashByPath = new Map();
   const pending = [...dexFolders];
@@ -171,30 +177,94 @@ function creditedNames(creditsText, nameById) {
   return [...names];
 }
 
-async function main() {
-  const requestedCommit = process.argv[2];
-  if (!requestedCommit) {
-    console.error('Usage: node tools/fetch-spritecollab.js <commit id>');
-    process.exit(1);
+// Extracts the wanted files of one tree root ('sprite' or 'portrait') from the archive, checks each against its
+// upstream blob hash, writes it under destinationFolder and returns the set of local paths written.
+function extractVerified(context, treeRoot, wantedFiles, destinationFolder) {
+  const { workFolder, archivePath, archiveRoot } = context;
+  const extractFolder = path.join(workFolder, `extract-${treeRoot}`);
+  fs.rmSync(extractFolder, { recursive: true, force: true });
+  fs.mkdirSync(extractFolder, { recursive: true });
+  const memberListPath = path.join(workFolder, `members-${treeRoot}.txt`);
+  fs.writeFileSync(memberListPath, wantedFiles.map((file) => `${archiveRoot}/${treeRoot}/${file.filePath}`).join('\n'));
+  console.log(`Extracting the wanted ${treeRoot} files`);
+  // Relative paths from inside the work folder: GNU tar reads "C:\..." as a remote host name.
+  childProcess.execFileSync(
+    'tar',
+    ['-xzf', path.basename(archivePath), '-C', path.basename(extractFolder), '-T', path.basename(memberListPath)],
+    { stdio: 'inherit', cwd: workFolder },
+  );
+
+  const hashMismatches = [];
+  const wantedLocalPaths = new Set();
+  for (const { filePath, blobHash } of wantedFiles) {
+    const extractedBytes = fs.readFileSync(path.join(extractFolder, archiveRoot, treeRoot, filePath));
+    if (gitBlobHash(extractedBytes) !== blobHash) {
+      hashMismatches.push(filePath);
+      continue;
+    }
+    const destination = path.join(destinationFolder, filePath);
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.writeFileSync(destination, extractedBytes);
+    wantedLocalPaths.add(path.normalize(destination));
   }
+  if (hashMismatches.length > 0) throw new Error(`Hash mismatch: ${hashMismatches.slice(0, 20).join(', ')}`);
+  console.log(`${wantedFiles.length} ${treeRoot} files verified and written`);
+  return wantedLocalPaths;
+}
 
-  const commitInfo = await fetchJson(`https://api.github.com/repos/${UPSTREAM_REPO}/commits/${requestedCommit}`);
-  const commitId = commitInfo.sha;
-  const commitDate = commitInfo.commit.committer.date;
-  console.log(`Commit ${commitId} (${commitDate})`);
+// Removes files from an earlier pin that are no longer wanted (only file types this script writes).
+function sweepUnwanted(rootFolder, wantedLocalPaths, generatedTopFiles) {
+  let removedCount = 0;
+  function sweep(folder) {
+    for (const entry of fs.readdirSync(folder, { withFileTypes: true })) {
+      const entryPath = path.join(folder, entry.name);
+      if (entry.isDirectory()) {
+        sweep(entryPath);
+        if (fs.readdirSync(entryPath).length === 0) fs.rmdirSync(entryPath);
+      } else if (folder === rootFolder && generatedTopFiles.has(entry.name)) {
+        continue;
+      } else if (/\.(png|xml|txt)$/.test(entry.name) && !wantedLocalPaths.has(path.normalize(entryPath))) {
+        fs.unlinkSync(entryPath);
+        removedCount++;
+      }
+    }
+  }
+  sweep(rootFolder);
+  if (removedCount > 0) console.log(`Removed ${removedCount} files no longer wanted`);
+}
 
-  const trackerText = await fetchRawText(commitId, 'tracker.json');
-  fs.mkdirSync(SPRITE_FOLDER, { recursive: true });
-  fs.writeFileSync(path.join(SPRITE_FOLDER, 'tracker.json'), trackerText);
-  console.log('tracker.json written');
-  if (process.argv.includes('--tracker-only')) return;
-  const tracker = JSON.parse(trackerText);
-  const creditNamesText = await fetchRawText(commitId, 'credit_names.txt');
-  const licenseText = await fetchRawText(commitId, 'LICENSE.md');
-  const nameById = parseCreditNames(creditNamesText);
+// The artist list and the per-set table, from each present set's credits.txt.
+function creditSections(rootFolder, presentSets, nameById, setHeading) {
+  const sortedSets = [...presentSets].sort((first, second) => first.folder.localeCompare(second.folder));
+  const creditedIds = new Set();
+  const creditLines = sortedSets.map((set) => {
+    const creditsPath = path.join(rootFolder, set.folder, 'credits.txt');
+    const creditsText = fs.existsSync(creditsPath) ? fs.readFileSync(creditsPath, 'utf8') : '';
+    for (const line of creditsText.split(/\r?\n/)) if (line.split('\t')[1]) creditedIds.add(line.split('\t')[1]);
+    return `| ${set.folder} | ${set.label} | ${creditedNames(creditsText, nameById).join(', ')} |`;
+  });
+  const artistLines = [...creditedIds]
+    .map((creditId) => nameById.get(creditId) || { name: creditId, contact: '' })
+    .sort((first, second) => first.name.localeCompare(second.name))
+    .map((artist) => `- ${artist.name}${artist.contact ? ` (${artist.contact})` : ''}`);
+  return [
+    `## Artists (${artistLines.length})`,
+    '',
+    ...artistLines,
+    '',
+    `## Per ${setHeading.toLowerCase()} (${creditLines.length})`,
+    '',
+    `| Folder | ${setHeading} | Credited |`,
+    '|---|---|---|',
+    ...creditLines,
+    '',
+  ];
+}
 
+async function spritePass(context) {
+  const { commitId, commitDate, tracker, nameById, licenseText } = context;
   console.log('Listing upstream sprite files');
-  const fileHashByPath = await listUpstreamSpriteFiles(commitId);
+  const fileHashByPath = await listUpstreamFiles(commitId, 'sprite');
   const allSets = wantedSpriteSets(tracker);
   const presentSets = allSets.filter((set) => fileHashByPath.has(`${set.folder}/AnimData.xml`));
   const missingSets = allSets.filter((set) => !fileHashByPath.has(`${set.folder}/AnimData.xml`));
@@ -209,76 +279,12 @@ async function main() {
   }
   console.log(`${presentSets.length} sprite sets with sprites, ${missingSets.length} without, ${wantedFiles.length} files`);
 
-  const workFolder = path.join(os.tmpdir(), `poketactics-spritecollab-${commitId.slice(0, 12)}`);
-  fs.mkdirSync(workFolder, { recursive: true });
-  const archivePath = path.join(workFolder, 'spritecollab.tar.gz');
-  await downloadArchive(commitId, archivePath);
-
-  const archiveRoot = `SpriteCollab-${commitId}`;
-  const extractFolder = path.join(workFolder, 'extract');
-  fs.rmSync(extractFolder, { recursive: true, force: true });
-  fs.mkdirSync(extractFolder, { recursive: true });
-  const memberListPath = path.join(workFolder, 'members.txt');
-  fs.writeFileSync(memberListPath, wantedFiles.map((file) => `${archiveRoot}/sprite/${file.filePath}`).join('\n'));
-  console.log('Extracting the wanted files');
-  // Relative paths from inside the work folder: GNU tar reads "C:\..." as a remote host name.
-  childProcess.execFileSync(
-    'tar',
-    ['-xzf', path.basename(archivePath), '-C', path.basename(extractFolder), '-T', path.basename(memberListPath)],
-    { stdio: 'inherit', cwd: workFolder },
+  const wantedLocalPaths = extractVerified(context, 'sprite', wantedFiles, SPRITE_FOLDER);
+  sweepUnwanted(
+    SPRITE_FOLDER,
+    wantedLocalPaths,
+    new Set(['README.md', 'CREDITS.md', 'LICENSE-SpriteCollab.md', 'tracker.json']),
   );
-
-  const hashMismatches = [];
-  const wantedLocalPaths = new Set();
-  for (const { filePath, blobHash } of wantedFiles) {
-    const extractedBytes = fs.readFileSync(path.join(extractFolder, archiveRoot, 'sprite', filePath));
-    if (gitBlobHash(extractedBytes) !== blobHash) {
-      hashMismatches.push(filePath);
-      continue;
-    }
-    const destination = path.join(SPRITE_FOLDER, filePath);
-    fs.mkdirSync(path.dirname(destination), { recursive: true });
-    fs.writeFileSync(destination, extractedBytes);
-    wantedLocalPaths.add(path.normalize(destination));
-  }
-  if (hashMismatches.length > 0) throw new Error(`Hash mismatch: ${hashMismatches.slice(0, 20).join(', ')}`);
-  console.log(`${wantedFiles.length} files verified and written`);
-
-  // Remove sprite files from an earlier pin that are no longer wanted (only file types this script writes).
-  const generatedTopFiles = new Set(['README.md', 'CREDITS.md', 'LICENSE-SpriteCollab.md', 'tracker.json']);
-  let removedCount = 0;
-  function sweep(folder) {
-    for (const entry of fs.readdirSync(folder, { withFileTypes: true })) {
-      const entryPath = path.join(folder, entry.name);
-      if (entry.isDirectory()) {
-        sweep(entryPath);
-        if (fs.readdirSync(entryPath).length === 0) fs.rmdirSync(entryPath);
-      } else if (folder === SPRITE_FOLDER && generatedTopFiles.has(entry.name)) {
-        continue;
-      } else if (/\.(png|xml|txt)$/.test(entry.name) && !wantedLocalPaths.has(path.normalize(entryPath))) {
-        fs.unlinkSync(entryPath);
-        removedCount++;
-      }
-    }
-  }
-  sweep(SPRITE_FOLDER);
-  if (removedCount > 0) console.log(`Removed ${removedCount} files no longer wanted`);
-
-  const creditLines = presentSets
-    .sort((first, second) => first.folder.localeCompare(second.folder))
-    .map((set) => {
-      const creditsText = fs.readFileSync(path.join(SPRITE_FOLDER, set.folder, 'credits.txt'), 'utf8');
-      return `| ${set.folder} | ${set.label} | ${creditedNames(creditsText, nameById).join(', ')} |`;
-    });
-  const creditedIds = new Set();
-  for (const set of presentSets) {
-    const creditsText = fs.readFileSync(path.join(SPRITE_FOLDER, set.folder, 'credits.txt'), 'utf8');
-    for (const line of creditsText.split(/\r?\n/)) if (line.split('\t')[1]) creditedIds.add(line.split('\t')[1]);
-  }
-  const artistLines = [...creditedIds]
-    .map((creditId) => nameById.get(creditId) || { name: creditId, contact: '' })
-    .sort((first, second) => first.name.localeCompare(second.name))
-    .map((artist) => `- ${artist.name}${artist.contact ? ` (${artist.contact})` : ''}`);
 
   fs.writeFileSync(
     path.join(SPRITE_FOLDER, 'CREDITS.md'),
@@ -289,16 +295,7 @@ async function main() {
       'licensed CC BY-NC 4.0 (LICENSE-SpriteCollab.md). CHUNSOFT marks sprites from the original Pokemon Mystery',
       'Dungeon games by Spike Chunsoft.',
       '',
-      `## Artists (${artistLines.length})`,
-      '',
-      ...artistLines,
-      '',
-      `## Per sprite set (${creditLines.length})`,
-      '',
-      '| Folder | Sprite set | Credited |',
-      '|---|---|---|',
-      ...creditLines,
-      '',
+      ...creditSections(SPRITE_FOLDER, presentSets, nameById, 'Sprite set'),
     ].join('\n'),
   );
   fs.writeFileSync(path.join(SPRITE_FOLDER, 'LICENSE-SpriteCollab.md'), licenseText);
@@ -333,7 +330,112 @@ async function main() {
     ].join('\n'),
   );
   console.log('Wrote source/spritecollab/README.md, CREDITS.md and LICENSE-SpriteCollab.md');
-  console.log('Next: python tools/pack_sprites.py');
+}
+
+// Portraits of the same sets: every emotion PNG (flipped ^ and Special ones included) and credits.txt, taken only
+// from files directly in the set's folder (a set folder's subfolders are other sets).
+async function portraitPass(context) {
+  const { commitId, commitDate, tracker, nameById, licenseText } = context;
+  console.log('Listing upstream portrait files');
+  const fileHashByPath = await listUpstreamFiles(commitId, 'portrait');
+  const allSets = wantedSpriteSets(tracker);
+  const presentSets = allSets.filter((set) => fileHashByPath.has(`${set.folder}/Normal.png`));
+  const missingSets = allSets.filter((set) => !fileHashByPath.has(`${set.folder}/Normal.png`));
+  const presentFolders = new Set(presentSets.map((set) => set.folder));
+
+  const wantedFiles = [];
+  for (const [filePath, blobHash] of fileHashByPath) {
+    const slash = filePath.lastIndexOf('/');
+    const fileName = filePath.slice(slash + 1);
+    if (presentFolders.has(filePath.slice(0, slash)) && (fileName.endsWith('.png') || fileName === 'credits.txt')) {
+      wantedFiles.push({ filePath, blobHash });
+    }
+  }
+  console.log(`${presentSets.length} sets with portraits, ${missingSets.length} without, ${wantedFiles.length} files`);
+
+  fs.mkdirSync(PORTRAIT_FOLDER, { recursive: true });
+  const wantedLocalPaths = extractVerified(context, 'portrait', wantedFiles, PORTRAIT_FOLDER);
+  sweepUnwanted(PORTRAIT_FOLDER, wantedLocalPaths, new Set(['README.md', 'CREDITS.md', 'LICENSE-SpriteCollab.md']));
+
+  fs.writeFileSync(
+    path.join(PORTRAIT_FOLDER, 'CREDITS.md'),
+    [
+      '# Portrait credits (generated by tools/fetch-spritecollab.js, do not edit by hand)',
+      '',
+      `Portraits from [SpriteCollab](https://github.com/${UPSTREAM_REPO}) at commit ${commitId},`,
+      'licensed CC BY-NC 4.0 (LICENSE-SpriteCollab.md). CHUNSOFT marks portraits from the original Pokemon Mystery',
+      'Dungeon games by Spike Chunsoft.',
+      '',
+      ...creditSections(PORTRAIT_FOLDER, presentSets, nameById, 'Portrait set'),
+    ].join('\n'),
+  );
+  fs.writeFileSync(path.join(PORTRAIT_FOLDER, 'LICENSE-SpriteCollab.md'), licenseText);
+  fs.writeFileSync(
+    path.join(PORTRAIT_FOLDER, 'README.md'),
+    [
+      '# source/spritecollab-portrait (raw SpriteCollab portraits, do not edit by hand)',
+      '',
+      `Copied byte-exact from portrait/ of https://github.com/${UPSTREAM_REPO}, same folder layout as`,
+      'source/spritecollab (dex number, then form, then 0001 for shiny; names in source/spritecollab/tracker.json).',
+      'Each file is one 40x40 portrait named by emotion; a trailing ^ marks the flipped version.',
+      '',
+      '| | |',
+      '|---|---|',
+      `| Commit | ${commitId} |`,
+      `| Commit date | ${commitDate.slice(0, 10)} |`,
+      `| Fetched | ${new Date().toISOString().slice(0, 10)} |`,
+      `| Portrait sets | ${presentSets.length} (shinies included) |`,
+      `| Files | ${wantedFiles.length} |`,
+      `| Sets wanted but without portraits upstream | ${missingSets.length} |`,
+      '',
+      'License: CC BY-NC 4.0, see LICENSE-SpriteCollab.md; artists in CREDITS.md here.',
+      'Packed for Godot by tools/pack_portraits.py into assets/portraits/.',
+      '',
+      '## Sets without portraits upstream',
+      '',
+      ...missingSets.map((set) => `- ${set.folder} ${set.label}`),
+      '',
+    ].join('\n'),
+  );
+  console.log('Wrote source/spritecollab-portrait/README.md, CREDITS.md and LICENSE-SpriteCollab.md');
+}
+
+async function main() {
+  const requestedCommit = process.argv[2];
+  if (!requestedCommit) {
+    console.error('Usage: node tools/fetch-spritecollab.js <commit id> [--tracker-only] [--portraits-only]');
+    process.exit(1);
+  }
+
+  const commitInfo = await fetchJson(`https://api.github.com/repos/${UPSTREAM_REPO}/commits/${requestedCommit}`);
+  const commitId = commitInfo.sha;
+  const commitDate = commitInfo.commit.committer.date;
+  console.log(`Commit ${commitId} (${commitDate})`);
+
+  const trackerText = await fetchRawText(commitId, 'tracker.json');
+  fs.mkdirSync(SPRITE_FOLDER, { recursive: true });
+  fs.writeFileSync(path.join(SPRITE_FOLDER, 'tracker.json'), trackerText);
+  console.log('tracker.json written');
+  if (process.argv.includes('--tracker-only')) return;
+
+  const workFolder = path.join(os.tmpdir(), `poketactics-spritecollab-${commitId.slice(0, 12)}`);
+  fs.mkdirSync(workFolder, { recursive: true });
+  const archivePath = path.join(workFolder, 'spritecollab.tar.gz');
+  await downloadArchive(commitId, archivePath);
+
+  const context = {
+    commitId,
+    commitDate,
+    tracker: JSON.parse(trackerText),
+    nameById: parseCreditNames(await fetchRawText(commitId, 'credit_names.txt')),
+    licenseText: await fetchRawText(commitId, 'LICENSE.md'),
+    workFolder,
+    archivePath,
+    archiveRoot: `SpriteCollab-${commitId}`,
+  };
+  if (!process.argv.includes('--portraits-only')) await spritePass(context);
+  await portraitPass(context);
+  console.log('Next: python tools/pack_sprites.py and python tools/pack_portraits.py');
   console.log(`Archive kept for reruns: ${archivePath}`);
 }
 

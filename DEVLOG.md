@@ -67,3 +67,10 @@
   size band with collision; no lock-down yet. Environment: tile material plus state, intuitive rules in upkeep,
   1.2x terrain-type bonus. Objectives pool; boss AI is GOAP plus utility (Jess's own fork code may be used).
 - Mainline systems all in a new M2b. 12 rulings, battle-design.md; #13 became a slice, #9 unblocked, #17 to #24.
+
+## 2026-11-16, 6 a side with portraits (#16, built)
+- Test battle: 6 player units against wild 2 to 4, trainer 3 to 6 or boss 6 enemies, seeded; keys 1 to 3.
+- Portraits: fetch-spritecollab.js gained a portrait pass (32,946 files, hash-checked, credits); Jess chose one
+  sheet per emotion and colour over one per species, so tools/pack_portraits.py writes 80 sheets sharing one cell
+  index. Turn bar shows Normal portraits through view/portrait_loader.gd (per-battle atlas left for later).
+- 6 relation tests, 71 in all; portrait rerun check in run-tests. Not feel-tested yet.

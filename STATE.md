@@ -21,14 +21,14 @@ Updated 2026-11-15.
   have none upstream). Camera pans with WASD or arrows; Tab shows a temporary unit panel.
 - Select and move (#7, shipped): rules/movement.gd, facing chosen before the walk, cell picker, tile
   highlight, zoom 1x to 3x.
-- Turn order (#8, built, feel test owed): rules/turn_order.gd rounds by Speed, seeded ties; view/turn_bar.gd;
+- Turn order (#8, shipped): rules/turn_order.gd rounds by Speed, seeded ties; view/turn_bar.gd;
   hotseat until #11. Strike ranks parked (#13).
 - Tests: 65 gdUnit4 tests plus the pack rerun check, `tools\run-tests.cmd` (needs Python 3; see CONTEXT.md).
 
 ## Next
 Plan: docs/discussion-outputs/development-plan.md (M0 foundation, M1 first playable battle, then M2 to M5).
 Rulings: see DECISIONS.md (latest: 2026-11-15-turn-order-m1).
-1. Jess feel-tests #8 (docs/discussion-outputs/turn-order-plan.md), then #9 move translation schema.
+1. #9 move translation schema: draft its opening and plan.
 2. Then #10 to #12. #5 to #8 are on slice/m1-build.
 
 ## Open decisions
@@ -41,4 +41,4 @@ Rulings: see DECISIONS.md (latest: 2026-11-15-turn-order-m1).
 | Shipping sprite credits | First export slice | CC BY-NC needs source/spritecollab/CREDITS.md in builds; export must also include data/*.json |
 
 ## Tracking
-Board: https://github.com/users/Jess-Rivera/projects/3. Open issues: #8 to #12 (M1), #13 (parked).
+Board: https://github.com/users/Jess-Rivera/projects/3. Open issues: #9 to #12 (M1), #13 (parked).

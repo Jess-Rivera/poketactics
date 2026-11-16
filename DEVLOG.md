@@ -51,3 +51,4 @@
 - rules/turn_order.gd: rounds fastest first, ties drawn once from the battle seed, forecast, move once per turn,
   end-turn facing. view/turn_bar.gd: slanted bar on the right edge, active entry larger at the bottom.
 - Hotseat until #11; other units inspect only (orange range). 9 new relation tests, 65 in all.
+- Jess feel-tested the turn flow and the bar and closed #8.

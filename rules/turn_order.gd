@@ -38,8 +38,11 @@ static func speed_of(unit: BattleUnit) -> int:
 	return int(unit.stats.get("speed", 0))
 
 
-## The unit whose turn it is, or null if no unit is standing.
+## The unit whose turn it is, or null if no unit is standing or the battle is over (so nothing moves, acts or ends
+## a turn after the end, #12).
 func active_unit() -> BattleUnit:
+	if _battle.is_over():
+		return null
 	_drop_fainted()
 	return _still_to_act.front() if not _still_to_act.is_empty() else null
 
@@ -63,11 +66,12 @@ func can_act(unit: BattleUnit) -> bool:
 
 
 ## Carries out a move use if its user is the active unit, has not acted this turn, and the use is allowed.
-## Returns whether it acted; the use then holds the outcomes.
+## Returns whether it acted; the use then holds the outcomes, and the battle is settled if a side was routed.
 func use_move(move_use: MoveUse, random: RandomNumberGenerator) -> bool:
 	if not can_act(move_use.user) or not move_use.is_allowed():
 		return false
 	move_use.resolve(random)
+	_battle.settle_rout(move_use.user.side)
 	_active_unit_has_acted = true
 	return true
 

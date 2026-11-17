@@ -8,11 +8,16 @@ extends RefCounted
 ##
 ## Score of one option, per unit in its footprint: hit chance x (expected non-crit damage, capped at the unit's HP,
 ## as a fraction of its max HP), plus KNOCKOUT_BONUS if that damage knocks it out. Foes add, allies and the user
-## subtract; a move that makes its user faint subtracts the user as if knocked out. Ties go to the shorter walk.
+## subtract; a move that makes its user faint subtracts the user as if knocked out. An option that knocks out every
+## standing foe wins the battle and adds WIN_BONUS. Ties go to the shorter walk.
 
 ## Worth a full unit, so any knockout outscores any hit that does not knock out (HP fractions never reach 1 without
 ## a knockout).
 const KNOCKOUT_BONUS := 1.0
+## Added (times the hit chance) when an option knocks out every standing foe, which wins the battle (#12, ruling
+## 2026-11-17-battle-end-m1, even if the user faints too). Far above the most a non-winning option can score (each
+## foe is worth at most 1 plus KNOCKOUT_BONUS), so a winning option is always taken.
+const WIN_BONUS := 100.0
 
 
 ## What the unit does this turn: walk (path may be empty), then use a move (move_name may be empty), then face.
@@ -103,20 +108,33 @@ static func _option(
 	return option
 
 
-## The option's score: foes hit add, allies and the user subtract, and a user that faints counts as knocked out.
+## The option's score: foes hit add, allies and the user subtract, a user that faints counts as knocked out, and
+## knocking out every standing foe adds WIN_BONUS.
 static func _score(battle: Battle, pack: PackData, unit: BattleUnit, option: Choice) -> float:
 	var move := pack.move(option.move_name)
 	var chance := BattleStats.hit_chance(move)
 	var total := 0.0
+	var foes_knocked_out := 0
 	for hit_unit in _units_hit_from(battle, pack, unit, option):
 		var damage := MoveUse.hit_damage(
 			pack, unit, hit_unit, option.move_name, option.stand_cell, option.target_cell, false
 		)
 		var value := chance * _damage_value(hit_unit, damage)
-		total += value if hit_unit.side != unit.side else -value
+		if hit_unit.side == unit.side:
+			total -= value
+			continue
+		total += value
+		if _knocks_out(hit_unit, damage):
+			foes_knocked_out += 1
 	if MoveUse.has_effect(move["grid"], MoveUse.EFFECT_USER_FAINTS):
 		total -= _damage_value(unit, unit.hit_points)
+	if foes_knocked_out > 0 and foes_knocked_out == _standing_foes(battle, unit).size():
+		total += chance * WIN_BONUS
 	return total
+
+
+static func _knocks_out(unit: BattleUnit, damage: int) -> bool:
+	return damage > 0 and damage >= unit.hit_points
 
 
 ## The share of the unit's max HP the damage takes (capped at what it has left), plus KNOCKOUT_BONUS on a knockout.
@@ -124,7 +142,7 @@ static func _damage_value(unit: BattleUnit, damage: int) -> float:
 	if damage <= 0 or unit.max_hit_points <= 0:
 		return 0.0
 	var value := float(mini(damage, unit.hit_points)) / unit.max_hit_points
-	if damage >= unit.hit_points:
+	if _knocks_out(unit, damage):
 		value += KNOCKOUT_BONUS
 	return value
 

@@ -6,12 +6,13 @@ extends Node3D
 ## docs/discussion-outputs/use-a-move-opening.md): the target cells and the area are lit, click or Enter uses it.
 ## Click another unit to inspect its range. Space ends the turn after a facing choice. The player controls only the
 ## player side; enemy units choose with TurnAi (#11, docs/discussion-outputs/enemy-turn-opening.md) and play their
-## turn out with short pauses: camera, walk, area preview, strike, facing.
+## turn out with short pauses: camera, walk, area preview, strike, facing. When a side is routed the board freezes
+## and the end screen offers the same battle again or a new one (#12, docs/discussion-outputs/win-lose-opening.md).
 ## Q and E rotate, WASD or the arrow keys pan, wheel or + and - zoom, Tab shows the unit panel. F1, F2 and F3
 ## restart the battle as a wild, trainer or boss encounter with a new seed (#16): 6 player units against 2 to 4,
 ## 3 to 6 or 6 enemies.
 
-enum Mode { READY, INSPECTING, CHOOSING_FACING, WALKING, ENDING_TURN, AIMING, RESOLVING, AI_TURN }
+enum Mode { READY, INSPECTING, CHOOSING_FACING, WALKING, ENDING_TURN, AIMING, RESOLVING, AI_TURN, OVER }
 
 const BACKGROUND_COLOUR := Color(0.11, 0.12, 0.15)
 const IDLE_ANIMATION := "Idle"
@@ -39,6 +40,9 @@ const AI_PREVIEW_SECONDS := 0.5
 
 ## Kept across a scene reload, so keys 1 to 3 restart with the chosen encounter kind.
 static var encounter_kind := TestBattleSetup.EncounterKind.TRAINER
+## The seed the last battle started with, and whether the next load reuses it (the end screen's Same battle, #12).
+static var last_seed := 0
+static var replay_seed_requested := false
 
 var _battle: Battle
 var _pack: PackData
@@ -50,6 +54,7 @@ var _turn_bar: TurnBar
 var _turn_label: Label
 var _move_menu: MoveMenu
 var _unit_panel: UnitPanel
+var _end_screen: EndScreen
 ## The battle's seeded random source, shared by turn order and move rolls.
 var _random: RandomNumberGenerator
 var _sprites_by_unit := {}
@@ -81,7 +86,12 @@ func _ready() -> void:
 	RenderingServer.set_default_clear_color(BACKGROUND_COLOUR)
 	_pack = PackData.shared()
 	_random = RandomNumberGenerator.new()
-	_random.randomize()
+	if replay_seed_requested:
+		_random.seed = last_seed
+		replay_seed_requested = false
+	else:
+		_random.randomize()
+	last_seed = _random.seed
 	print("%s battle, seed %d" % [TestBattleSetup.ENCOUNTER_NAMES[encounter_kind], _random.seed])
 	_battle = TestBattleSetup.build(_pack, encounter_kind, _random.seed)
 	_turn_order = TurnOrder.new(_battle, _random)
@@ -145,6 +155,12 @@ func _ready() -> void:
 	_pause_timer = Timer.new()
 	_pause_timer.one_shot = true
 	add_child(_pause_timer)
+
+	_end_screen = EndScreen.new()
+	_end_screen.name = "EndScreen"
+	_end_screen.same_battle_pressed.connect(_restart_same_battle)
+	_end_screen.new_battle_pressed.connect(_restart_new_battle)
+	add_child(_end_screen)
 
 	_begin_turn()
 
@@ -315,7 +331,34 @@ func _direction_under_mouse(anchor_cell: Vector2i, ray_origin: Vector3, ray_dire
 
 
 func _is_busy() -> bool:
-	return _mode in [Mode.WALKING, Mode.RESOLVING, Mode.AI_TURN]
+	return _mode in [Mode.WALKING, Mode.RESOLVING, Mode.AI_TURN, Mode.OVER]
+
+
+## The battle is over (#12): the board freezes (the camera still works) and the end screen shows the result.
+func _show_end() -> void:
+	_mode = Mode.OVER
+	_reachable_paths = {}
+	_inspected_unit = null
+	_tile_highlight.clear()
+	_tile_highlight.cursor_cell = CellPicker.NO_CELL
+	_tile_highlight.refresh()
+	_move_menu.show_moves(null, _pack, NO_MOVE, false)
+	_turn_label.text = "%s   Round %d   %s" % [
+		TestBattleSetup.ENCOUNTER_NAMES[encounter_kind],
+		_turn_order.round_number,
+		EndScreen.result_title(_battle),
+	]
+	_end_screen.show_result(_battle, _turn_order.round_number)
+
+
+## Restarts with the seed this battle used, so the same units start in the same places and the same turn order.
+func _restart_same_battle() -> void:
+	replay_seed_requested = true
+	get_tree().reload_current_scene()
+
+
+func _restart_new_battle() -> void:
+	get_tree().reload_current_scene()
 
 
 ## Starts aiming one of the active unit's moves, if it may still act.
@@ -406,8 +449,9 @@ func _outcome_text(outcome: MoveUse.Outcome) -> String:
 	return "\n".join(lines)
 
 
-## After the attack: the panels catch up, and a user that fainted (Self-Destruct) fades and the next unit begins.
-## An AI unit then ends its turn; a player unit goes back to its menu.
+## After the attack: the panels catch up and a user that fainted (Self-Destruct) fades. If that ended the battle
+## the end screen shows; otherwise a fainted user's turn passes on, an AI unit ends its turn, and a player unit goes
+## back to its menu.
 func _after_move(move_use: MoveUse) -> void:
 	_unit_panel.refresh()
 	_hovered_cell = CellPicker.NO_CELL
@@ -415,6 +459,10 @@ func _after_move(move_use: MoveUse) -> void:
 		var user_sprite: UnitSprite = _sprites_by_unit.get(move_use.user)
 		if user_sprite != null:
 			user_sprite.fade_out()
+	if _battle.is_over():
+		_show_end()
+		return
+	if move_use.user.has_fainted():
 		_begin_turn()
 		return
 	if move_use.user.side == AI_SIDE:

@@ -100,7 +100,7 @@ func test_same_board_same_choice() -> void:
 
 
 ## Relations 1 and 7: on the real test battle, AI against AI for each encounter kind, every choice is legal and
-## the battle ends with one side standing.
+## the battle ends with a result from the rules (#12 relation 6).
 func test_ai_battle_is_legal_and_ends() -> void:
 	for kind_index in BATTLE_SEEDS.size():
 		var encounter_kind: TestBattleSetup.EncounterKind = TestBattleSetup.EncounterKind.values()[kind_index]
@@ -109,9 +109,9 @@ func test_ai_battle_is_legal_and_ends() -> void:
 		var random := RandomNumberGenerator.new()
 		random.seed = battle_seed
 		var turn_order := TurnOrder.new(battle, random)
-		while not _one_side_left(battle) and turn_order.round_number <= MAX_ROUNDS:
+		while not battle.is_over() and turn_order.round_number <= MAX_ROUNDS:
 			_play_turn(battle, turn_order, random)
-		assert_bool(_one_side_left(battle)).override_failure_message(
+		assert_bool(battle.is_over()).override_failure_message(
 			"%s battle, seed %d: no side won within %d rounds" % [
 				TestBattleSetup.ENCOUNTER_NAMES[encounter_kind], battle_seed, MAX_ROUNDS
 			]
@@ -137,13 +137,6 @@ func _play_turn(battle: Battle, turn_order: TurnOrder, random: RandomNumberGener
 		assert_bool(turn_order.use_move(move_use, random)).is_true()
 	if not unit.has_fainted():
 		turn_order.end_turn(choice.end_facing)
-
-
-func _one_side_left(battle: Battle) -> bool:
-	for side in [Battle.Side.PLAYER, Battle.Side.ENEMY]:
-		if battle.units_on_side(side).all(func(unit: BattleUnit) -> bool: return unit.has_fainted()):
-			return true
-	return false
 
 
 func _battle() -> Battle:

@@ -23,12 +23,13 @@ Updated 2026-11-17.
   footprints in data/shapes.json, rules/move_area.gd gives tiles hit.
 - Use a move (#10, shipped): rules/move_use.gd, keys 1 to 4, area preview, HP bars, faint.
 - Enemy turn (#11, shipped): rules/turn_ai.gd one-turn scorer; enemies play out with pauses.
-- Tests: 97 gdUnit4 tests plus the pack and portrait checks, `tools\run-tests.cmd` (see CONTEXT.md).
+- Win, lose (#12, built): rout ends the battle in rules; view/end_screen.gd, Same or New battle. Feel test owed.
+- Tests: 103 gdUnit4 tests plus the pack and portrait checks, `tools\run-tests.cmd` (see CONTEXT.md).
 
 ## Next
 Design: game-design.md (Kanto run roguelite), battle-design.md (strike rank clock, positioning, tiles).
 Roadmap: development-plan.md (M1, M1b hotseat, M2 battle depth, M2b mainline systems, M3 run layer, M4, M5).
-1. #12 win, lose, restart: draft its opening. Jess closes #9.
+1. Jess plays a full battle for #12 (M1 done when it passes); closes #9.
 2. Then #15 hotseat. #25 (show the AI's choice) later. Sub-grillings #20, #23 before M2.
 
 ## Open decisions

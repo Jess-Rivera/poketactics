@@ -110,3 +110,10 @@
 ## 2026-11-17, #11 closed
 - Jess feel-tested the enemy turn: passed. #11 closed, board card Shipped.
 - Follow-up #25: the player gets no clue what the AI chose (move name, target). Next: #12 opening.
+
+## 2026-11-17, #12 win, lose, restart (built)
+- Opening and plan win-lose-opening.md; ruling 2026-11-17-battle-end-m1 (rout ends at once; a double wipe goes to
+  the side that used the move, so a last Self-Destruct wins).
+- Battle holds the winning side; TurnOrder.use_move settles a rout and gives no active unit once it is over.
+- TurnAi adds a win bonus for an option that knocks out every standing foe. view/end_screen.gd: Victory or Defeat,
+  rounds, units left, Same battle (seed kept) and New battle. 6 new tests, 103 in all. Awaiting Jess's full battle.

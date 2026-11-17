@@ -63,8 +63,10 @@ const QUIET_TEXT_COLOUR := Color(0.7, 0.7, 0.7)
 ## Seconds an AI unit waits after the camera reaches it, and while its move's area is shown before the strike.
 const AI_THINK_SECONDS := 0.4
 const AI_PREVIEW_SECONDS := 0.5
-## Where the walk cost label sits relative to the mouse, in pixels.
+## Where the cursor label (walk cost, or no line of sight) sits relative to the mouse, in pixels.
 const COST_LABEL_OFFSET := Vector2(10, -14)
+## Shown by the cursor over a cell the aimed move cannot see (#18).
+const NO_SIGHT_TEXT := "No line of sight"
 const LABEL_OUTLINE := 3
 const WAIT_UP_KEYS := [KEY_EQUAL, KEY_PLUS, KEY_KP_ADD]
 const WAIT_DOWN_KEYS := [KEY_MINUS, KEY_KP_SUBTRACT]
@@ -759,9 +761,12 @@ func _refresh_marks() -> void:
 	_tile_highlight.reachable_cells.assign(_reachable_paths.keys())
 	_tile_highlight.move_range_cells.clear()
 	_tile_highlight.move_area_cells.clear()
+	_tile_highlight.walled_cells.clear()
 	_hide_aim_hints()
 	if _mode == Mode.AIMING:
-		_tile_highlight.move_range_cells = MoveArea.target_cells(_battle.grid, _aimed_recipe(), _active_unit.cell)
+		var recipe := _aimed_recipe()
+		_tile_highlight.move_range_cells = MoveArea.target_cells(_battle, recipe, _active_unit, _active_unit.cell)
+		_tile_highlight.walled_cells = MoveArea.walled_cells(_battle, recipe, _active_unit, _active_unit.cell)
 		var move_use := _aimed_move_use()
 		if move_use.is_allowed():
 			_tile_highlight.move_area_cells = move_use.footprint()
@@ -788,6 +793,9 @@ func _refresh_marks() -> void:
 	var hovered_walk_cost := _walk_cost_to(_hovered_cell) if _mode == Mode.READY else TurnOrder.NO_ACTION
 	_cost_label.visible = hovered_walk_cost != TurnOrder.NO_ACTION
 	_cost_label.text = "%d SR" % hovered_walk_cost
+	if _mode == Mode.AIMING and _tile_highlight.walled_cells.has(_hovered_cell):
+		_cost_label.visible = true
+		_cost_label.text = NO_SIGHT_TEXT
 	_show_landing(_landing_preview(hovered_walk_cost))
 
 
@@ -797,14 +805,12 @@ func _show_aim_hints(move_use: MoveUse) -> void:
 	var damage_component := MoveRecipe.damage_component(move_use.recipe)
 	if damage_component.is_empty() or damage_component["effect"] != MoveRecipe.EFFECT_DAMAGE:
 		return
-	var units_hit := MoveArea.units_hit(
-		_battle, _pack.shapes, move_use.recipe, _active_unit, move_use.target_cell, move_use.direction
-	)
-	for unit in units_hit:
+	var landing := move_use.landing_cell()
+	for unit in move_use.units_hit():
 		var unit_sprite: UnitSprite = _sprites_by_unit.get(unit)
 		if unit == _active_unit or unit_sprite == null:
 			continue
-		var hit := HitModifiers.for_hit(_battle.grid, move_use.recipe, unit, _active_unit.cell, move_use.target_cell)
+		var hit := HitModifiers.for_hit(_battle.grid, move_use.recipe, unit, _active_unit.cell, landing)
 		unit_sprite.show_hint(_aim_hint_text(hit))
 
 

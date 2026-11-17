@@ -54,11 +54,17 @@ func _init(
 	recipe = MoveRecipe.built(pack, move_user, used_move_name)
 
 
-## The user knows the move, it has a recipe, and the target cell is in range. Nobody needs to stand there.
+## The user knows the move, it has a recipe, and the target cell is in range and in sight. Nobody needs to stand
+## there.
 func is_allowed() -> bool:
 	if recipe.is_empty() or not user.move_names.has(move_name):
 		return false
-	return MoveArea.can_reach(_battle.grid, recipe, user.cell, target_cell)
+	return MoveArea.can_target(_battle, recipe, user, user.cell, target_cell)
+
+
+## Where the move lands: the aimed cell, or the first unit in a projectile's way (#18).
+func landing_cell() -> Vector2i:
+	return MoveArea.landing_cell(_battle, recipe, user, user.cell, target_cell)
 
 
 ## The SR using the move costs (2026-11-16-act-cost; placeholder bands until tuned). Call only when is_allowed().
@@ -66,9 +72,14 @@ func strike_rank_cost() -> int:
 	return int(recipe["sr_cost"])
 
 
-## Every tile the move covers, for the preview.
+## Every tile the move covers where it lands, for the preview.
 func footprint() -> Array[Vector2i]:
-	return MoveArea.footprint(_pack.shapes, recipe, user.cell, target_cell, direction)
+	return MoveArea.footprint(_battle.grid, _pack.shapes, recipe, user.cell, landing_cell(), direction)
+
+
+## Every unit the move covers where it lands, in footprint order.
+func units_hit() -> Array[BattleUnit]:
+	return MoveArea.units_hit(_battle, _pack.shapes, recipe, user, landing_cell(), direction)
 
 
 ## Carries the move out: turns the user, then runs the loop. Call once, only when is_allowed().
@@ -76,14 +87,14 @@ func resolve(random: RandomNumberGenerator) -> void:
 	assert(is_allowed(), "%s cannot be used on %s" % [move_name, target_cell])
 	if not MoveRecipe.is_on_user_tile(recipe) or MoveRecipe.needs_aim(recipe):
 		user.facing = direction
-	var units_hit := MoveArea.units_hit(_battle, _pack.shapes, recipe, user, target_cell, direction)
+	var covered_units := units_hit()
 	var on_hit_components := _handled_unit_components(true)
 	if not on_hit_components.is_empty():
-		for unit in units_hit:
+		for unit in covered_units:
 			if _any_lands_on(on_hit_components, unit):
 				outcomes.append(_strike(unit, on_hit_components, random))
 	for component in _handled_unit_components(false):
-		for unit in _on_use_units(component, units_hit):
+		for unit in _on_use_units(component, covered_units):
 			if _rolls_component_chance(component, random):
 				MoveEffects.run(self, component, unit, null, random)
 
@@ -96,11 +107,11 @@ func critical_hit_stage() -> int:
 
 ## The damage one of this use's damage components does to a unit.
 func damage_to(unit: BattleUnit, component: Dictionary, is_critical_hit: bool) -> int:
-	return component_damage(_battle, _pack, user, unit, recipe, component, user.cell, target_cell, is_critical_hit)
+	return component_damage(_battle, _pack, user, unit, recipe, component, user.cell, landing_cell(), is_critical_hit)
 
 
-## The damage one hit of a move's first damage component does to a unit when the user stands on user_cell and
-## aims at target_cell. The AI scores with the non-crit value.
+## The damage one hit of a move's first damage component does to a unit when the user stands on user_cell and the
+## move lands on aimed_cell (MoveArea.landing_cell). The AI scores with the non-crit value.
 static func hit_damage(
 	battle: Battle,
 	pack: PackData,

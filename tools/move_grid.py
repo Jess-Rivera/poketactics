@@ -2,12 +2,14 @@
 the shape footprint table.
 
 Rulings: 2026-11-17-move-recipe-structure, 2026-11-17-move-recipes-build, 2026-11-16-act-cost,
-2026-11-16-height-and-sight, 2026-11-16-environment-model. Plan: docs/discussion-outputs/move-recipes-plan.md.
+2026-11-16-height-and-sight, 2026-11-16-environment-model, 2026-11-17-line-of-sight-rules.
+Plan: docs/discussion-outputs/move-recipes-plan.md.
 
 A move's recipe holds:
   type, damage_class, accuracy   the move's pokeapi facts, as the game reads them (upgrades may change them, #28)
   sr_cost          strike rank cost of using the move (placeholder PP bands, a tuning item)
-  arcing           ignores units (not walls) for line of sight
+  tags             the move's pokeapi flags (contact, ballistics, sound, ...) in pokeapi id order, plus arcing (from
+                   ballistics, or an override): arcing ignores units, not walls, for line of sight
   shape            kind square (length along the aim, width across it; width always odd, length odd when
                    centred) or circle (radius: tiles whose centre lies within radius + 0.5; angle: a multiple of
                    SPREAD_STEP_DEGREES, under 360 for a cone), range_min and range_max in grid steps (0 and 0 for a
@@ -35,7 +37,16 @@ EFFECTS = {
     "needs_rule",
 }
 FIXED_DAMAGE_AMOUNTS = {"user_level"}
-RECIPE_FIELDS = {"type", "damage_class", "accuracy", "sr_cost", "arcing", "shape", "components", "modifiers"}
+RECIPE_FIELDS = {"type", "damage_class", "accuracy", "sr_cost", "tags", "shape", "components", "modifiers"}
+# pokeapi's 21 move flag identifiers (source/pokeapi/csv/move_flags.csv), then the one tag of our own.
+POKEAPI_FLAGS = [
+    "contact", "charge", "recharge", "protect", "reflectable", "snatch", "mirror", "punch", "sound", "gravity",
+    "defrost", "distance", "heal", "authentic", "powder", "bite", "pulse", "ballistics", "mental", "non-sky-battle",
+    "dance",
+]
+ARCING_TAG = "arcing"
+ARCING_FLAG = "ballistics"
+KNOWN_TAGS = set(POKEAPI_FLAGS) | {ARCING_TAG}
 SHAPE_FIELDS = {"square": {"length", "width"}, "circle": {"radius", "angle"}}
 SHAPE_COMMON_FIELDS = {"kind", "range_min", "range_max", "anchor"}
 
@@ -148,7 +159,12 @@ def default_components(move):
     return components
 
 
-def default_recipe(move):
+def default_tags(flags):
+    """The move's pokeapi flags, plus arcing when it has the ballistics flag."""
+    return list(flags) + ([ARCING_TAG] if ARCING_FLAG in flags else [])
+
+
+def default_recipe(move, flags):
     shape = default_shape(move)
     is_ranged_damage = move["damage_class"] != "status" and not move["contact"] and shape["range_max"] > 0
     return {
@@ -156,7 +172,7 @@ def default_recipe(move):
         "damage_class": move["damage_class"],
         "accuracy": move["accuracy"],
         "sr_cost": sr_cost_for(move["pp"]),
-        "arcing": False,
+        "tags": default_tags(flags),
         "shape": shape,
         "components": default_components(move),
         "modifiers": [{"modifier": "close_range"}] if is_ranged_damage else [],
@@ -237,6 +253,9 @@ def validation_problems(move_name, recipe):
     if missing or extra:
         return [f"{move_name}: recipe fields differ: missing {sorted(missing)}, extra {sorted(extra)}"]
     problems = shape_problems(move_name, recipe["shape"])
+    tags = recipe["tags"]
+    if not isinstance(tags, list) or len(set(tags)) != len(tags) or not set(tags) <= KNOWN_TAGS:
+        problems.append(f"{move_name}: tags must be a list of known tags with no repeats")
     for component in recipe["components"]:
         problems.extend(component_problems(move_name, component))
     for modifier in recipe["modifiers"]:
@@ -245,9 +264,10 @@ def validation_problems(move_name, recipe):
     return problems
 
 
-def add_recipes(moves, overrides_path):
+def add_recipes(moves, overrides_path, flags_by_move_name):
     """Gives each move named in the overrides file its recipe (defaults, then the override's whole fields), and
-    every other move a null one. Stops the export with every problem listed if an override or recipe is invalid."""
+    every other move a null one. flags_by_move_name holds each move's pokeapi flag identifiers. Stops the export
+    with every problem listed if an override or recipe is invalid."""
     overrides = json.loads(overrides_path.read_text(encoding="utf-8"))
     problems = []
     for move in moves.values():
@@ -261,7 +281,7 @@ def add_recipes(moves, overrides_path):
         if unknown_fields:
             problems.append(f"{move_name}: override has unknown field {', '.join(sorted(unknown_fields))}")
             continue
-        recipe = default_recipe(moves[move_name])
+        recipe = default_recipe(moves[move_name], flags_by_move_name.get(move_name, []))
         recipe.update(override)
         problems.extend(validation_problems(move_name, recipe))
         moves[move_name]["recipe"] = recipe

@@ -23,7 +23,7 @@ func test_every_roster_move_builds_and_resolves() -> void:
 		var user := _unit_knowing(battle, move_name)
 		var recipe := MoveRecipe.built(pack, user, move_name)
 		assert_bool(recipe.is_empty()).override_failure_message(move_name).is_false()
-		for target_cell in MoveArea.target_cells(battle.grid, recipe, user.cell):
+		for target_cell in MoveArea.target_cells(battle, recipe, user, user.cell):
 			var use := MoveUse.new(battle, pack, user, move_name, target_cell, Facing.Direction.EAST)
 			assert_bool(use.is_allowed()).override_failure_message("%s at %s" % [move_name, target_cell]).is_true()
 			use.resolve(_seeded(1))

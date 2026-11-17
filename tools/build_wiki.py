@@ -344,7 +344,7 @@ class Wiki:
                 ("Shape", escape(size) + f", {escape(shape['anchor'])}"),
                 ("Reach", escape(reach) + (" (half damage at 1)" if close_range else "")),
                 ("Strike rank cost", f"{recipe['sr_cost']} SR"),
-                ("Arcing", "yes" if recipe["arcing"] else "no"),
+                ("Tags", escape(", ".join(words(tag) for tag in recipe["tags"])) or "-"),
                 ("Components", components),
             ]
             sections.append("<h2>On the grid</h2><table class=\"facts\">" + "".join(f"<tr><th>{label}</th><td>{value}</td></tr>" for label, value in recipe_rows) + "</table>")

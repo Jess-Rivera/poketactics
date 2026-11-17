@@ -81,7 +81,7 @@ static func _options_from(battle: Battle, pack: PackData, unit: BattleUnit, stan
 			for direction in Facing.ALL_DIRECTIONS:
 				options.append(_option(stand_cell, move_name, stand_cell, direction))
 			continue
-		for target_cell in MoveArea.target_cells(battle.grid, recipe, stand_cell):
+		for target_cell in MoveArea.target_cells(battle, recipe, unit, stand_cell):
 			var direction := unit.facing
 			if target_cell != stand_cell:
 				direction = Facing.direction_of_step(target_cell - stand_cell)
@@ -107,9 +107,10 @@ static func _score(battle: Battle, pack: PackData, unit: BattleUnit, option: Cho
 	var chance := BattleStats.hit_chance(recipe)
 	var total := 0.0
 	var foes_knocked_out := 0
-	for hit_unit in _units_hit_from(battle, pack, unit, option):
+	var landing := MoveArea.landing_cell(battle, recipe, unit, option.stand_cell, option.target_cell)
+	for hit_unit in _units_hit_from(battle, pack, unit, option, landing):
 		var damage := MoveUse.hit_damage(
-			battle, pack, unit, hit_unit, option.move_name, option.stand_cell, option.target_cell, false
+			battle, pack, unit, hit_unit, option.move_name, option.stand_cell, landing, false
 		)
 		var value := chance * _damage_value(hit_unit, damage)
 		if hit_unit.side == unit.side:
@@ -139,12 +140,16 @@ static func _damage_value(unit: BattleUnit, damage: int) -> float:
 	return value
 
 
-## The units the option's footprint covers, as if the unit already stood on the option's cell: its start cell is
-## empty and its stand cell holds it.
-static func _units_hit_from(battle: Battle, pack: PackData, unit: BattleUnit, option: Choice) -> Array[BattleUnit]:
+## The units the option's footprint covers where the move lands, as if the unit already stood on the option's
+## cell: its start cell is empty and its stand cell holds it.
+static func _units_hit_from(
+	battle: Battle, pack: PackData, unit: BattleUnit, option: Choice, landing: Vector2i
+) -> Array[BattleUnit]:
 	var recipe := MoveRecipe.built(pack, unit, option.move_name)
 	var hit: Array[BattleUnit] = []
-	var footprint := MoveArea.footprint(pack.shapes, recipe, option.stand_cell, option.target_cell, option.direction)
+	var footprint := MoveArea.footprint(
+		battle.grid, pack.shapes, recipe, option.stand_cell, landing, option.direction
+	)
 	for cell in footprint:
 		var standing := _unit_seen_at(battle, unit, option.stand_cell, cell)
 		if standing != null and not hit.has(standing):

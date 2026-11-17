@@ -71,14 +71,14 @@ func test_height_factor_is_capped_at_two_levels() -> void:
 ## it; it never drops below its min range.
 func test_ranged_reach_grows_from_above_and_shrinks_from_below() -> void:
 	var recipe := MoveRecipe.built(pack, BattleUnit.new(), RANGED_MOVE)
-	var flat := MoveArea.target_cells(_board(0, 0).grid, recipe, CENTRE)
-	var from_above := MoveArea.target_cells(_board(4, 0).grid, recipe, CENTRE)
-	var from_below := MoveArea.target_cells(_board(0, 4).grid, recipe, CENTRE)
+	var flat := MoveArea.target_cells(_board(0, 0), recipe, BattleUnit.new(), CENTRE)
+	var from_above := MoveArea.target_cells(_board(4, 0), recipe, BattleUnit.new(), CENTRE)
+	var from_below := MoveArea.target_cells(_board(0, 4), recipe, BattleUnit.new(), CENTRE)
 	assert_array(from_above).contains(flat)
 	assert_int(from_above.size()).is_greater(flat.size())
 	assert_array(flat).contains(from_below)
 	assert_int(from_below.size()).is_less(flat.size())
-	var from_far_below := MoveArea.target_cells(_board(0, BattleGrid.HIGHEST_LEVEL).grid, recipe, CENTRE)
+	var from_far_below := MoveArea.target_cells(_board(0, BattleGrid.HIGHEST_LEVEL), recipe, BattleUnit.new(), CENTRE)
 	var range_min := int(recipe["shape"]["range_min"])
 	for cell in flat:
 		if MoveArea.distance(CENTRE, cell) == range_min:
@@ -104,9 +104,9 @@ func test_range_change_from_height_is_diminishing_and_symmetric() -> void:
 ## Relation 7: a melee move's reach is the same at any height.
 func test_melee_reach_ignores_height() -> void:
 	var recipe := MoveRecipe.built(pack, BattleUnit.new(), MELEE_MOVE)
-	var flat := MoveArea.target_cells(_board(0, 0).grid, recipe, CENTRE)
-	assert_array(MoveArea.target_cells(_board(1, 0).grid, recipe, CENTRE)).is_equal(flat)
-	assert_array(MoveArea.target_cells(_board(0, 1).grid, recipe, CENTRE)).is_equal(flat)
+	var flat := MoveArea.target_cells(_board(0, 0), recipe, BattleUnit.new(), CENTRE)
+	assert_array(MoveArea.target_cells(_board(1, 0), recipe, BattleUnit.new(), CENTRE)).is_equal(flat)
+	assert_array(MoveArea.target_cells(_board(0, 1), recipe, BattleUnit.new(), CENTRE)).is_equal(flat)
 
 
 ## Relation 8: fixed damage is the same from any arc and any height.

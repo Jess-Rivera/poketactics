@@ -34,7 +34,8 @@ Moves whose effect is pokeapi's newest English in-game description (no effect te
 - types.json `against`: damage multiplier of the attacking type (the entry) on each defending type.
 - A learnset entry's level is present only for level-up moves; 0 means learned on evolution.
 - A move's `contact` is pokeapi's contact flag. Its `recipe` (null for moves no slice fields yet) is described
-  in tools/move_grid.py; ranges are grid steps, sr_cost is strike rank (placeholder bands).
+  in tools/move_grid.py; ranges are grid steps, sr_cost is strike rank (placeholder bands); tags are the
+  move's pokeapi flags plus arcing.
 - shapes.json: every tile around an origin for a shape aimed east, with the smallest circle radius and cone
   spread that cover it (a tile is in when its centre lies within radius + 0.5).
 

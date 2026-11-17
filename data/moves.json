@@ -453,7 +453,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": null,
-      "arcing": false,
       "components": [
         {"chance": 100, "effect": "stat", "stages": 2, "stat": "speed", "timing": "on_use", "touches": "units", "who": "self"}
       ],
@@ -461,6 +460,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 0, "range_min": 0, "width": 1},
       "sr_cost": 3,
+      "tags": ["snatch"],
       "type": "psychic"
     },
     "target": "user",
@@ -861,7 +861,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 90,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 90, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "element", "element": "water", "timing": "on_use", "touches": "tiles"}
@@ -870,6 +869,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 1, "range_min": 1, "width": 1},
       "sr_cost": 5,
+      "tags": ["contact", "protect", "mirror"],
       "type": "water"
     },
     "target": "selected-pokemon",
@@ -1036,7 +1036,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 60, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "element", "element": "dark", "timing": "on_use", "touches": "tiles"}
@@ -1045,6 +1044,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 1, "range_min": 1, "width": 1},
       "sr_cost": 5,
+      "tags": ["contact", "protect", "mirror"],
       "type": "dark"
     },
     "target": "selected-pokemon",
@@ -1276,7 +1276,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 65, "timing": "on_hit", "touches": "units", "who": "all"},
         {"chance": 10, "effect": "stat", "stages": -1, "stat": "attack", "timing": "on_hit", "touches": "units", "who": "all"},
@@ -1288,6 +1287,7 @@
       ],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["protect", "mirror"],
       "type": "ice"
     },
     "target": "selected-pokemon",
@@ -1424,7 +1424,6 @@
     "priority": 1,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"chance": 100, "effect": "stat", "stages": -1, "stat": "attack", "timing": "on_hit", "touches": "units", "who": "all"}
       ],
@@ -1432,6 +1431,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 3,
+      "tags": ["protect", "reflectable", "mirror"],
       "type": "fairy"
     },
     "target": "selected-pokemon",
@@ -1918,7 +1918,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 60, "timing": "on_hit", "touches": "units", "who": "all"},
         {"chance": 30, "effect": "flinch", "timing": "on_hit", "touches": "units", "who": "all"},
@@ -1928,6 +1927,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 1, "range_min": 1, "width": 1},
       "sr_cost": 3,
+      "tags": ["contact", "protect", "mirror", "bite"],
       "type": "dark"
     },
     "target": "selected-pokemon",
@@ -3914,7 +3914,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"chance": 100, "effect": "status", "status": "confusion", "timing": "on_hit", "touches": "units", "who": "all"}
       ],
@@ -3922,6 +3921,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 5,
+      "tags": ["protect", "reflectable", "mirror"],
       "type": "ghost"
     },
     "target": "selected-pokemon",
@@ -4151,7 +4151,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": null,
-      "arcing": false,
       "components": [
         {"effect": "needs_rule", "kind": "unique", "timing": "on_hit", "touches": "units", "who": "all"}
       ],
@@ -4159,6 +4158,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 0, "range_min": 0, "width": 1},
       "sr_cost": 4,
+      "tags": [],
       "type": "normal"
     },
     "target": "user",
@@ -4585,7 +4585,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 80,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 100, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "element", "element": "fighting", "timing": "on_use", "touches": "tiles"}
@@ -4594,6 +4593,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 1, "range_min": 1, "width": 1},
       "sr_cost": 6,
+      "tags": ["contact", "protect", "mirror"],
       "type": "fighting"
     },
     "target": "selected-pokemon",
@@ -4761,7 +4761,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": null,
-      "arcing": false,
       "components": [
         {"effect": "needs_rule", "kind": "unique", "timing": "on_hit", "touches": "units", "who": "all"}
       ],
@@ -4769,6 +4768,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 5,
+      "tags": ["authentic"],
       "type": "ghost"
     },
     "target": "specific-move",
@@ -7083,7 +7083,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 80, "timing": "on_hit", "touches": "units", "who": "all"},
         {"chance": 10, "effect": "flinch", "timing": "on_hit", "touches": "units", "who": "all"},
@@ -7095,6 +7094,7 @@
       ],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["protect", "mirror"],
       "type": "psychic"
     },
     "target": "selected-pokemon",
@@ -7460,7 +7460,6 @@
     "priority": 2,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 30, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "element", "element": "normal", "timing": "on_use", "touches": "tiles"}
@@ -7471,6 +7470,7 @@
       ],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 5,
+      "tags": ["mirror"],
       "type": "normal"
     },
     "target": "selected-pokemon",
@@ -7702,7 +7702,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 95,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 65, "timing": "on_hit", "touches": "units", "who": "all"},
         {"chance": 10, "effect": "status", "status": "burn", "timing": "on_hit", "touches": "units", "who": "all"},
@@ -7713,6 +7712,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 1, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["contact", "protect", "mirror", "bite"],
       "type": "fire"
     },
     "target": "selected-pokemon",
@@ -8104,7 +8104,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 90, "timing": "on_hit", "touches": "units", "who": "all"},
         {"chance": 10, "effect": "status", "status": "burn", "timing": "on_hit", "touches": "units", "who": "all"},
@@ -8116,6 +8115,7 @@
       ],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["protect", "mirror"],
       "type": "fire"
     },
     "target": "selected-pokemon",
@@ -9387,7 +9387,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 75, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "drain", "percent": 50, "timing": "on_use", "touches": "units", "who": "self"},
@@ -9399,6 +9398,7 @@
       ],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 5,
+      "tags": ["protect", "mirror", "heal"],
       "type": "grass"
     },
     "target": "selected-pokemon",
@@ -10827,7 +10827,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 65, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "element", "element": "ghost", "timing": "on_use", "touches": "tiles"}
@@ -10838,6 +10837,7 @@
       ],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 5,
+      "tags": ["protect", "mirror"],
       "type": "ghost"
     },
     "target": "selected-pokemon",
@@ -11847,7 +11847,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 95,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 55, "timing": "on_hit", "touches": "units", "who": "all"},
         {"chance": 100, "effect": "stat", "stages": -1, "stat": "speed", "timing": "on_hit", "touches": "units", "who": "all"},
@@ -11857,6 +11856,7 @@
       "modifiers": [],
       "shape": {"anchor": "forward", "angle": 60, "kind": "circle", "radius": 3, "range_max": 0, "range_min": 0},
       "sr_cost": 4,
+      "tags": ["protect", "mirror"],
       "type": "ice"
     },
     "target": "all-opponents",
@@ -11924,7 +11924,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 60, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "element", "element": "fire", "timing": "on_use", "touches": "tiles"}
@@ -11933,6 +11932,7 @@
       "modifiers": [],
       "shape": {"anchor": "forward", "angle": 60, "kind": "circle", "radius": 3, "range_max": 0, "range_min": 0},
       "sr_cost": 4,
+      "tags": ["protect", "mirror"],
       "type": "fire"
     },
     "target": "all-opponents",
@@ -12195,7 +12195,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": null,
-      "arcing": false,
       "components": [
         {"chance": 100, "effect": "stat", "stages": 2, "stat": "defense", "timing": "on_use", "touches": "units", "who": "self"}
       ],
@@ -12203,6 +12202,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 0, "range_min": 0, "width": 1},
       "sr_cost": 4,
+      "tags": ["snatch"],
       "type": "steel"
     },
     "target": "user",
@@ -12272,7 +12272,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 75,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 100, "timing": "on_hit", "touches": "units", "who": "all"},
         {"chance": 30, "effect": "stat", "stages": -1, "stat": "defense", "timing": "on_hit", "touches": "units", "who": "all"},
@@ -12282,6 +12281,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 1, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["contact", "protect", "mirror"],
       "type": "steel"
     },
     "target": "selected-pokemon",
@@ -12545,7 +12545,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 65, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "element", "element": "dark", "timing": "on_use", "touches": "tiles"}
@@ -12554,6 +12553,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 1, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["contact", "protect", "mirror"],
       "type": "dark"
     },
     "target": "selected-pokemon",
@@ -15418,7 +15418,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 95, "timing": "on_hit", "touches": "units", "who": "all"},
         {"chance": 30, "effect": "stat", "stages": -1, "stat": "special_attack", "timing": "on_hit", "touches": "units", "who": "all"},
@@ -15430,6 +15429,7 @@
       ],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["protect", "mirror"],
       "type": "fairy"
     },
     "target": "selected-pokemon",
@@ -16058,7 +16058,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"amount": "user_level", "effect": "fixed_damage", "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "element", "element": "ghost", "timing": "on_use", "touches": "tiles"}
@@ -16069,6 +16068,7 @@
       ],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["protect", "mirror"],
       "type": "ghost"
     },
     "target": "selected-pokemon",
@@ -18615,7 +18615,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": null,
-      "arcing": false,
       "components": [
         {"effect": "needs_rule", "kind": "whole-field-effect", "timing": "on_hit", "touches": "units", "who": "all"}
       ],
@@ -18623,6 +18622,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 0, "range_min": 0, "width": 1},
       "sr_cost": 6,
+      "tags": [],
       "type": "water"
     },
     "target": "entire-field",
@@ -19271,7 +19271,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 90,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 25, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "multi_hit", "maximum": 5, "minimum": 2, "timing": "on_hit", "touches": "units", "who": "all"},
@@ -19283,6 +19282,7 @@
       ],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 5,
+      "tags": ["protect", "mirror", "ballistics", "arcing"],
       "type": "rock"
     },
     "target": "selected-pokemon",
@@ -20102,7 +20102,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"chance": 100, "effect": "stat", "stages": -2, "stat": "speed", "timing": "on_hit", "touches": "units", "who": "all"}
       ],
@@ -20110,6 +20109,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 5,
+      "tags": ["protect", "reflectable", "mirror"],
       "type": "normal"
     },
     "target": "selected-pokemon",
@@ -20469,7 +20469,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 200, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "faint", "timing": "on_use", "touches": "units", "who": "self"},
@@ -20479,6 +20478,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "angle": 360, "kind": "circle", "radius": 1, "range_max": 0, "range_min": 0},
       "sr_cost": 6,
+      "tags": ["protect", "mirror"],
       "type": "normal"
     },
     "target": "all-other-pokemon",
@@ -20879,7 +20879,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": null,
-      "arcing": false,
       "components": [
         {"chance": 100, "effect": "stat", "stages": 2, "stat": "attack", "timing": "on_use", "touches": "units", "who": "self"},
         {"chance": 100, "effect": "stat", "stages": -1, "stat": "defense", "timing": "on_use", "touches": "units", "who": "self"},
@@ -20892,6 +20891,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 0, "range_min": 0, "width": 1},
       "sr_cost": 4,
+      "tags": ["snatch"],
       "type": "normal"
     },
     "target": "user",
@@ -21548,7 +21548,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 70, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "element", "element": "normal", "timing": "on_use", "touches": "tiles"}
@@ -21557,6 +21556,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 1, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["contact", "protect", "mirror"],
       "type": "normal"
     },
     "target": "selected-pokemon",
@@ -21592,7 +21592,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 75,
-      "arcing": false,
       "components": [
         {"chance": 100, "effect": "status", "status": "sleep", "timing": "on_hit", "touches": "units", "who": "all"}
       ],
@@ -21600,6 +21599,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["protect", "reflectable", "mirror", "powder"],
       "type": "grass"
     },
     "target": "selected-pokemon",
@@ -21763,7 +21763,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 50, "timing": "on_hit", "touches": "units", "who": "all"},
         {"chance": 100, "effect": "status", "status": "unknown", "timing": "on_hit", "touches": "units", "who": "all"},
@@ -21775,6 +21774,7 @@
       ],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["protect", "mirror", "non-sky-battle"],
       "type": "rock"
     },
     "target": "selected-pokemon",
@@ -22327,7 +22327,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 65, "timing": "on_hit", "touches": "units", "who": "all"},
         {"chance": 30, "effect": "status", "status": "paralysis", "timing": "on_hit", "touches": "units", "who": "all"},
@@ -22337,6 +22336,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 1, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["contact", "protect", "mirror"],
       "type": "electric"
     },
     "target": "selected-pokemon",
@@ -22728,7 +22728,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "needs_rule", "kind": "unique", "timing": "on_hit", "touches": "units", "who": "all"}
       ],
@@ -22736,6 +22735,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 5,
+      "tags": ["protect", "reflectable", "mirror", "authentic"],
       "type": "ghost"
     },
     "target": "selected-pokemon",
@@ -22932,7 +22932,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": null,
-      "arcing": false,
       "components": [
         {"effect": "needs_rule", "kind": "field-effect", "timing": "on_hit", "touches": "units", "who": "all"}
       ],
@@ -22940,6 +22939,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "angle": 360, "kind": "circle", "radius": 1, "range_max": 4, "range_min": 1},
       "sr_cost": 4,
+      "tags": ["reflectable"],
       "type": "rock"
     },
     "target": "opponents-field",
@@ -23429,7 +23429,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 80, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "element", "element": "normal", "timing": "on_use", "touches": "tiles"}
@@ -23438,6 +23437,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 1, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["contact", "protect", "mirror"],
       "type": "normal"
     },
     "target": "selected-pokemon",
@@ -24127,7 +24127,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 85,
-      "arcing": false,
       "components": [
         {"chance": 100, "effect": "status", "status": "confusion", "timing": "on_hit", "touches": "units", "who": "all"},
         {"chance": 100, "effect": "stat", "stages": 2, "stat": "attack", "timing": "on_hit", "touches": "units", "who": "all"},
@@ -24137,6 +24136,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["protect", "reflectable", "mirror"],
       "type": "normal"
     },
     "target": "selected-pokemon",
@@ -24238,7 +24238,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"chance": 100, "effect": "stat", "stages": -2, "stat": "evasion", "timing": "on_hit", "touches": "units", "who": "all"}
       ],
@@ -24246,6 +24245,7 @@
       "modifiers": [],
       "shape": {"anchor": "forward", "angle": 60, "kind": "circle", "radius": 3, "range_max": 0, "range_min": 0},
       "sr_cost": 4,
+      "tags": ["protect", "reflectable", "mirror"],
       "type": "normal"
     },
     "target": "all-opponents",
@@ -24281,7 +24281,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": null,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 60, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "element", "element": "normal", "timing": "on_use", "touches": "tiles"}
@@ -24290,6 +24289,7 @@
       "modifiers": [],
       "shape": {"anchor": "forward", "angle": 60, "kind": "circle", "radius": 3, "range_max": 0, "range_min": 0},
       "sr_cost": 4,
+      "tags": ["protect", "mirror"],
       "type": "normal"
     },
     "target": "all-opponents",
@@ -24423,7 +24423,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": null,
-      "arcing": false,
       "components": [
         {"effect": "heal", "percent": 50, "timing": "on_use", "touches": "units", "who": "self"}
       ],
@@ -24431,6 +24430,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 0, "range_min": 0, "width": 1},
       "sr_cost": 6,
+      "tags": ["snatch", "heal"],
       "type": "grass"
     },
     "target": "user",
@@ -24665,7 +24665,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 85,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 90, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "recoil", "percent": 25, "timing": "on_use", "touches": "units", "who": "self"},
@@ -24675,6 +24674,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 1, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["contact", "protect", "mirror"],
       "type": "normal"
     },
     "target": "selected-pokemon",
@@ -25167,7 +25167,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 120, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "element", "element": "normal", "timing": "on_use", "touches": "tiles"}
@@ -25176,6 +25175,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 1, "range_min": 1, "width": 1},
       "sr_cost": 5,
+      "tags": ["contact", "protect", "mirror"],
       "type": "normal"
     },
     "target": "random-opponent",
@@ -25603,7 +25603,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 90,
-      "arcing": false,
       "components": [
         {"chance": 100, "effect": "status", "status": "poison", "timing": "on_hit", "touches": "units", "who": "all"}
       ],
@@ -25611,6 +25610,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 5,
+      "tags": ["protect", "reflectable", "mirror"],
       "type": "poison"
     },
     "target": "selected-pokemon",
@@ -26432,7 +26432,6 @@
     "priority": -1,
     "recipe": {
       "accuracy": null,
-      "arcing": false,
       "components": [
         {"effect": "damage", "power": 70, "timing": "on_hit", "touches": "units", "who": "all"},
         {"effect": "element", "element": "fighting", "timing": "on_use", "touches": "tiles"}
@@ -26441,6 +26440,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 1, "range_min": 1, "width": 1},
       "sr_cost": 5,
+      "tags": ["contact", "protect", "mirror"],
       "type": "fighting"
     },
     "target": "selected-pokemon",
@@ -26991,7 +26991,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 85,
-      "arcing": false,
       "components": [
         {"chance": 100, "effect": "status", "status": "burn", "timing": "on_hit", "touches": "units", "who": "all"}
       ],
@@ -26999,6 +26998,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 4,
+      "tags": ["protect", "reflectable", "mirror"],
       "type": "fire"
     },
     "target": "selected-pokemon",
@@ -27231,7 +27231,6 @@
     "priority": 0,
     "recipe": {
       "accuracy": 100,
-      "arcing": false,
       "components": [
         {"effect": "needs_rule", "kind": "unique", "timing": "on_hit", "touches": "units", "who": "all"}
       ],
@@ -27239,6 +27238,7 @@
       "modifiers": [],
       "shape": {"anchor": "centered", "kind": "square", "length": 1, "range_max": 4, "range_min": 1, "width": 1},
       "sr_cost": 5,
+      "tags": ["protect", "reflectable", "mirror"],
       "type": "grass"
     },
     "target": "selected-pokemon",

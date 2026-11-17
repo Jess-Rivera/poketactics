@@ -5,7 +5,7 @@ extends GdUnitTestSuite
 ## identical output) is checked by tools/export_pack.py --check in tools/run-tests.cmd.
 
 const OVERRIDES_PATH := "res://authored/move_recipe_overrides.json"
-const RECIPE_FIELDS := ["type", "damage_class", "accuracy", "sr_cost", "arcing", "shape", "components", "modifiers"]
+const RECIPE_FIELDS := ["type", "damage_class", "accuracy", "sr_cost", "tags", "shape", "components", "modifiers"]
 const SHAPE_COMMON_FIELDS := ["kind", "range_min", "range_max", "anchor"]
 const SHAPE_SIZE_FIELDS := {"square": ["length", "width"], "circle": ["radius", "angle"]}
 const RADIUS_LIMIT := 50
@@ -90,7 +90,7 @@ func test_areas_hit_exactly_the_units_inside_whatever_their_side() -> void:
 		for direction in Facing.ALL_DIRECTIONS:
 			var hit := MoveArea.units_hit(battle, pack.shapes, recipe, user, target_cell, direction)
 			var expected := {}
-			for cell in MoveArea.footprint(pack.shapes, recipe, centre, target_cell, direction):
+			for cell in MoveArea.footprint(battle.grid, pack.shapes, recipe, centre, target_cell, direction):
 				if battle.grid.contains(cell):
 					expected[battle.unit_at(cell)] = true
 			assert_int(hit.size()).override_failure_message(move_name).is_equal(expected.size())
@@ -220,7 +220,7 @@ func _board_full_of_units() -> Battle:
 func _offset_set(shape: Dictionary, direction: Facing.Direction) -> Dictionary:
 	var origin := Vector2i(100, 100)
 	var offsets := {}
-	for cell in MoveArea.footprint(pack.shapes, {"shape": shape}, origin, origin, direction):
+	for cell in MoveArea.footprint(BattleGrid.new(), pack.shapes, {"shape": shape}, origin, origin, direction):
 		offsets[cell - origin] = true
 	return offsets
 

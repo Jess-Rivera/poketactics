@@ -8,6 +8,10 @@ extends RefCounted
 ## cone), centred on the aimed tile or running forward from it. A move with range 0 is aimed at the user's own
 ## tile and leaves that tile out, unless it is a single tile. An area hits every unit standing in it, friend or
 ## foe. The shape table is aimed east; the other directions are exact quarter turns, so no trigonometry runs.
+##
+## Line of sight (#18, 2026-11-17-line-of-sight-rules, SightLine): a wall between the user and where the move lands
+## makes a cell unaimable; a projectile (MoveRecipe.is_projectile) lands on the first unit on its line; walls
+## shelter the tiles behind them inside an area, units never do.
 
 const TABLE_X := 0
 const TABLE_Y := 1
@@ -42,19 +46,62 @@ static func can_reach(grid: BattleGrid, recipe: Dictionary, user_cell: Vector2i,
 	return steps >= int(recipe["shape"]["range_min"]) and steps <= max_reach(grid, recipe, user_cell, target_cell)
 
 
-## Every cell inside the grid the user may choose as the target (just its own cell at range 0). The search box
-## allows for the largest range a height difference can add.
-static func target_cells(grid: BattleGrid, recipe: Dictionary, user_cell: Vector2i) -> Array[Vector2i]:
+## Whether the mover, standing on from_cell, may aim the move at target_cell: in reach and in sight.
+static func can_target(
+	battle: Battle, recipe: Dictionary, mover: BattleUnit, from_cell: Vector2i, target_cell: Vector2i
+) -> bool:
+	if not can_reach(battle.grid, recipe, from_cell, target_cell):
+		return false
+	return is_in_sight(battle, recipe, mover, from_cell, target_cell)
+
+
+## Every cell the mover, standing on from_cell, may aim the move at (just its own cell at range 0).
+static func target_cells(
+	battle: Battle, recipe: Dictionary, mover: BattleUnit, from_cell: Vector2i
+) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
-	var reach := int(recipe["shape"]["range_max"])
-	if reach >= BattleStats.RANGED_MIN_REACH:
-		reach += BattleStats.range_change_from_height(BattleGrid.HIGHEST_LEVEL)
-	for step_y in range(-reach, reach + 1):
-		for step_x in range(-reach, reach + 1):
-			var cell := user_cell + Vector2i(step_x, step_y)
-			if can_reach(grid, recipe, user_cell, cell):
-				cells.append(cell)
+	for cell in _cells_in_reach(battle.grid, recipe, from_cell):
+		if is_in_sight(battle, recipe, mover, from_cell, cell):
+			cells.append(cell)
 	return cells
+
+
+## Every cell in the move's reach that a wall hides from the mover standing on from_cell.
+static func walled_cells(
+	battle: Battle, recipe: Dictionary, mover: BattleUnit, from_cell: Vector2i
+) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for cell in _cells_in_reach(battle.grid, recipe, from_cell):
+		if not is_in_sight(battle, recipe, mover, from_cell, cell):
+			cells.append(cell)
+	return cells
+
+
+## Whether no wall stands between from_cell and where the move would land when aimed at aimed_cell. Moves on the
+## user's own tile always are.
+static func is_in_sight(
+	battle: Battle, recipe: Dictionary, mover: BattleUnit, from_cell: Vector2i, aimed_cell: Vector2i
+) -> bool:
+	if MoveRecipe.is_on_user_tile(recipe):
+		return true
+	var landing := landing_cell(battle, recipe, mover, from_cell, aimed_cell)
+	return not SightLine.is_walled(battle.grid, from_cell, landing)
+
+
+## Where the move lands when the mover, standing on from_cell, aims it at aimed_cell: for a projectile, the first
+## standing unit on the line (at a corner, only when both tiles hold one, and then the first in reading order: lower
+## grid y, then lower x); otherwise, or with nobody in the way, the aimed cell. The mover's own cell counts as empty,
+## so the AI can ask from a cell it has not walked to yet. Walls do not stop the search; is_in_sight judges them.
+static func landing_cell(
+	battle: Battle, recipe: Dictionary, mover: BattleUnit, from_cell: Vector2i, aimed_cell: Vector2i
+) -> Vector2i:
+	if not MoveRecipe.is_projectile(recipe):
+		return aimed_cell
+	for step in SightLine.crossed_steps(from_cell, aimed_cell):
+		var occupied := _occupied_cells(battle, mover, step)
+		if not occupied.is_empty() and occupied.size() == step.size():
+			return _first_in_reading_order(occupied)
+	return aimed_cell
 
 
 ## The cell one hit is measured from for facing and height (2026-11-17-facing-height-rules): the blast centre for
@@ -82,21 +129,31 @@ static func turned(offset: Vector2i, direction: Facing.Direction) -> Vector2i:
 			return Vector2i(offset.y, -offset.x)
 
 
-## Every tile the move covers, in a fixed order. target_cell is the aimed tile (the user's own at range 0);
-## direction aims forward shapes and cones, and turns squares.
+## Every tile the move covers, in a fixed order, leaving out tiles inside the grid that a wall shelters from the
+## shape's origin (the user for shapes on or running from the user, else the centre). target_cell is where the move
+## lands (landing_cell; the user's own tile at range 0); direction aims forward shapes and cones, and turns squares.
 static func footprint(
-	shapes: Dictionary, recipe: Dictionary, user_cell: Vector2i, target_cell: Vector2i, direction: Facing.Direction
+	grid: BattleGrid,
+	shapes: Dictionary,
+	recipe: Dictionary,
+	user_cell: Vector2i,
+	target_cell: Vector2i,
+	direction: Facing.Direction
 ) -> Array[Vector2i]:
 	var shape: Dictionary = recipe["shape"]
 	var anchor := user_cell if MoveRecipe.is_on_user_tile(recipe) else target_cell
 	var leaves_out_anchor := MoveRecipe.is_on_user_tile(recipe) and not _is_single_tile(shape)
+	var cells: Array[Vector2i]
 	if shape["kind"] == MoveRecipe.SHAPE_SQUARE:
-		return _square_cells(shape, anchor, leaves_out_anchor, direction)
-	return _circle_cells(shapes, shape, anchor, leaves_out_anchor, direction)
+		cells = _square_cells(shape, anchor, leaves_out_anchor, direction)
+	else:
+		cells = _circle_cells(shapes, shape, anchor, leaves_out_anchor, direction)
+	var origin := user_cell if shape["anchor"] == MoveRecipe.ANCHOR_FORWARD else anchor
+	return _unsheltered(grid, origin, cells)
 
 
 ## Every unit standing on a covered tile inside the grid, friend or foe, in footprint order. Fainted units are
-## left out.
+## left out. target_cell is where the move lands (landing_cell).
 static func units_hit(
 	battle: Battle,
 	shapes: Dictionary,
@@ -106,13 +163,57 @@ static func units_hit(
 	direction: Facing.Direction
 ) -> Array[BattleUnit]:
 	var hit: Array[BattleUnit] = []
-	for cell in footprint(shapes, recipe, user.cell, target_cell, direction):
+	for cell in footprint(battle.grid, shapes, recipe, user.cell, target_cell, direction):
 		if not battle.grid.contains(cell):
 			continue
 		var standing := battle.unit_at(cell)
 		if standing != null and not standing.has_fainted() and not hit.has(standing):
 			hit.append(standing)
 	return hit
+
+
+## Every cell inside the grid within the move's reach of from_cell, sight not judged. The search box allows for
+## the largest range a height difference can add.
+static func _cells_in_reach(grid: BattleGrid, recipe: Dictionary, from_cell: Vector2i) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	var reach := int(recipe["shape"]["range_max"])
+	if reach >= BattleStats.RANGED_MIN_REACH:
+		reach += BattleStats.range_change_from_height(BattleGrid.HIGHEST_LEVEL)
+	for step_y in range(-reach, reach + 1):
+		for step_x in range(-reach, reach + 1):
+			var cell := from_cell + Vector2i(step_x, step_y)
+			if can_reach(grid, recipe, from_cell, cell):
+				cells.append(cell)
+	return cells
+
+
+## The cells of one sight line step that hold a standing unit other than the mover.
+static func _occupied_cells(battle: Battle, mover: BattleUnit, step: Array) -> Array[Vector2i]:
+	var occupied: Array[Vector2i] = []
+	for cell in step:
+		var standing := battle.unit_at(cell)
+		if standing != null and standing != mover:
+			occupied.append(cell)
+	return occupied
+
+
+static func _first_in_reading_order(cells: Array[Vector2i]) -> Vector2i:
+	var first := cells[0]
+	for cell in cells:
+		if cell.y < first.y or (cell.y == first.y and cell.x < first.x):
+			first = cell
+	return first
+
+
+## The cells no wall shelters from origin. Cells outside the grid are kept for the caller to skip.
+static func _unsheltered(grid: BattleGrid, origin: Vector2i, cells: Array[Vector2i]) -> Array[Vector2i]:
+	if not grid.contains(origin):
+		return cells
+	var open_cells: Array[Vector2i] = []
+	for cell in cells:
+		if not grid.contains(cell) or not SightLine.is_walled(grid, origin, cell):
+			open_cells.append(cell)
+	return open_cells
 
 
 static func _is_single_tile(shape: Dictionary) -> bool:

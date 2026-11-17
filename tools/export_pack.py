@@ -150,8 +150,15 @@ class Source:
         self.move_names = english_by(read_table("move_names"), "move_id", "name")
         self.move_effects = english_by(read_table("move_effect_prose"), "move_effect_id", "short_effect")
         self.move_meta = by_id(read_table("move_meta"), "move_id")
-        contact_flag = next(row["id"] for row in read_table("move_flags") if row["identifier"] == "contact")
-        self.contact_move_ids = {row["move_id"] for row in read_table("move_flag_map") if row["move_flag_id"] == contact_flag}
+        flag_names = {row["id"]: row["identifier"] for row in read_table("move_flags")}
+        flag_ids_of_move = defaultdict(list)
+        for row in read_table("move_flag_map"):
+            flag_ids_of_move[row["move_id"]].append(int(row["move_flag_id"]))
+        # Each move's pokeapi flag identifiers, in flag id order (2026-11-17-line-of-sight-rules).
+        self.flags_of_move = {
+            move_id: [flag_names[str(flag_id)] for flag_id in sorted(flag_ids)]
+            for move_id, flag_ids in flag_ids_of_move.items()
+        }
         self.damage_classes = by_id(read_table("move_damage_classes"))
         self.move_targets = by_id(read_table("move_targets"))
         self.meta_categories = by_id(read_table("move_meta_categories"))
@@ -510,9 +517,14 @@ def build_moves(source):
             "effect": effect,
             "effect_source": effect_source,
             "battle_details": battle_details,
-            "contact": move_id in source.contact_move_ids,
+            "contact": "contact" in source.flags_of_move.get(move_id, []),
         }
     return moves, flavor_count
+
+
+def flags_by_move_name(source):
+    """Each move's pokeapi flag identifiers, keyed by move name, for the recipe tags."""
+    return {row["identifier"]: source.flags_of_move.get(move_id, []) for move_id, row in source.moves.items()}
 
 
 def build_abilities(source):
@@ -623,7 +635,8 @@ def readme(units, moves, abilities, types, left_out, dropped, flavor_count, reci
         "- types.json `against`: damage multiplier of the attacking type (the entry) on each defending type.",
         "- A learnset entry's level is present only for level-up moves; 0 means learned on evolution.",
         "- A move's `contact` is pokeapi's contact flag. Its `recipe` (null for moves no slice fields yet) is described",
-        "  in tools/move_grid.py; ranges are grid steps, sr_cost is strike rank (placeholder bands).",
+        "  in tools/move_grid.py; ranges are grid steps, sr_cost is strike rank (placeholder bands); tags are the",
+        "  move's pokeapi flags plus arcing.",
         "- shapes.json: every tile around an origin for a shape aimed east, with the smallest circle radius and cone",
         "  spread that cover it (a tile is in when its centre lies within radius + 0.5).",
         "",
@@ -656,7 +669,7 @@ def write_pack(folder):
     units, left_out, dropped = build_units(source, SpriteSets())
     add_size_bands(units)
     moves, flavor_count = build_moves(source)
-    recipe_count = move_grid.add_recipes(moves, MOVE_RECIPE_OVERRIDES)
+    recipe_count = move_grid.add_recipes(moves, MOVE_RECIPE_OVERRIDES, flags_by_move_name(source))
     abilities = build_abilities(source)
     types = build_types(source)
     folder.mkdir(parents=True, exist_ok=True)

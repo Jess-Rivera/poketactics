@@ -1,8 +1,9 @@
 class_name MoveRecipe
 extends RefCounted
-## Reads a move's recipe (data/moves.json, built by tools/move_grid.py, which documents every field): basics,
-## shape, components and modifiers. Issue #27, rulings 2026-11-17-move-recipe-structure and
-## 2026-11-17-move-recipes-build, plan docs/discussion-outputs/move-recipes-plan.md. Rules only: no nodes.
+## Reads a move's recipe (data/moves.json, built by tools/move_grid.py, which documents every field): basics (tags
+## among them, #18), shape, components and modifiers. Issue #27, rulings 2026-11-17-move-recipe-structure,
+## 2026-11-17-move-recipes-build and 2026-11-17-line-of-sight-rules, plan docs/discussion-outputs/move-recipes-plan.md.
+## Rules only: no nodes.
 ##
 ## Everything that uses a move (MoveUse, MoveArea, the AI, the view) reads the built recipe from built(), never the
 ## pack entry directly, so upgrades (#28) change every reader at once.
@@ -20,6 +21,8 @@ const WHO_FOES := "foes"
 const WHO_ALLIES := "allies"
 const WHO_SELF := "self"
 const MODIFIER_CLOSE_RANGE := "close_range"
+## Arcing moves fly over units (not walls) to their aimed cell.
+const TAG_ARCING := "arcing"
 
 
 ## The move as this unit uses it: today the pack's recipe itself, since upgrades come in #28. Empty for a move
@@ -41,6 +44,19 @@ static func needs_aim(recipe: Dictionary) -> bool:
 ## Whether the move is used on the user's own tile (range 0 to 0).
 static func is_on_user_tile(recipe: Dictionary) -> bool:
 	return int(recipe["shape"]["range_max"]) == 0
+
+
+static func has_tag(recipe: Dictionary, tag: String) -> bool:
+	return recipe["tags"].has(tag)
+
+
+## Whether the move flies like a projectile (2026-11-17-line-of-sight-rules): ranged, centred on its aimed cell and
+## not arcing, so it stops at the first unit on its line. Shapes running forward from the user hit their whole area.
+static func is_projectile(recipe: Dictionary) -> bool:
+	var shape: Dictionary = recipe["shape"]
+	if int(shape["range_max"]) < BattleStats.RANGED_MIN_REACH or shape["anchor"] == ANCHOR_FORWARD:
+		return false
+	return not has_tag(recipe, TAG_ARCING)
 
 
 static func has_effect(recipe: Dictionary, effect_name: String) -> bool:

@@ -156,3 +156,10 @@
   HitModifiers list (rounded once); AI scores through it; aim labels and inspect arc tint. Parity fixture retired.
 - 129 tests pass. Awaiting Jess's feel test.
 - Jess's feel test passed; #17 closed. Guard hook fixed: heredoc stripping hid any git command after it.
+
+## 2026-11-17, #18 line of sight (built)
+- Opened with Jess: tags are all 21 pokeapi flags plus arcing; centre-to-centre lines, lenient corners; walls block
+  and shelter; non-arcing centred moves stop at the first unit (blasts burst there); areas hit everyone. Range from
+  height stays for every ranged move (rulings line-of-sight-rules, height-range-all-ranged). Free aim is #29.
+- Built: tags in the export and wiki, new SightLine, MoveArea sight, landing and shelter, MoveUse and AI use the
+  landing cell, grey walled tint and "No line of sight" label. 140 tests pass. Awaiting Jess's feel test.

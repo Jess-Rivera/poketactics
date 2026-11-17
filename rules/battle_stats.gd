@@ -98,13 +98,20 @@ static func level_damage(level: int, multiplier: float) -> int:
 	return 0 if multiplier == 0.0 else level
 
 
-## Whether a move hits: no accuracy value or 100 always hits, otherwise one roll against its accuracy.
-## Reach and environment (range, line of sight, height) are checked by the battle, not here.
-static func rolls_hit(move: Dictionary, random: RandomNumberGenerator) -> bool:
+## The chance from 0 to 1 that a move hits: no accuracy value or 100 always hits, otherwise its accuracy out of 100.
+static func hit_chance(move: Dictionary) -> float:
 	var accuracy = move.get("accuracy")
 	if accuracy == null or int(accuracy) >= ALWAYS_HITS_ACCURACY:
+		return 1.0
+	return float(accuracy) / ALWAYS_HITS_ACCURACY
+
+
+## Whether a move hits: one roll against its hit chance, or none when it always hits.
+## Reach and environment (range, line of sight, height) are checked by the battle, not here.
+static func rolls_hit(move: Dictionary, random: RandomNumberGenerator) -> bool:
+	if hit_chance(move) >= 1.0:
 		return true
-	return random.randi_range(1, ALWAYS_HITS_ACCURACY) <= int(accuracy)
+	return random.randi_range(1, ALWAYS_HITS_ACCURACY) <= int(move["accuracy"])
 
 
 ## Whether a hit is critical, from the crit stage (the move's critical_hit_stage, later plus other boosts).

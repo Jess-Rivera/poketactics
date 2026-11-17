@@ -4,13 +4,14 @@ extends Node3D
 ## time, fastest first; the active unit is selected and the camera pans to it. Click a lit tile, choose a facing,
 ## and it walks there (once per turn). Keys 1 to 4 aim one of its moves (once per turn, issue #10,
 ## docs/discussion-outputs/use-a-move-opening.md): the target cells and the area are lit, click or Enter uses it.
-## Click another unit to inspect its range. Space ends the turn after a facing choice. Until the enemy AI (#11) the
-## player controls both sides.
+## Click another unit to inspect its range. Space ends the turn after a facing choice. The player controls only the
+## player side; enemy units choose with TurnAi (#11, docs/discussion-outputs/enemy-turn-opening.md) and play their
+## turn out with short pauses: camera, walk, area preview, strike, facing.
 ## Q and E rotate, WASD or the arrow keys pan, wheel or + and - zoom, Tab shows the unit panel. F1, F2 and F3
 ## restart the battle as a wild, trainer or boss encounter with a new seed (#16): 6 player units against 2 to 4,
 ## 3 to 6 or 6 enemies.
 
-enum Mode { READY, INSPECTING, CHOOSING_FACING, WALKING, ENDING_TURN, AIMING, RESOLVING }
+enum Mode { READY, INSPECTING, CHOOSING_FACING, WALKING, ENDING_TURN, AIMING, RESOLVING, AI_TURN }
 
 const BACKGROUND_COLOUR := Color(0.11, 0.12, 0.15)
 const IDLE_ANIMATION := "Idle"
@@ -30,6 +31,11 @@ const HURT_ANIMATION := "Hurt"
 const NO_MOVE := -1
 const DAMAGE_TEXT_COLOUR := Color(1.0, 1.0, 1.0)
 const QUIET_TEXT_COLOUR := Color(0.7, 0.7, 0.7)
+## The side TurnAi plays (2026-11-17-enemy-ai-m1); a hotseat toggle comes with #15.
+const AI_SIDE := Battle.Side.ENEMY
+## Seconds an AI unit waits after the camera reaches it, and while its move's area is shown before the strike.
+const AI_THINK_SECONDS := 0.4
+const AI_PREVIEW_SECONDS := 0.5
 
 ## Kept across a scene reload, so keys 1 to 3 restart with the chosen encounter kind.
 static var encounter_kind := TestBattleSetup.EncounterKind.TRAINER
@@ -63,6 +69,12 @@ var _chosen_facing := Facing.Direction.SOUTH
 var _aimed_move_index := NO_MOVE
 ## Where a cone or line is aimed, from the mouse.
 var _aim_direction := Facing.Direction.SOUTH
+## The AI unit's choice for the turn being played out.
+var _ai_choice: TurnAi.Choice
+## The tiles an AI move will cover, lit before it strikes.
+var _ai_preview_cells: Array[Vector2i] = []
+## Times the AI pauses; a child of this scene, so a restart mid-turn drops its pending step.
+var _pause_timer: Timer
 
 
 func _ready() -> void:
@@ -130,6 +142,10 @@ func _ready() -> void:
 	hint_layer.add_child(_turn_label)
 	add_child(hint_layer)
 
+	_pause_timer = Timer.new()
+	_pause_timer.one_shot = true
+	add_child(_pause_timer)
+
 	_begin_turn()
 
 
@@ -158,6 +174,11 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	var key_event := event as InputEventKey
+	if key_event != null and key_event.pressed and ENCOUNTER_KEYS.has(key_event.keycode):
+		encounter_kind = ENCOUNTER_KEYS[key_event.keycode]
+		get_tree().reload_current_scene()
+		return
 	if _is_busy() or _active_unit == null:
 		return
 	var mouse_button := event as InputEventMouseButton
@@ -167,13 +188,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif mouse_button.button_index == MOUSE_BUTTON_RIGHT:
 			_step_back()
 		return
-	var key_event := event as InputEventKey
 	if key_event == null or not key_event.pressed or key_event.echo:
 		return
-	if ENCOUNTER_KEYS.has(key_event.keycode):
-		encounter_kind = ENCOUNTER_KEYS[key_event.keycode]
-		get_tree().reload_current_scene()
-	elif key_event.keycode in MOVE_KEYS and _mode in [Mode.READY, Mode.INSPECTING, Mode.AIMING]:
+	if key_event.keycode in MOVE_KEYS and _mode in [Mode.READY, Mode.INSPECTING, Mode.AIMING]:
 		_pick_move(MOVE_KEYS.find(key_event.keycode))
 	elif key_event.keycode in CONFIRM_KEYS and _mode == Mode.AIMING:
 		_use_aimed_move()
@@ -183,7 +200,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_start_ending_turn()
 
 
-## Selects the new active unit, shows its range and pans the camera to it.
+## Selects the new active unit and pans the camera to it: a player unit shows its range, an AI unit starts playing
+## out its choice.
 func _begin_turn() -> void:
 	_active_unit = _turn_order.active_unit()
 	_turn_bar.show_forecast(_turn_order.forecast(TurnBar.ENTRY_COUNT))
@@ -192,14 +210,19 @@ func _begin_turn() -> void:
 		_move_menu.show_moves(null, _pack, NO_MOVE, false)
 		_tile_highlight.clear()
 		return
-	_turn_label.text = "%s   Round %d   %s (%s)   Space: end turn" % [
+	var is_ai_turn := _active_unit.side == AI_SIDE
+	_turn_label.text = "%s   Round %d   %s (%s)   %s" % [
 		TestBattleSetup.ENCOUNTER_NAMES[encounter_kind],
 		_turn_order.round_number,
 		_pack.unit(_active_unit.unit_name)["english_name"],
 		SIDE_LABELS[_active_unit.side],
+		"Thinking" if is_ai_turn else "Space: end turn",
 	]
-	_show_active()
 	_camera_rig.pan_to(_battle_map.top_center(_active_unit.cell))
+	if is_ai_turn:
+		_start_ai_turn()
+	else:
+		_show_active()
 
 
 ## Back to the active unit: its range if it may still move, nothing inspected.
@@ -292,7 +315,7 @@ func _direction_under_mouse(anchor_cell: Vector2i, ray_origin: Vector3, ray_dire
 
 
 func _is_busy() -> bool:
-	return _mode == Mode.WALKING or _mode == Mode.RESOLVING
+	return _mode in [Mode.WALKING, Mode.RESOLVING, Mode.AI_TURN]
 
 
 ## Starts aiming one of the active unit's moves, if it may still act.
@@ -326,9 +349,13 @@ func _aimed_move_use() -> MoveUse:
 
 
 func _use_aimed_move() -> void:
-	var move_use := _aimed_move_use()
+	_play_move_use(_aimed_move_use())
+
+
+## Uses the move through the turn order and plays the attack; returns false (and changes nothing) if not allowed.
+func _play_move_use(move_use: MoveUse) -> bool:
 	if not _turn_order.use_move(move_use, _random):
-		return
+		return false
 	_mode = Mode.RESOLVING
 	_tile_highlight.clear()
 	_tile_highlight.cursor_cell = CellPicker.NO_CELL
@@ -338,11 +365,12 @@ func _use_aimed_move() -> void:
 	if user_sprite == null:
 		_show_outcomes(move_use)
 		_after_move(move_use)
-		return
+		return true
 	user_sprite.show_unit_facing()
 	user_sprite.hit_landed.connect(_show_outcomes.bind(move_use), CONNECT_ONE_SHOT)
 	user_sprite.play_once_finished.connect(_after_move.bind(move_use), CONNECT_ONE_SHOT)
 	user_sprite.play_once(ATTACK_ANIMATION)
+	return true
 
 
 ## At the attack's hit frame: each unit hit flinches and shows its damage, or "Miss"; fainted units fade out.
@@ -379,6 +407,7 @@ func _outcome_text(outcome: MoveUse.Outcome) -> String:
 
 
 ## After the attack: the panels catch up, and a user that fainted (Self-Destruct) fades and the next unit begins.
+## An AI unit then ends its turn; a player unit goes back to its menu.
 func _after_move(move_use: MoveUse) -> void:
 	_unit_panel.refresh()
 	_hovered_cell = CellPicker.NO_CELL
@@ -388,25 +417,33 @@ func _after_move(move_use: MoveUse) -> void:
 			user_sprite.fade_out()
 		_begin_turn()
 		return
+	if move_use.user.side == AI_SIDE:
+		_finish_ai_turn()
+		return
 	_turn_bar.show_forecast(_turn_order.forecast(TurnBar.ENTRY_COUNT))
 	_show_active()
 
 
 func _start_walk() -> void:
-	var path: Array[Vector2i] = _reachable_paths[_target_cell]
+	if not _play_walk(_reachable_paths[_target_cell], _chosen_facing, _after_walk):
+		_show_active()
+
+
+## Walks the active unit through the turn order and plays the walk, then calls on_finished; returns false (and
+## changes nothing) if it may not move.
+func _play_walk(path: Array[Vector2i], end_facing: Facing.Direction, on_finished: Callable) -> bool:
 	var unit := _active_unit
 	var start_cell := unit.cell
-	if not _turn_order.move_unit(unit, path, _chosen_facing):
-		_show_active()
-		return
+	if not _turn_order.move_unit(unit, path, end_facing):
+		return false
 	_mode = Mode.WALKING
 	_tile_highlight.clear()
 	_tile_highlight.cursor_cell = CellPicker.NO_CELL
 	_tile_highlight.refresh()
 	var unit_sprite: UnitSprite = _sprites_by_unit.get(unit)
 	if unit_sprite == null:
-		_after_walk()
-		return
+		on_finished.call()
+		return true
 	var step_feet_positions: Array[Vector3] = []
 	var step_facings: Array[Facing.Direction] = []
 	var previous_cell := start_cell
@@ -414,13 +451,65 @@ func _start_walk() -> void:
 		step_feet_positions.append(_battle_map.top_center(cell))
 		step_facings.append(Facing.direction_of_step(cell - previous_cell))
 		previous_cell = cell
-	unit_sprite.walk_finished.connect(_after_walk, CONNECT_ONE_SHOT)
+	unit_sprite.walk_finished.connect(on_finished, CONNECT_ONE_SHOT)
 	unit_sprite.walk(step_feet_positions, step_facings)
+	return true
 
 
 func _after_walk() -> void:
 	_hovered_cell = CellPicker.NO_CELL
 	_show_active()
+
+
+## An AI unit's turn: choose, wait a moment, then walk, preview and strike as the choice says, then face and end.
+func _start_ai_turn() -> void:
+	_mode = Mode.AI_TURN
+	_inspected_unit = null
+	_reachable_paths = {}
+	_ai_preview_cells.clear()
+	_ai_choice = TurnAi.choose(_battle, _pack, _active_unit)
+	_move_menu.show_moves(_active_unit, _pack, NO_MOVE, false)
+	_refresh_marks()
+	_after_pause(AI_THINK_SECONDS, _play_ai_walk)
+
+
+func _play_ai_walk() -> void:
+	if not _ai_choice.has_walk():
+		_play_ai_move()
+		return
+	var walk_facing := Movement.last_step_facing(_active_unit.cell, _ai_choice.path)
+	if not _play_walk(_ai_choice.path, walk_facing, _play_ai_move):
+		_play_ai_move()
+
+
+## Lights the chosen move's area, then strikes after the preview pause; ends the turn if there is no move.
+func _play_ai_move() -> void:
+	_mode = Mode.AI_TURN
+	if not _ai_choice.has_move():
+		_finish_ai_turn()
+		return
+	var move_use := MoveUse.new(
+		_battle, _pack, _active_unit, _ai_choice.move_name, _ai_choice.target_cell, _ai_choice.direction
+	)
+	_ai_preview_cells = move_use.footprint()
+	_refresh_marks()
+	_after_pause(AI_PREVIEW_SECONDS, _strike_ai_move.bind(move_use))
+
+
+func _strike_ai_move(move_use: MoveUse) -> void:
+	_ai_preview_cells.clear()
+	if not _play_move_use(move_use):
+		_finish_ai_turn()
+
+
+func _finish_ai_turn() -> void:
+	_chosen_facing = _ai_choice.end_facing
+	_finish_turn()
+
+
+func _after_pause(seconds: float, next_step: Callable) -> void:
+	_pause_timer.timeout.connect(next_step, CONNECT_ONE_SHOT)
+	_pause_timer.start(seconds)
 
 
 func _refresh_marks() -> void:
@@ -432,6 +521,8 @@ func _refresh_marks() -> void:
 		var move_use := _aimed_move_use()
 		if move_use.is_allowed():
 			_tile_highlight.move_area_cells = move_use.footprint()
+	elif _mode == Mode.AI_TURN:
+		_tile_highlight.move_area_cells.assign(_ai_preview_cells)
 	_tile_highlight.inspecting = _mode == Mode.INSPECTING
 	_tile_highlight.path_cells.clear()
 	if _mode == Mode.READY or _mode == Mode.CHOOSING_FACING:

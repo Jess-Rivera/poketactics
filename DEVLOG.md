@@ -98,3 +98,11 @@
 ## 2026-11-16, #10 closed
 - Jess feel-tested use a move: passed. #10 closed, board card Shipped. #9 left for Jess to close.
 - Open: whether fixed damage (Night Shade) should skip the 0.5x at range 1. Next: #11 opening.
+
+## 2026-11-17, #11 enemy turn (built)
+- Primer docs/discussion-outputs/enemy-ai-primer.md; opening and plan enemy-turn-opening.md; ruling
+  2026-11-17-enemy-ai-m1 (one-turn scorer, knockouts first, avoid allies, move then act, enemy side always AI).
+- rules/turn_ai.gd scores every stand cell, move and target with no rolls; approach by path when nothing is in reach.
+- Shared helpers: BattleStats.hit_chance, MoveUse.hit_damage, has_effect, deals_damage (behaviour unchanged).
+- View: enemy turns play out (think 0.4 s, walk, area preview 0.5 s, strike); F1 to F3 work at any time.
+- coding-principles skill rewritten for this repo. 6 new tests, 97 in all, pass. Awaiting Jess's feel test.

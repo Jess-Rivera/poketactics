@@ -54,3 +54,4 @@ One file per ruling in docs/decisions/. Each file's `Canonical:` line names the 
 - [2026-11-16-mainline-systems-m2b](docs/decisions/2026-11-16-mainline-systems-m2b.md): Every portable mainline battle system, in its own milestone M2b
 - [2026-11-16-move-shapes-and-range](docs/decisions/2026-11-16-move-shapes-and-range.md): Single, line, cone, circle; self, other, point; areas hit friend and foe; melee 1, ranged 2 to 4 with 0.5x at 1
 - [2026-11-16-use-a-move-m1](docs/decisions/2026-11-16-use-a-move-m1.md): M1 move use: one move and one act per turn, empty targets allowed, damage only
+- [2026-11-17-enemy-ai-m1](docs/decisions/2026-11-17-enemy-ai-m1.md): M1 enemy AI: one-turn scorer, knockouts first, avoid allies, move then act, enemy side always AI

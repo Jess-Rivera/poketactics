@@ -80,11 +80,48 @@ func resolve(random: RandomNumberGenerator) -> void:
 	assert(is_allowed(), "%s cannot be used on %s" % [move_name, target_cell])
 	if _grid_entry["target"] != MoveArea.TARGET_SELF or is_aimed(_grid_entry):
 		user.facing = direction
-	if _has_effect(EFFECT_DAMAGE) or _has_effect(EFFECT_FIXED_DAMAGE):
+	if deals_damage(_grid_entry):
 		for unit in MoveArea.units_hit(_battle, _pack.shapes, _grid_entry, user, target_cell, direction):
 			outcomes.append(_strike(unit, random))
-	if _has_effect(EFFECT_USER_FAINTS):
+	if has_effect(_grid_entry, EFFECT_USER_FAINTS):
 		user.take_damage(user.hit_points)
+
+
+## Whether a move's grid entry carries an effect (EFFECT_DAMAGE, EFFECT_USER_FAINTS and so on).
+static func has_effect(grid_entry: Dictionary, effect_name: String) -> bool:
+	for effect in grid_entry.get("payload", []):
+		if effect["effect"] == effect_name:
+			return true
+	return false
+
+
+## Whether the move damages the units it hits (by the stat formula or a fixed amount).
+static func deals_damage(grid_entry: Dictionary) -> bool:
+	return has_effect(grid_entry, EFFECT_DAMAGE) or has_effect(grid_entry, EFFECT_FIXED_DAMAGE)
+
+
+## The damage one hit does to a unit when the user stands on user_cell and aims at target_cell: fixed level
+## damage or the stat formula, then the 0.5x of a ranged move at range 1. The AI scores with the non-crit value.
+static func hit_damage(
+	pack: PackData,
+	attacker: BattleUnit,
+	defender: BattleUnit,
+	move_name: String,
+	user_cell: Vector2i,
+	target_cell: Vector2i,
+	is_critical_hit: bool
+) -> int:
+	var move := pack.move(move_name)
+	var grid_entry: Dictionary = move["grid"]
+	var amount := 0
+	if has_effect(grid_entry, EFFECT_FIXED_DAMAGE):
+		var multiplier := BattleStats.type_multiplier(pack, move["type"], defender.types)
+		amount = BattleStats.level_damage(attacker.level, multiplier)
+	else:
+		amount = BattleStats.move_damage(pack, attacker, defender, move_name, is_critical_hit)
+	if grid_entry["close_penalty"] and MoveArea.distance(user_cell, target_cell) == 1:
+		amount = BattleStats.close_range_damage(amount)
+	return amount
 
 
 ## Accuracy roll, then crit roll, then damage to one unit.
@@ -95,22 +132,11 @@ func _strike(unit: BattleUnit, random: RandomNumberGenerator) -> Outcome:
 	outcome.is_hit = BattleStats.rolls_hit(_move, random)
 	if not outcome.is_hit:
 		return outcome
-	if _has_effect(EFFECT_FIXED_DAMAGE):
-		outcome.damage = BattleStats.level_damage(user.level, outcome.type_multiplier)
-	else:
+	if not has_effect(_grid_entry, EFFECT_FIXED_DAMAGE):
 		outcome.is_critical_hit = BattleStats.rolls_critical_hit(_critical_hit_stage(), random)
-		outcome.damage = BattleStats.move_damage(_pack, user, unit, move_name, outcome.is_critical_hit)
-	if _grid_entry["close_penalty"] and MoveArea.distance(user.cell, target_cell) == 1:
-		outcome.damage = BattleStats.close_range_damage(outcome.damage)
+	outcome.damage = hit_damage(_pack, user, unit, move_name, user.cell, target_cell, outcome.is_critical_hit)
 	unit.take_damage(outcome.damage)
 	return outcome
-
-
-func _has_effect(effect_name: String) -> bool:
-	for effect in _grid_entry["payload"]:
-		if effect["effect"] == effect_name:
-			return true
-	return false
 
 
 func _critical_hit_stage() -> int:

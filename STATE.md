@@ -23,7 +23,7 @@ Updated 2026-11-17.
   footprints in data/shapes.json, rules/move_area.gd gives tiles hit.
 - Use a move (#10, shipped): rules/move_use.gd, keys 1 to 4, area preview, HP bars, faint.
 - Enemy turn (#11, shipped): rules/turn_ai.gd one-turn scorer; enemies play out with pauses.
-- Win, lose (#12, built): rout ends the battle in rules; view/end_screen.gd, Same or New battle. Feel test owed.
+- Win, lose (#12, built): rout ends the battle in rules; end screen with Same or New battle.
 - Tests: 103 gdUnit4 tests plus the pack and portrait checks, `tools\run-tests.cmd` (see CONTEXT.md).
 
 ## Next

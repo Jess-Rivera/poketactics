@@ -21,9 +21,7 @@ Updated 2026-11-17.
   in the turn bar.
 - Move schema (#9, built): grid entry for the 45 roster moves in data/moves.json, overrides in authored/,
   footprints in data/shapes.json, rules/move_area.gd gives tiles hit.
-- Use a move (#10, shipped): rules/move_use.gd, keys 1 to 4, area preview, HP bars, faint.
-- Enemy turn (#11, shipped): rules/turn_ai.gd one-turn scorer; enemies play out with pauses.
-- Win, lose (#12, shipped): rout ends the battle in rules; end screen. M1 done.
+- Shipped, M1 done: use a move (#10, rules/move_use.gd), enemy AI (#11, rules/turn_ai.gd), rout and end screen (#12).
 - Hotseat (#15, built): start menu, blind picks from 12 units, handover banner and camera turn. Feel test owed.
 - Tests: 109 gdUnit4 tests plus the pack and portrait checks, `tools\run-tests.cmd` (see CONTEXT.md).
 

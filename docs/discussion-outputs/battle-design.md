@@ -4,8 +4,10 @@ Date: 2026-11-16. Source: battle mechanics sub-grilling with Jess (#14). Parent:
 Rulings: the 2026-11-16 battle files in DECISIONS.md (strike-rank-clock to mainline-systems-m2b).
 
 ## Strike rank clock [Approved]
-- Base SR from a size band (height and weight), Speed adjusting by at most about one band. [Proposed] range 1 to 4.
-- Battle start: every unit at its base SR. A turn is a **move or an act**. Next turn = now + cost + base SR.
+- Base SR 0 to 4 from one size score (log height and weight), ranked 10/20/40/20/10%; Speed nudges by 1
+  (2026-11-17-size-bands).
+- Battle start: every unit at its base SR. A turn is a **move, an act or a Wait**, then a free facing choice.
+  Next turn = now + cost + base SR; a Wait of w lands at now + w and goes first on that SR (2026-11-17-wait-action).
 - Rounds are 12 SR; the clock position carries across rounds; upkeep happens between SR 12 and SR 1.
 - Same SR: higher Speed first, then a seeded tie-break. "N turns" durations count rounds.
 
@@ -21,11 +23,13 @@ Jess's example (Bulbasaur, base SR 1):
 flowchart LR
     START[Battle start<br/>each unit at base SR] --> TICK{Next SR with a unit}
     TICK --> TURN{Move or act?}
-    TURN -->|move| MOVE["Walk<br/>1 SR per 2 flat tiles<br/>1 SR per elevation change<br/>terrain costs"]
+    TURN -->|move| MOVE["Walk, by segment<br/>flat: round up tiles / 2<br/>climb: 1 per level<br/>drop: round up levels / 2<br/>terrain costs; cap 12 SR"]
     TURN -->|act| ACT["Use a move (SR from PP bands)<br/>or push (flat SR)"]
+    TURN -->|wait| WAIT["Wait w SR<br/>next turn = now + w"]
     MOVE --> NEXT[Next turn = now + cost + base SR]
     ACT --> NEXT
     NEXT --> TICK
+    WAIT --> TICK
     TICK -->|past SR 12| UPKEEP["Upkeep step<br/>status countdowns, poison and burn,<br/>weather, tile spread and fade"]
     UPKEEP --> TICK
 ```

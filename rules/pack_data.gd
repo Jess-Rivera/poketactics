@@ -12,6 +12,8 @@ var units: Dictionary
 var moves: Dictionary
 var abilities: Dictionary
 var types: Dictionary
+## The shape footprint table (data/shapes.json), read by MoveArea.
+var shapes: Dictionary
 
 
 ## The pack, read from disk on first use and kept for the rest of the run.
@@ -22,6 +24,7 @@ static func shared() -> PackData:
 		_shared.moves = _read_pack_file("moves.json")
 		_shared.abilities = _read_pack_file("abilities.json")
 		_shared.types = _read_pack_file("types.json")
+		_shared.shapes = _read_pack_file("shapes.json")
 	return _shared
 
 

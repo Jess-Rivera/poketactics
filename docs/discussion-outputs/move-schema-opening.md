@@ -1,4 +1,4 @@
-# #9 opening: move translation schema [Proposed]
+# #9 opening: move translation schema [Approved]
 
 Date: 2026-11-16. Issue: #9. Rulings: 2026-11-15-move-grid-translation, 2026-11-16-move-schema-adaptation,
 2026-11-16-act-cost, 2026-11-16-height-and-sight, 2026-11-16-environment-model, 2026-11-16-push-and-collision.
@@ -118,7 +118,7 @@ is circle {point} radius 1. All in 2026-11-16-move-shapes-and-range.
 Note: a 60 degree cone of length 3 covers 1, 3 and 3 tiles by row (7 in all). Row 1 is a single tile because its
 side tiles sit at 45 degrees.
 
-## Plan [Proposed]
+## Plan [Approved]
 ```mermaid
 flowchart TD
     CSV["source/pokeapi/csv<br/>moves, move_flag_map (contact)"] --> EXP
@@ -171,3 +171,64 @@ designed (a resize is just a re-export). The SR bands are placeholders.
 
 **Decisions in this plan.** (a) The authored/ folder name. (b) Table bounds: radius 1 to 6, spread 15 to 360
 degrees in 15 degree steps. (c) Relation 10 moves to #10.
+
+## Review table: the 45 resolved entries (before commit)
+
+Ranged single moves reach 1 to 4 with half damage at 1 (the ruling's "2 to 4, 0.5x at 1"). Overrides so far:
+Self-Destruct adds user_faints. Mark any row to change; an override is one line in authored/move_grid_overrides.json.
+
+| Move | Class | Contact | Shape | Size | Reach | SR | Element | Effects |
+|---|---|---|---|---|---|---|---|---|
+| Aqua Tail | physical | yes | single {other} | 1 tile | 1 to 1 | 5 | water | damage |
+| Assurance | physical | yes | single {other} | 1 tile | 1 to 1 | 5 | dark | damage |
+| Bite | physical | yes | single {other} | 1 tile | 1 to 1 | 3 | dark | damage, flinch |
+| Cross Chop | physical | yes | single {other} | 1 tile | 1 to 1 | 6 | fighting | damage |
+| Feint | physical | no | single {other} | 1 tile | 1 to 4 (0.5x at 1) | 5 | normal | damage |
+| Fire Fang | physical | yes | single {other} | 1 tile | 1 to 1 | 4 | fire | damage, ailment burn, flinch |
+| Iron Tail | physical | yes | single {other} | 1 tile | 1 to 1 | 4 | steel | damage, stat defense -1 (target) |
+| Knock Off | physical | yes | single {other} | 1 tile | 1 to 1 | 4 | dark | damage |
+| Rock Blast | physical | no | single {other} | 1 tile | 1 to 4 (0.5x at 1) | 5 | rock | damage, multi_hit |
+| Self-Destruct | physical | no | circle {self} | r1 | self | 6 | normal | damage, user_faints |
+| Slash | physical | yes | single {other} | 1 tile | 1 to 1 | 4 | normal | damage |
+| Smack Down | physical | no | single {other} | 1 tile | 1 to 4 (0.5x at 1) | 4 | rock | damage, ailment unknown |
+| Spark | physical | yes | single {other} | 1 tile | 1 to 1 | 4 | electric | damage, ailment paralysis |
+| Strength | physical | yes | single {other} | 1 tile | 1 to 1 | 4 | normal | damage |
+| Take Down | physical | yes | single {other} | 1 tile | 1 to 1 | 4 | normal | damage, recoil |
+| Thrash | physical | yes | single {other} | 1 tile | 1 to 1 | 5 | normal | damage |
+| Vital Throw | physical | yes | single {other} | 1 tile | 1 to 1 | 5 | fighting | damage |
+| Aurora Beam | special | no | single {other} | 1 tile | 1 to 4 (0.5x at 1) | 4 | ice | damage, stat attack -1 (target) |
+| Extrasensory | special | no | single {other} | 1 tile | 1 to 4 (0.5x at 1) | 4 | psychic | damage, flinch |
+| Flamethrower | special | no | single {other} | 1 tile | 1 to 4 (0.5x at 1) | 4 | fire | damage, ailment burn |
+| Giga Drain | special | no | single {other} | 1 tile | 1 to 4 (0.5x at 1) | 5 | grass | damage, drain |
+| Hex | special | no | single {other} | 1 tile | 1 to 4 (0.5x at 1) | 5 | ghost | damage |
+| Icy Wind | special | no | cone {self} | r3 60 deg | self | 4 | ice | damage, stat speed -1 (target) |
+| Incinerate | special | no | cone {self} | r3 60 deg | self | 4 | fire | damage |
+| Moonblast | special | no | single {other} | 1 tile | 1 to 4 (0.5x at 1) | 4 | fairy | damage, stat special_attack -1 (target) |
+| Night Shade | special | no | single {other} | 1 tile | 1 to 4 (0.5x at 1) | 4 | ghost | damage |
+| Swift | special | no | cone {self} | r3 60 deg | self | 4 | normal | damage |
+| Agility | status | no | single {self} | 1 tile | self | 3 | - | stat speed +2 (user) |
+| Baby-Doll Eyes | status | no | single {other} | 1 tile | 1 to 4 | 3 | - | stat attack -1 (target) |
+| Confuse Ray | status | no | single {other} | 1 tile | 1 to 4 | 5 | - | ailment confusion |
+| Copycat | status | no | single {self} | 1 tile | self | 4 | - | needs_rule unique |
+| Curse | status | no | single {other} | 1 tile | 1 to 4 | 5 | - | needs_rule unique |
+| Iron Defense | status | no | single {self} | 1 tile | self | 4 | - | stat defense +2 (user) |
+| Rain Dance | status | no | single {self} | 1 tile | self | 6 | - | needs_rule whole-field-effect |
+| Scary Face | status | no | single {other} | 1 tile | 1 to 4 | 5 | - | stat speed -2 (target) |
+| Shell Smash | status | no | single {self} | 1 tile | self | 4 | - | stat attack +2 (user), stat defense -1 (user), stat special_attack +2 (user), stat special_defense -1 (user), stat speed +2 (user), needs_rule unique |
+| Sleep Powder | status | no | single {other} | 1 tile | 1 to 4 | 4 | - | ailment sleep |
+| Spite | status | no | single {other} | 1 tile | 1 to 4 | 5 | - | needs_rule unique |
+| Stealth Rock | status | no | circle {point} | r1 | 1 to 4 | 4 | - | needs_rule field-effect |
+| Swagger | status | no | single {other} | 1 tile | 1 to 4 | 4 | - | ailment confusion, stat attack +2 (target), needs_rule swagger |
+| Sweet Scent | status | no | cone {self} | r3 60 deg | self | 4 | - | stat evasion -2 (target) |
+| Synthesis | status | no | single {self} | 1 tile | self | 6 | - | heal |
+| Toxic | status | no | single {other} | 1 tile | 1 to 4 | 5 | - | ailment poison |
+| Will-O-Wisp | status | no | single {other} | 1 tile | 1 to 4 | 4 | - | ailment burn |
+| Worry Seed | status | no | single {other} | 1 tile | 1 to 4 | 5 | - | needs_rule unique |
+
+Worth a look: Feint, Rock Blast and Smack Down (physical, no contact, so ranged); Curse (single {other} by
+default, but the non-Ghost version raises the user's own stats); Thrash (random-opponent, here a melee single);
+Swift and Icy Wind as cones; Night Shade has no power (fixed damage, a rule for #10).
+
+## Review outcome (2026-11-16)
+Jess approved the 45 entries as resolved, with no more overrides. Follow-up for a later move review pass:
+Flamethrower reads more like a line or cone than single {other}.

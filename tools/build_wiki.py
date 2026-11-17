@@ -292,6 +292,7 @@ class Wiki:
             ("PP", dash(move["pp"])),
             ("Priority", move["priority"]),
             ("Target", escape(words(move["target"]))),
+            ("Contact", "yes" if move["contact"] else "no"),
             ("Effect chance", f"{move['effect_chance']}%" if move["effect_chance"] is not None else "-"),
             ("Generation", move["generation"]),
         ]
@@ -323,6 +324,22 @@ class Wiki:
                 chance = f" ({details['stat_chance']}%)" if details["stat_chance"] else ""
                 detail_rows.append(("Stat changes", changes + chance))
             sections.append("<h2>Battle details</h2><table class=\"facts\">" + "".join(f"<tr><th>{label}</th><td>{value}</td></tr>" for label, value in detail_rows) + "</table>")
+        grid = move["grid"]
+        if grid:
+            size = {"line": f"length {grid.get('length')}", "cone": f"radius {grid.get('radius')}, {grid.get('spread_degrees')} degrees",
+                    "circle": f"radius {grid.get('radius')}"}.get(grid["shape"], "one tile")
+            reach = "the user" if grid["target"] == "self" else f"{grid['range_min']} to {grid['range_max']} tiles"
+            effects = ", ".join(escape(words(effect["effect"])) for effect in grid["payload"]) or "-"
+            grid_rows = [
+                ("Shape", f"{escape(grid['shape'])} from {escape(grid['target'])}"),
+                ("Size", escape(size)),
+                ("Reach", escape(reach) + (" (half damage at 1)" if grid["close_penalty"] else "")),
+                ("Strike rank cost", f"{grid['sr_cost']} SR"),
+                ("Tile element", escape(grid["tile_element"]) if grid["tile_element"] else "-"),
+                ("Arcing", "yes" if grid["arcing"] else "no"),
+                ("Effects", effects),
+            ]
+            sections.append("<h2>On the grid</h2><table class=\"facts\">" + "".join(f"<tr><th>{label}</th><td>{value}</td></tr>" for label, value in grid_rows) + "</table>")
         learners = self.learners_of_move.get(move_name, [])
         sections.append(f"<h2>Learned by ({len({name for name, _ in learners})} units)</h2>")
         by_method = defaultdict(list)

@@ -80,3 +80,10 @@
 - #9 opening drafted in move-schema-opening.md: the fork's three axes adapted to tiles, default rules from
   pokeapi target, damage class and the contact flag (to be exported), 8 relation tests, the 45 roster moves to
   review, and six questions (Q1 to Q6) for Jess.
+
+## 2026-11-16, #9 move translation schema (built)
+- Every M1 roster move (45) has a grid entry in data/moves.json (shape, target, range, SR cost, tile element,
+  payload), derived from pokeapi with hand-written overrides in the new authored/ folder; contact on all 919.
+- data/shapes.json holds circle and cone footprints; rules/move_area.gd returns tiles and units hit.
+- 8 relation tests, 79 in all, pass. Wiki move pages show the grid entry. Jess approved the review table.
+- Follow-up: Flamethrower as a line or cone (later move review). Relation 10 (0.5x at range 1) moved to #10.

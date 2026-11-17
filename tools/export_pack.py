@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Export the pinned pokeapi CSVs (source/pokeapi/csv) into the game's JSON data pack (data/).
 
-Writes data/units.json, data/moves.json, data/abilities.json, data/types.json and data/README.md.
+Writes data/units.json, data/moves.json, data/abilities.json, data/types.json, data/shapes.json and data/README.md.
 Every entry is keyed by its pokeapi name (vulpix-alola, ember); the pokeapi number is kept as pokeapi_id.
 
 Shaped by the rulings in docs/decisions/ (2026-11-15-*):
   unit-is-pokemon-variant, variant-scope   units are species defaults plus regional forms
   mega-gmax-transform                      Mega, Gigantamax and Primal attach to their base unit
   learnset-game, learn-methods             one learnset game per unit, all four learn methods kept
-Plan: docs/discussion-outputs/data-pack-plan.md (issue #2).
+Plan: docs/discussion-outputs/data-pack-plan.md (issue #2). Move grid entries and the shape table come from
+tools/move_grid.py and authored/move_grid_overrides.json (issue #9, move-schema-opening.md).
 
 Python 3 standard library only. Output is deterministic: sorted keys, LF, UTF-8, scalar-only lists and objects on
 one line (so one learnset entry is one line).
@@ -27,13 +28,16 @@ import tempfile
 from collections import defaultdict
 from pathlib import Path
 
+import move_grid
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CSV_FOLDER = REPO_ROOT / "source" / "pokeapi" / "csv"
 PIN_NOTE = REPO_ROOT / "source" / "pokeapi" / "README.md"
 PACK_FOLDER = REPO_ROOT / "data"
 SPRITE_TRACKER = REPO_ROOT / "source" / "spritecollab" / "tracker.json"
 PACKED_SPRITE_FOLDER = REPO_ROOT / "assets" / "pokemon"
-PACK_FILES = ["units.json", "moves.json", "abilities.json", "types.json", "README.md"]
+MOVE_GRID_OVERRIDES = REPO_ROOT / "authored" / "move_grid_overrides.json"
+PACK_FILES = ["units.json", "moves.json", "abilities.json", "types.json", "shapes.json", "README.md"]
 
 ENGLISH = "9"
 REGIONS = ["alola", "galar", "hisui", "paldea"]
@@ -142,6 +146,8 @@ class Source:
         self.move_names = english_by(read_table("move_names"), "move_id", "name")
         self.move_effects = english_by(read_table("move_effect_prose"), "move_effect_id", "short_effect")
         self.move_meta = by_id(read_table("move_meta"), "move_id")
+        contact_flag = next(row["id"] for row in read_table("move_flags") if row["identifier"] == "contact")
+        self.contact_move_ids = {row["move_id"] for row in read_table("move_flag_map") if row["move_flag_id"] == contact_flag}
         self.damage_classes = by_id(read_table("move_damage_classes"))
         self.move_targets = by_id(read_table("move_targets"))
         self.meta_categories = by_id(read_table("move_meta_categories"))
@@ -471,6 +477,7 @@ def build_moves(source):
             "effect": effect,
             "effect_source": effect_source,
             "battle_details": battle_details,
+            "contact": move_id in source.contact_move_ids,
         }
     return moves, flavor_count
 
@@ -535,7 +542,7 @@ def pinned_commit():
     return match.group(1) if match else "unknown"
 
 
-def readme(units, moves, abilities, types, left_out, dropped, flavor_count):
+def readme(units, moves, abilities, types, left_out, dropped, flavor_count, grid_count):
     regional = defaultdict(int)
     games = defaultdict(int)
     transformation_kinds = defaultdict(int)
@@ -560,9 +567,10 @@ def readme(units, moves, abilities, types, left_out, dropped, flavor_count):
         f"| units.json | {len(units)} ({sum(1 for u in units.values() if u['is_species_default'])} species defaults, "
         + ", ".join(f"{region} {regional[region]}" for region in REGIONS)
         + ") |",
-        f"| moves.json | {len(moves)} (Shadow moves left out) |",
+        f"| moves.json | {len(moves)} (Shadow moves left out; {grid_count} with a grid entry) |",
         f"| abilities.json | {len(abilities)} (main series) |",
         f"| types.json | {len(types)} |",
+        f"| shapes.json | footprint table, radius 1 to {move_grid.RADIUS_LIMIT}, spread in {move_grid.SPREAD_STEP_DEGREES} degree steps |",
         "",
         "| Learnset game | Units |",
         "|---|---|",
@@ -579,6 +587,10 @@ def readme(units, moves, abilities, types, left_out, dropped, flavor_count):
         "- gender_rate: chance of female in eighths; -1 means genderless.",
         "- types.json `against`: damage multiplier of the attacking type (the entry) on each defending type.",
         "- A learnset entry's level is present only for level-up moves; 0 means learned on evolution.",
+        "- A move's `contact` is pokeapi's contact flag. Its `grid` (null for moves no slice fields yet) is described in",
+        "  tools/move_grid.py; ranges are grid steps, sr_cost is strike rank (placeholder bands).",
+        "- shapes.json: every tile around an origin for a shape aimed east, with the smallest circle radius and cone",
+        "  spread that cover it (a tile is in when its centre lies within radius + 0.5).",
         "",
         "## Units and transformations without a sprite set",
         "",
@@ -608,15 +620,17 @@ def write_pack(folder):
     source = Source()
     units, left_out, dropped = build_units(source, SpriteSets())
     moves, flavor_count = build_moves(source)
+    grid_count = move_grid.add_grid_entries(moves, MOVE_GRID_OVERRIDES)
     abilities = build_abilities(source)
     types = build_types(source)
     folder.mkdir(parents=True, exist_ok=True)
     contents = {
         "units.json": to_json(units) + "\n",
         "moves.json": to_json(moves) + "\n",
+        "shapes.json": to_json(move_grid.shape_table()) + "\n",
         "abilities.json": to_json(abilities) + "\n",
         "types.json": to_json(types) + "\n",
-        "README.md": readme(units, moves, abilities, types, left_out, dropped, flavor_count),
+        "README.md": readme(units, moves, abilities, types, left_out, dropped, flavor_count, grid_count),
     }
     for name, text in contents.items():
         with open(folder / name, "w", encoding="utf-8", newline="\n") as handle:

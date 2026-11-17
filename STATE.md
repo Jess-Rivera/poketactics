@@ -21,13 +21,16 @@ Updated 2026-11-16.
   hotseat until #11.
 - 6 a side (#16, shipped): wild, trainer, boss enemy counts (keys 1 to 3); portraits packed one sheet per
   emotion and colour in assets/portraits/ (tools/pack_portraits.py), shown in the turn bar.
-- Tests: 71 gdUnit4 tests plus the pack and portrait rerun checks, `tools\run-tests.cmd` (needs Python 3; see CONTEXT.md).
+- Move schema (#9, built): grid entry for the 45 roster moves in data/moves.json, overrides in authored/,
+  footprints in data/shapes.json, rules/move_area.gd gives tiles hit.
+- Tests: 79 gdUnit4 tests plus the pack and portrait rerun checks, `tools\run-tests.cmd` (needs Python 3; see CONTEXT.md).
 
 ## Next
 Design: game-design.md (Kanto run roguelite), battle-design.md (strike rank clock, positioning, tiles).
 Roadmap: development-plan.md (M1, M1b hotseat, M2 battle depth, M2b mainline systems, M3 run layer, M4, M5).
-1. #9 opening drafted (move-schema-opening.md): Jess answers Q1 to Q6 and approves goal, done-when, test.
-2. Then #10 to #12, then #15 hotseat. Sub-grillings #20, #23 before their M2 slices.
+1. #10 use a move: opening drafted (use-a-move-opening.md), Jess approves goal, done-when, test.
+   #9 awaits Jess closing it.
+2. Then #11, #12, then #15 hotseat. Sub-grillings #20, #23 before their M2 slices.
 
 ## Open decisions
 | Decision | Blocks | Note |

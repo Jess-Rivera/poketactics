@@ -27,8 +27,7 @@ Updated 2026-11-17.
 - Tests: 103 gdUnit4 tests plus the pack and portrait checks, `tools\run-tests.cmd` (see CONTEXT.md).
 
 ## Next
-Design: game-design.md (Kanto run roguelite), battle-design.md (strike rank clock, positioning, tiles).
-Roadmap: development-plan.md (M1, M1b hotseat, M2 battle depth, M2b mainline systems, M3 run layer, M4, M5).
+Design: game-design.md, battle-design.md. Roadmap: development-plan.md (M1, M1b hotseat, M2, M2b, M3 to M5).
 1. Jess plays a full battle for #12 (M1 done when it passes); closes #9.
 2. Then #15 hotseat. #25 (show the AI's choice) later. Sub-grillings #20, #23 before M2.
 

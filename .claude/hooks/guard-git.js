@@ -73,8 +73,10 @@ function checkGh(command, args) {
 }
 
 // Drop heredoc bodies and quoted text so words inside commit messages never trigger a rule.
+// Only up to each heredoc's end marker: commands after it are still checked. A heredoc with no end marker keeps
+// its body (a false block is safer than a missed command).
 function strip(command) {
-  return command.replace(/<<-?\s*['"]?\w+['"]?[\s\S]*$/, '');
+  return command.replace(/<<-?\s*(['"]?)(\w+)\1([^\n]*)\n[\s\S]*?\n[ \t]*\2[ \t]*(?=\n|$)/g, '$3');
 }
 function stripQuotes(text) {
   return text.replace(/"[^"]*"|'[^']*'/g, '""');

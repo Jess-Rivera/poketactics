@@ -5,6 +5,7 @@ extends Sprite3D
 ## plays Walk along a path, hopping on height changes, then turns to the end facing and goes back to Idle.
 ## For using a move (#10): play_once() plays an animation through once and announces its hit frame, an HP bar sits
 ## over the unit, float_text() shows damage and other results, and fade_out() takes a fainted unit off the map.
+## show_hint() keeps a steady line over the unit (the aim labels of #17) until hide_hint().
 
 signal walk_finished
 ## A play_once() animation reached its hit frame (or its end, if it marks none).
@@ -31,6 +32,9 @@ const FLOAT_TEXT_OUTLINE_SIZE := 4
 const FLOAT_TEXT_RISE := 0.6
 const FLOAT_TEXT_SECONDS := 1.0
 const FADE_OUT_SECONDS := 0.6
+const HINT_COLOUR := Color(1.0, 0.9, 0.55)
+## The hint sits this far above the HP bar, in world units.
+const HINT_LIFT := 0.25
 
 var _unit: BattleUnit
 var _sprite_pack: SpritePack
@@ -43,6 +47,7 @@ var _view_step := 0
 var _is_playing_once := false
 var _has_hit_landed := false
 var _hit_points_bar: Sprite3D
+var _hint_label: Label3D
 ## World units from the feet up to where the HP bar and floating text sit.
 var _overhead_height := 0.0
 
@@ -100,24 +105,28 @@ func show_hit_points() -> void:
 
 ## Text that rises over the unit and fades, for damage numbers and results such as "Miss".
 func float_text(text: String, colour: Color) -> void:
-	var label := Label3D.new()
-	label.text = text
-	label.modulate = colour
-	label.font_size = FLOAT_TEXT_FONT_SIZE
-	label.outline_size = FLOAT_TEXT_OUTLINE_SIZE
-	label.pixel_size = 1.0 / PIXELS_PER_UNIT
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	label.no_depth_test = true
-	label.render_priority = 2
-	label.outline_render_priority = 1
-	label.position = Vector3(0.0, _overhead_height, 0.0)
+	var label := _overhead_label(text, colour)
 	add_child(label)
 	var tween := label.create_tween()
 	tween.set_parallel()
 	tween.tween_property(label, "position:y", _overhead_height + FLOAT_TEXT_RISE, FLOAT_TEXT_SECONDS)
 	tween.tween_property(label, "modulate:a", 0.0, FLOAT_TEXT_SECONDS).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(label.queue_free)
+
+
+## A steady line over the unit, such as the arc an aimed move would hit it from; replaces the one shown.
+func show_hint(text: String) -> void:
+	if _hint_label == null:
+		_hint_label = _overhead_label(text, HINT_COLOUR)
+		_hint_label.position.y += HINT_LIFT
+		add_child(_hint_label)
+	_hint_label.text = text
+	_hint_label.visible = true
+
+
+func hide_hint() -> void:
+	if _hint_label != null:
+		_hint_label.visible = false
 
 
 ## Fades the unit and its HP bar out (a fainted unit leaves the map), then hides it.
@@ -219,6 +228,23 @@ func _add_hit_points_bar() -> void:
 	_hit_points_bar.position = Vector3(0.0, _overhead_height, 0.0)
 	add_child(_hit_points_bar)
 	show_hit_points()
+
+
+## A pixel-crisp label over the unit's head that always draws on top.
+func _overhead_label(text: String, colour: Color) -> Label3D:
+	var label := Label3D.new()
+	label.text = text
+	label.modulate = colour
+	label.font_size = FLOAT_TEXT_FONT_SIZE
+	label.outline_size = FLOAT_TEXT_OUTLINE_SIZE
+	label.pixel_size = 1.0 / PIXELS_PER_UNIT
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	label.no_depth_test = true
+	label.render_priority = 2
+	label.outline_render_priority = 1
+	label.position = Vector3(0.0, _overhead_height, 0.0)
+	return label
 
 
 func _show_current_frame() -> void:

@@ -15,6 +15,18 @@ const CRITICAL_HIT_ODDS_BY_STAGE := [24, 8, 2, 1]
 const ALWAYS_HITS_ACCURACY := 100
 ## A ranged move that hits from range 1 does this share of its damage (2026-11-16-move-shapes-and-range).
 const CLOSE_RANGE_FACTOR := 0.5
+## Facing and height (2026-11-16-facing-arcs, 2026-11-17-facing-height-rules; [Proposed] placeholders until tuned).
+const FRONT_FACTOR := 1.0
+const SIDE_FACTOR := 1.3
+const BACK_FACTOR := 2.0
+## Per height level between the hit's origin and the defender, compounding, up to HEIGHT_FACTOR_CAP_LEVELS levels.
+const ATTACKING_DOWN_FACTOR := 1.1
+const ATTACKING_UP_FACTOR := 0.9
+const HEIGHT_FACTOR_CAP_LEVELS := 2
+## Range change from height: sign(levels) x floor(RANGE_HEIGHT_CONSTANT x sqrt(abs(levels))), ranged moves only.
+const RANGE_HEIGHT_CONSTANT := 1.0
+## The smallest max range that makes a move ranged (melee is range 1).
+const RANGED_MIN_REACH := 2
 const LEVEL_UP := "level-up"
 ## Base strike rank (2026-11-17-size-bands): the size band from the pack (0 smallest to 4), nudged by Speed at the
 ## unit's level against the Speed these base values give at that level, then kept within the band range.
@@ -113,12 +125,37 @@ static func power_damage(
 	)
 
 
-## Damage from a ranged move used at range 1: CLOSE_RANGE_FACTOR of the full amount, rounded down, at least 1
-## unless the full amount was 0.
-static func close_range_damage(full_damage: int) -> int:
-	if full_damage <= 0:
+## Damage after the resolve-time modifiers of one hit (HitModifiers): the amount times their product, rounded down
+## once, at least 1 unless the amount was 0.
+static func modified_damage(amount: int, modifier_product: float) -> int:
+	if amount <= 0:
 		return 0
-	return maxi(floori(full_damage * CLOSE_RANGE_FACTOR), 1)
+	return maxi(floori(amount * modifier_product), 1)
+
+
+## The damage factor of the defender's arc the hit comes from.
+static func arc_factor(arc: Facing.Arc) -> float:
+	match arc:
+		Facing.Arc.BACK:
+			return BACK_FACTOR
+		Facing.Arc.SIDE:
+			return SIDE_FACTOR
+		_:
+			return FRONT_FACTOR
+
+
+## The damage factor of a height difference (origin minus defender, in levels): per level down or up, capped.
+static func height_factor(levels_above: int) -> float:
+	var levels := clampi(levels_above, -HEIGHT_FACTOR_CAP_LEVELS, HEIGHT_FACTOR_CAP_LEVELS)
+	if levels > 0:
+		return pow(ATTACKING_DOWN_FACTOR, levels)
+	return pow(ATTACKING_UP_FACTOR, -levels)
+
+
+## Range a ranged move gains (or loses, below 0) from a height difference (user minus aimed cell, in levels).
+static func range_change_from_height(levels_above: int) -> int:
+	var change := floori(RANGE_HEIGHT_CONSTANT * sqrt(absi(levels_above)))
+	return change if levels_above >= 0 else -change
 
 
 ## Damage equal to the user's level (Night Shade), whatever the stats; only immunity stops it.
@@ -135,7 +172,7 @@ static func hit_chance(move: Dictionary) -> float:
 
 
 ## Whether a move hits: one roll against its hit chance, or none when it always hits.
-## Reach and environment (range, line of sight, height) are checked by the battle, not here.
+## Reach and environment (range, line of sight) are checked by MoveArea, not here.
 static func rolls_hit(move: Dictionary, random: RandomNumberGenerator) -> bool:
 	if hit_chance(move) >= 1.0:
 		return true

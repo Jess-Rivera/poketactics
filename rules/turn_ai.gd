@@ -109,7 +109,7 @@ static func _score(battle: Battle, pack: PackData, unit: BattleUnit, option: Cho
 	var foes_knocked_out := 0
 	for hit_unit in _units_hit_from(battle, pack, unit, option):
 		var damage := MoveUse.hit_damage(
-			pack, unit, hit_unit, option.move_name, option.stand_cell, option.target_cell, false
+			battle, pack, unit, hit_unit, option.move_name, option.stand_cell, option.target_cell, false
 		)
 		var value := chance * _damage_value(hit_unit, damage)
 		if hit_unit.side == unit.side:

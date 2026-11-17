@@ -54,6 +54,10 @@ const CONFIRM_KEYS := [KEY_ENTER, KEY_KP_ENTER]
 const ATTACK_ANIMATION := "Attack"
 const HURT_ANIMATION := "Hurt"
 const NO_MOVE := -1
+## How far (grid steps) the inspected unit's side and back arcs are tinted (#17).
+const ARC_TINT_STEPS := 4
+## Aim hint words by Facing.Arc.
+const ARC_WORDS := ["Front", "Side", "Back"]
 const DAMAGE_TEXT_COLOUR := Color(1.0, 1.0, 1.0)
 const QUIET_TEXT_COLOUR := Color(0.7, 0.7, 0.7)
 ## Seconds an AI unit waits after the camera reaches it, and while its move's area is shown before the strike.
@@ -585,6 +589,7 @@ func _play_move_use(move_use: MoveUse) -> bool:
 	if not _turn_order.use_move(move_use, _random):
 		return false
 	_mode = Mode.RESOLVING
+	_hide_aim_hints()
 	_tile_highlight.clear()
 	_tile_highlight.cursor_cell = CellPicker.NO_CELL
 	_tile_highlight.refresh()
@@ -754,14 +759,17 @@ func _refresh_marks() -> void:
 	_tile_highlight.reachable_cells.assign(_reachable_paths.keys())
 	_tile_highlight.move_range_cells.clear()
 	_tile_highlight.move_area_cells.clear()
+	_hide_aim_hints()
 	if _mode == Mode.AIMING:
 		_tile_highlight.move_range_cells = MoveArea.target_cells(_battle.grid, _aimed_recipe(), _active_unit.cell)
 		var move_use := _aimed_move_use()
 		if move_use.is_allowed():
 			_tile_highlight.move_area_cells = move_use.footprint()
+			_show_aim_hints(move_use)
 	elif _mode == Mode.AI_TURN:
 		_tile_highlight.move_area_cells.assign(_ai_preview_cells)
 	_tile_highlight.inspecting = _mode == Mode.INSPECTING
+	_show_arc_tint(_inspected_unit if _mode == Mode.INSPECTING else null)
 	_tile_highlight.path_cells.clear()
 	if _mode == Mode.READY or _mode == Mode.CHOOSING_FACING:
 		var preview_cell := _target_cell if _mode == Mode.CHOOSING_FACING else _hovered_cell
@@ -781,6 +789,55 @@ func _refresh_marks() -> void:
 	_cost_label.visible = hovered_walk_cost != TurnOrder.NO_ACTION
 	_cost_label.text = "%d SR" % hovered_walk_cost
 	_show_landing(_landing_preview(hovered_walk_cost))
+
+
+## Over each unit the aimed move would damage by formula: the arc it is hit from and, if heights differ, whether
+## from above or below (2026-11-17-facing-height-rules). Fixed damage ignores both, so it shows nothing.
+func _show_aim_hints(move_use: MoveUse) -> void:
+	var damage_component := MoveRecipe.damage_component(move_use.recipe)
+	if damage_component.is_empty() or damage_component["effect"] != MoveRecipe.EFFECT_DAMAGE:
+		return
+	var units_hit := MoveArea.units_hit(
+		_battle, _pack.shapes, move_use.recipe, _active_unit, move_use.target_cell, move_use.direction
+	)
+	for unit in units_hit:
+		var unit_sprite: UnitSprite = _sprites_by_unit.get(unit)
+		if unit == _active_unit or unit_sprite == null:
+			continue
+		var hit := HitModifiers.for_hit(_battle.grid, move_use.recipe, unit, _active_unit.cell, move_use.target_cell)
+		unit_sprite.show_hint(_aim_hint_text(hit))
+
+
+func _aim_hint_text(hit: HitModifiers) -> String:
+	var arc_word: String = ARC_WORDS[hit.arc]
+	if hit.levels_above > 0:
+		return arc_word + ", from above"
+	if hit.levels_above < 0:
+		return arc_word + ", from below"
+	return arc_word
+
+
+func _hide_aim_hints() -> void:
+	for unit_sprite in _sprites_by_unit.values():
+		unit_sprite.hide_hint()
+
+
+## Tints the side and back arcs within ARC_TINT_STEPS of an inspected unit; clears them for null.
+func _show_arc_tint(unit: BattleUnit) -> void:
+	_tile_highlight.side_arc_cells.clear()
+	_tile_highlight.back_arc_cells.clear()
+	if unit == null:
+		return
+	for step_y in range(-ARC_TINT_STEPS, ARC_TINT_STEPS + 1):
+		for step_x in range(-ARC_TINT_STEPS, ARC_TINT_STEPS + 1):
+			var cell := unit.cell + Vector2i(step_x, step_y)
+			if not _battle.grid.contains(cell) or MoveArea.distance(unit.cell, cell) > ARC_TINT_STEPS:
+				continue
+			match Facing.arc_of(unit.cell, unit.facing, cell):
+				Facing.Arc.SIDE:
+					_tile_highlight.side_arc_cells.append(cell)
+				Facing.Arc.BACK:
+					_tile_highlight.back_arc_cells.append(cell)
 
 
 ## The SR a walk to a cell costs, or TurnOrder.NO_ACTION if the active unit cannot walk there now.

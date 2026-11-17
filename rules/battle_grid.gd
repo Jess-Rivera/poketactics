@@ -3,6 +3,9 @@ extends RefCounted
 ## The battlefield as rules see it: a width by depth grid of cells, each with a height level.
 ## No nodes and no drawing, so battles can run headless.
 
+## Height levels run 0 to 9 (one digit per cell).
+const HIGHEST_LEVEL := 9
+
 var width: int
 var depth: int
 var _height_levels: PackedInt32Array

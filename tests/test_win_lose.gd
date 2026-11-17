@@ -117,8 +117,12 @@ func test_ai_takes_a_winning_self_destruct() -> void:
 	var battle := _battle()
 	var user := _unit(battle, "geodude", ATTACKER_CELL, Battle.Side.ENEMY, ["strength", "self-destruct"])
 	var last_foe := _unit(battle, "eevee", ADJACENT_CELL, Battle.Side.PLAYER)
-	var blast_damage := MoveUse.hit_damage(pack, user, last_foe, "self-destruct", ATTACKER_CELL, ATTACKER_CELL, false)
-	var strength_damage := MoveUse.hit_damage(pack, user, last_foe, "strength", ATTACKER_CELL, ADJACENT_CELL, false)
+	var blast_damage := MoveUse.hit_damage(
+		battle, pack, user, last_foe, "self-destruct", ATTACKER_CELL, ATTACKER_CELL, false
+	)
+	var strength_damage := MoveUse.hit_damage(
+		battle, pack, user, last_foe, "strength", ATTACKER_CELL, ADJACENT_CELL, false
+	)
 	# Preconditions: Self-Destruct knocks the healthy foe out, Strength does not.
 	assert_int(blast_damage).is_greater_equal(last_foe.hit_points)
 	assert_int(strength_damage).is_less(last_foe.hit_points)

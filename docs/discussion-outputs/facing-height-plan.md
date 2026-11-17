@@ -3,6 +3,16 @@
 Rulings: 2026-11-16-facing-arcs, 2026-11-16-height-and-sight, 2026-11-17-facing-height-rules. Design:
 battle-design.md "Positioning". Checked against the coding-principles skill. No code in this plan.
 
+## As built (2026-11-17, awaiting Jess's feel test)
+- D1 to D3 as recommended: parity fixture and its two tests deleted; arc tint 4 steps; labels are words only.
+- Relation 6 reworded: with whole tiles, floor(sqrt) cannot shrink at every level (0, 1, 1, 1, 2, ...). The test
+  checks the true diminishing shape instead: never more than one tile per level, never shrinking, and each further
+  tile needs a bigger step of levels than the one before (1, 4, 9 at c = 1.0); exact mirror when attacking up.
+- Relation 10 is the existing seeded replay test in test_win_lose.gd (now on the height map with facing in play).
+- Relation 8 covers fixed damage only: no roster move has faint on a target (Self-Destruct faints the user).
+- Height factor compounds per level (1.1 then 1.21; 0.9 then 0.81).
+- Tests: 129 (122, minus 2 parity, plus 9 in test_facing_and_height.gd).
+
 ## Opening (agreed 2026-11-17)
 
 | Item | Content |
@@ -18,8 +28,8 @@ End-goal relations:
 4. A height difference of 3 gives the same damage as 2 (the cap).
 5. A ranged move's reach from higher ground covers every cell its flat reach covers; from lower ground it covers a
    subset of the flat reach; it never drops below its min range.
-6. Range change never shrinks as the height difference grows, and each extra level adds no more than the one
-   before (diminishing).
+6. Range change never shrinks as the height difference grows, adds at most one tile per level, and each further
+   tile needs more extra levels than the one before (diminishing); attacking up mirrors it exactly.
 7. A melee move's reach is the same at any height.
 8. Fixed damage and faint moves deal the same at any arc and height.
 9. A distant blast bigger than one tile measures from its centre; the unit on the centre tile is measured from the

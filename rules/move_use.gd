@@ -58,7 +58,7 @@ func _init(
 func is_allowed() -> bool:
 	if recipe.is_empty() or not user.move_names.has(move_name):
 		return false
-	return MoveArea.can_reach(recipe, user.cell, target_cell) and _battle.grid.contains(target_cell)
+	return MoveArea.can_reach(_battle.grid, recipe, user.cell, target_cell)
 
 
 ## The SR using the move costs (2026-11-16-act-cost; placeholder bands until tuned). Call only when is_allowed().
@@ -96,12 +96,13 @@ func critical_hit_stage() -> int:
 
 ## The damage one of this use's damage components does to a unit.
 func damage_to(unit: BattleUnit, component: Dictionary, is_critical_hit: bool) -> int:
-	return component_damage(_pack, user, unit, recipe, component, user.cell, target_cell, is_critical_hit)
+	return component_damage(_battle, _pack, user, unit, recipe, component, user.cell, target_cell, is_critical_hit)
 
 
 ## The damage one hit of a move's first damage component does to a unit when the user stands on user_cell and
 ## aims at target_cell. The AI scores with the non-crit value.
 static func hit_damage(
+	battle: Battle,
 	pack: PackData,
 	attacker: BattleUnit,
 	defender: BattleUnit,
@@ -114,12 +115,15 @@ static func hit_damage(
 	var component := MoveRecipe.damage_component(built)
 	if component.is_empty():
 		return 0
-	return component_damage(pack, attacker, defender, built, component, user_cell, aimed_cell, is_critical_hit)
+	return component_damage(
+		battle, pack, attacker, defender, built, component, user_cell, aimed_cell, is_critical_hit
+	)
 
 
-## A damage component's amount: fixed level damage or the stat formula at the component's power, then the
-## close-range modifier when the move brings it and is used at range 1.
+## A damage component's amount: fixed level damage or the stat formula at the component's power, then the hit's
+## resolve-time modifiers (HitModifiers): all of them on formula damage, only close range on fixed damage.
 static func component_damage(
+	battle: Battle,
 	pack: PackData,
 	attacker: BattleUnit,
 	defender: BattleUnit,
@@ -129,16 +133,13 @@ static func component_damage(
 	aimed_cell: Vector2i,
 	is_critical_hit: bool
 ) -> int:
-	var amount := 0
+	var hit := HitModifiers.for_hit(battle.grid, built, defender, user_cell, aimed_cell)
 	if component["effect"] == MoveRecipe.EFFECT_FIXED_DAMAGE:
 		var multiplier := BattleStats.type_multiplier(pack, built["type"], defender.types)
-		amount = BattleStats.level_damage(attacker.level, multiplier)
-	else:
-		amount = BattleStats.power_damage(pack, attacker, defender, built, component["power"], is_critical_hit)
-	var is_close := MoveArea.distance(user_cell, aimed_cell) == 1
-	if is_close and MoveRecipe.has_modifier(built, MoveRecipe.MODIFIER_CLOSE_RANGE):
-		amount = BattleStats.close_range_damage(amount)
-	return amount
+		var fixed_amount := BattleStats.level_damage(attacker.level, multiplier)
+		return BattleStats.modified_damage(fixed_amount, hit.fixed_damage_product())
+	var amount := BattleStats.power_damage(pack, attacker, defender, built, component["power"], is_critical_hit)
+	return BattleStats.modified_damage(amount, hit.product())
 
 
 ## The handled components that touch units, either the on-hit ones or the on-use ones, in recipe order.

@@ -16,28 +16,57 @@ const TABLE_SMALLEST_SPREAD := 3
 const ANY_SPREAD := -1
 
 
-## Grid steps between two cells, no diagonals (height is ignored until #17).
+## Grid steps between two cells, no diagonals. Height changes reach through max_reach(), not here.
 static func distance(from_cell: Vector2i, to_cell: Vector2i) -> int:
 	return absi(to_cell.x - from_cell.x) + absi(to_cell.y - from_cell.y)
 
 
-## Whether the user may choose this target cell: within the shape's range (only its own cell at range 0).
-static func can_reach(recipe: Dictionary, user_cell: Vector2i, target_cell: Vector2i) -> bool:
+## The farthest the move reaches from the user's cell to a target cell inside the grid: a ranged move (max range
+## RANGED_MIN_REACH or more) gains or loses range by height (2026-11-17-facing-height-rules), never below its min
+## range; melee and range-0 moves keep their range.
+static func max_reach(grid: BattleGrid, recipe: Dictionary, user_cell: Vector2i, target_cell: Vector2i) -> int:
 	var shape: Dictionary = recipe["shape"]
+	var range_max := int(shape["range_max"])
+	if range_max < BattleStats.RANGED_MIN_REACH:
+		return range_max
+	var levels_above := grid.height_level_at(user_cell) - grid.height_level_at(target_cell)
+	return maxi(range_max + BattleStats.range_change_from_height(levels_above), int(shape["range_min"]))
+
+
+## Whether the user may choose this target cell: inside the grid and within the move's reach (only its own cell
+## at range 0).
+static func can_reach(grid: BattleGrid, recipe: Dictionary, user_cell: Vector2i, target_cell: Vector2i) -> bool:
+	if not grid.contains(target_cell):
+		return false
 	var steps := distance(user_cell, target_cell)
-	return steps >= int(shape["range_min"]) and steps <= int(shape["range_max"])
+	return steps >= int(recipe["shape"]["range_min"]) and steps <= max_reach(grid, recipe, user_cell, target_cell)
 
 
-## Every cell inside the grid the user may choose as the target (just its own cell at range 0).
+## Every cell inside the grid the user may choose as the target (just its own cell at range 0). The search box
+## allows for the largest range a height difference can add.
 static func target_cells(grid: BattleGrid, recipe: Dictionary, user_cell: Vector2i) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
 	var reach := int(recipe["shape"]["range_max"])
+	if reach >= BattleStats.RANGED_MIN_REACH:
+		reach += BattleStats.range_change_from_height(BattleGrid.HIGHEST_LEVEL)
 	for step_y in range(-reach, reach + 1):
 		for step_x in range(-reach, reach + 1):
 			var cell := user_cell + Vector2i(step_x, step_y)
-			if grid.contains(cell) and can_reach(recipe, user_cell, cell):
+			if can_reach(grid, recipe, user_cell, cell):
 				cells.append(cell)
 	return cells
+
+
+## The cell one hit is measured from for facing and height (2026-11-17-facing-height-rules): the blast centre for
+## an area bigger than one tile centred on a cell away from the user, else the user's cell. A defender on the blast
+## centre is measured from the user.
+static func hit_origin(
+	recipe: Dictionary, user_cell: Vector2i, aimed_cell: Vector2i, defender_cell: Vector2i
+) -> Vector2i:
+	var shape: Dictionary = recipe["shape"]
+	if MoveRecipe.is_on_user_tile(recipe) or shape["anchor"] == MoveRecipe.ANCHOR_FORWARD or _is_single_tile(shape):
+		return user_cell
+	return user_cell if defender_cell == aimed_cell else aimed_cell
 
 
 ## An east-aimed offset turned to face a direction (grid y grows south, so south is a clockwise quarter turn).

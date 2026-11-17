@@ -54,8 +54,12 @@ func test_sure_knockout_beats_bigger_hit() -> void:
 	var healthy_foe := _unit(battle, "eevee", Vector2i(4, 3), Battle.Side.PLAYER)
 	var wounded_foe := _unit(battle, "geodude", Vector2i(5, 4), Battle.Side.PLAYER)
 	wounded_foe.hit_points = 1
-	var healthy_damage := MoveUse.hit_damage(pack, user, healthy_foe, "strength", user.cell, healthy_foe.cell, false)
-	var wounded_damage := MoveUse.hit_damage(pack, user, wounded_foe, "strength", user.cell, wounded_foe.cell, false)
+	var healthy_damage := MoveUse.hit_damage(
+		battle, pack, user, healthy_foe, "strength", user.cell, healthy_foe.cell, false
+	)
+	var wounded_damage := MoveUse.hit_damage(
+		battle, pack, user, wounded_foe, "strength", user.cell, wounded_foe.cell, false
+	)
 	# Preconditions: the hit on the healthy foe is bigger and does not knock it out.
 	assert_int(healthy_damage).is_greater(wounded_damage)
 	assert_int(healthy_damage).is_less(healthy_foe.hit_points)
@@ -133,7 +137,7 @@ func _play_turn(battle: Battle, turn_order: TurnOrder, random: RandomNumberGener
 		assert_that(choice.stand_cell).is_equal(unit.cell)
 		assert_bool(unit.move_names.has(choice.move_name)).is_true()
 		var recipe := MoveRecipe.built(pack, unit, choice.move_name)
-		assert_bool(MoveArea.can_reach(recipe, unit.cell, choice.target_cell)).is_true()
+		assert_bool(MoveArea.can_reach(battle.grid, recipe, unit.cell, choice.target_cell)).is_true()
 		var move_use := MoveUse.new(battle, pack, unit, choice.move_name, choice.target_cell, choice.direction)
 		assert_bool(turn_order.use_move(move_use, random)).is_true()
 	else:

@@ -2,7 +2,8 @@ class_name TileHighlight
 extends MeshInstance3D
 ## Flat marks drawn just above cell tops: the cells a selected unit can reach, the previewed path, the cursor
 ## outline, the selected unit's cell, (while choosing a facing) four arrows on the target cell, and (while aiming a
-## move, #10) the cells it can target and the area it would cover. Set the fields,
+## move, #10) the cells it can target and the area it would cover, and (while inspecting, #17) the side and back
+## arcs around the inspected unit. Set the fields,
 ## then call refresh(). Unshaded and flat, so the marks stay pixel crisp.
 
 const LIFT_ABOVE_TOP := 0.02
@@ -17,6 +18,8 @@ const ARROW_COLOUR := Color(1.0, 1.0, 1.0, 0.45)
 const CHOSEN_ARROW_COLOUR := Color(1.0, 0.85, 0.3, 1.0)
 const MOVE_RANGE_COLOUR := Color(1.0, 0.35, 0.35, 0.3)
 const MOVE_AREA_COLOUR := Color(1.0, 0.3, 0.3, 0.75)
+const SIDE_ARC_COLOUR := Color(0.95, 0.9, 0.35, 0.22)
+const BACK_ARC_COLOUR := Color(0.7, 0.35, 1.0, 0.35)
 ## Outline thickness: two sprite pixels.
 const OUTLINE_WIDTH := 2.0 / 24.0
 const FILL_INSET := 1.0 / 24.0
@@ -34,6 +37,9 @@ var chosen_facing := Facing.Direction.SOUTH
 ## Cells the aimed move may target, and the cells it would cover.
 var move_range_cells: Array[Vector2i] = []
 var move_area_cells: Array[Vector2i] = []
+## The inspected unit's side and back arcs nearby (front cells are left plain).
+var side_arc_cells: Array[Vector2i] = []
+var back_arc_cells: Array[Vector2i] = []
 
 
 func _ready() -> void:
@@ -54,6 +60,8 @@ func clear() -> void:
 	facing_target = CellPicker.NO_CELL
 	move_range_cells.clear()
 	move_area_cells.clear()
+	side_arc_cells.clear()
+	back_arc_cells.clear()
 	refresh()
 
 
@@ -61,6 +69,12 @@ func refresh() -> void:
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var drawn_anything := false
+	for cell in side_arc_cells:
+		_add_fill(surface, cell, SIDE_ARC_COLOUR)
+		drawn_anything = true
+	for cell in back_arc_cells:
+		_add_fill(surface, cell, BACK_ARC_COLOUR)
+		drawn_anything = true
 	for cell in reachable_cells:
 		var colour := PATH_COLOUR if cell in path_cells else REACHABLE_COLOUR
 		if inspecting:

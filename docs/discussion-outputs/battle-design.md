@@ -53,7 +53,7 @@ the forward offset; the 2:1 line counts as front or back.
 | Factor | Rule | Numbers |
 |---|---|---|
 | Facing | Its own damage factor | [Proposed] front 1.0x, side 1.3x, back 2.0x |
-| Height | Ranged range bonus plus damage factor | [Proposed] 1.1x down, 0.9x up per level, cap 2 |
+| Height | Ranged range change sign(D) x floor(c x sqrt(abs(D))), symmetric, never below min range; damage factor on every formula move (2026-11-17-facing-height-rules) | [Proposed] 1.1x down, 0.9x up per level, cap 2; c = 1.0 |
 | Line of sight | Direct moves blocked by taller terrain and units; arcing moves ignore units | |
 | Push | Act; 1 tile if pusher's size band is at least the target's | [Proposed] 2 SR |
 | Collision and fall | Collision hurts both; falls hurt by height; target picks up the tile's state | Tuning |

@@ -24,7 +24,7 @@ flowchart TD
 | M1b Hotseat versus | Two players free-pick 6 units each at one level and play a battle on one machine | 1 to 2 slices |
 | M2 Battle depth | Strike rank clock, facing, height and line of sight, push, environment, terrain-type bonuses, objectives and a boss AI that feels human (battle-design.md) | 8 to 10 slices |
 | M2b Mainline systems | Every portable mainline battle system works on the grid (2026-11-16-mainline-systems-m2b) | Open, sized at its opening |
-| M3 Run layer | A Kanto run on a branching map with every node type, catching by talk, shops, both currencies, recovery and checkpoint saves | 6 to 9 slices |
+| M3 Run layer | A Kanto run on a branching map with every node type, catching by talk, shops, move upgrades (#28), both currencies, recovery and checkpoint saves | 6 to 9 slices |
 | M4 Content and look | Kanto's 8 gyms, Elite Four and legendary fights; chosen block art; walkable home town; menus and sound | Open-ended |
 | M5 First build | An exported build with CREDITS that Jess plays through a full Kanto run | 1 to 2 slices |
 

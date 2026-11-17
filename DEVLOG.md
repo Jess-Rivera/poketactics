@@ -146,3 +146,4 @@
   timing, touches, who and chance. Rulings move-recipes, move-recipe-structure, move-recipes-build; #27 and #28.
 - Built #27: recipe export, MoveRecipe, MoveEffects handlers, generic MoveUse loop; AI and view read built moves.
 - Parity fixture (footprints and 24 seeded battles) recorded before the change; 122 tests pass.
+- Jess feel-tested: plays the same. #27 closed; #28 Accepted on the board, next session.

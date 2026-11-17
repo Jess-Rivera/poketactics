@@ -14,13 +14,13 @@ Updated 2026-11-17.
 - M1 done (#5 to #12, #16), M1b hotseat done (#15). #9 closed with 45 roster moves; the rest is #26.
 - M2 started on slice/m2-build. Strike rank clock shipped (#13): base SR 0 to 4 from size plus a Speed nudge;
   a turn is one walk, move or Wait; 12 SR rounds with upkeep; forecast bar with landing ghost.
-- Move recipes (#27, built, feel test owed): moves are recipes (basics, square or circle shape, components) run
+- Move recipes (#27, closed, feel test passed): moves are recipes (basics, square or circle shape, components) run
   by one loop with a handler per effect; nothing plays differently. Upgrades are #28.
 - Tests: 122 gdUnit4 tests plus the pack and portrait checks, `tools\run-tests.cmd` (see CONTEXT.md).
 
 ## Next
 Design: game-design.md, battle-design.md. Roadmap: development-plan.md (M2, M2b, M3 to M5).
-1. Jess feel-tests #27 (nothing should change), then #28 upgrades. Next M2 slice after that: #17 facing and height (then #18 line of sight), or #19 push. #20, #23 sub-grillings first
+1. #28 upgrades (plan first, new session). Next M2 slice after that: #17 facing and height (then #18 line of sight), or #19 push. #20, #23 sub-grillings first
    for #21, #22 and the boss AI.
 2. #26 (Kanto move grid), #25 (show the AI's choice) when convenient.
 
@@ -36,5 +36,5 @@ Design: game-design.md, battle-design.md. Roadmap: development-plan.md (M2, M2b,
 | Shipping sprite credits | First export slice | CC BY-NC needs source/spritecollab/CREDITS.md in builds; export includes data/*.json |
 
 ## Tracking
-Board: https://github.com/users/Jess-Rivera/projects/3. Open: UI #25; data #26; M2 #17 to #22, #27, #28;
+Board: https://github.com/users/Jess-Rivera/projects/3. Open: UI #25; data #26; M2 #17 to #22, #28;
 sub-grillings #20, #23; M2b #24.

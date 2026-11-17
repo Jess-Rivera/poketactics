@@ -1,7 +1,7 @@
 # TODO (next-session handoff)
 
-0. Feel-test #27: play an AI battle and a hotseat; menus, previews, cones and Self-Destruct should look and play
-   exactly as before. Then #28 (upgrades, splash, Wide Breath); its plan comes first.
+0. #28 (upgrades, splash, Wide Breath, debug toggle): write its prose plan from the rulings and
+   ecs-vs-effect-pipeline.md, then build. Delete tests/fixtures/move_parity.json and its two tests when #28 closes.
 1. Pick the next M2 slice: #17 facing and height (then #18 line of sight) or #19 push. Sub-grillings #20 and
    #23 before #21, #22 and the boss AI.
 2. Turn bar shows 8 turns; widening to all 12 needs smaller entries (feel-test call, #13 as built).

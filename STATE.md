@@ -28,7 +28,7 @@ Updated 2026-11-17.
 ## Next
 Design: game-design.md, battle-design.md. Roadmap: development-plan.md (M1, M1b hotseat, M2, M2b, M3 to M5).
 1. Next slice: M2 (development-plan.md) or #26; sub-grillings #20, #23 first. Jess closes #9.
-2. Then M2; #26 widens the hotseat pool. #25 (show the AI's choice) later. Sub-grillings #20, #23 before M2.
+2. #25 (show the AI's choice) later, maybe inside M2 intent telegraphs.
 
 ## Open decisions
 | Decision | Blocks | Note |
@@ -42,5 +42,5 @@ Design: game-design.md, battle-design.md. Roadmap: development-plan.md (M1, M1b 
 | Shipping sprite credits | First export slice | CC BY-NC needs source/spritecollab/CREDITS.md in builds; export includes data/*.json |
 
 ## Tracking
-Board: https://github.com/users/Jess-Rivera/projects/3. Open: M1 #9; UI #25; M2 #13, #17 to #22;
+Board: https://github.com/users/Jess-Rivera/projects/3. Open: M1 #9; UI #25; data #26; M2 #13, #17 to #22;
 sub-grillings #20, #23; M2b #24.

@@ -16,6 +16,13 @@ const ALWAYS_HITS_ACCURACY := 100
 ## A ranged move that hits from range 1 does this share of its damage (2026-11-16-move-shapes-and-range).
 const CLOSE_RANGE_FACTOR := 0.5
 const LEVEL_UP := "level-up"
+## Base strike rank (2026-11-17-size-bands): the size band from the pack (0 smallest to 4), nudged by Speed at the
+## unit's level against the Speed these base values give at that level, then kept within the band range.
+const FAST_BASE_SPEED := 100
+const SLOW_BASE_SPEED := 40
+const SMALLEST_SIZE_BAND := 0
+const LARGEST_SIZE_BAND := 4
+const MIDDLE_SIZE_BAND := 2
 
 
 ## Hit points at a level: floor(2 x base x level / 100) + level + 10.
@@ -35,6 +42,16 @@ static func battle_stats(base_stats: Dictionary, level: int) -> Dictionary:
 		var base_value := int(base_stats[stat_key])
 		stats[stat_key] = hit_points(base_value, level) if stat_key == "hp" else other_stat(base_value, level)
 	return stats
+
+
+## The SR added after every turn but a Wait: the size band, 1 less for a fast unit, 1 more for a slow one.
+static func base_strike_rank(size_band: int, speed: int, level: int) -> int:
+	var speed_nudge := 0
+	if speed >= other_stat(FAST_BASE_SPEED, level):
+		speed_nudge = -1
+	elif speed <= other_stat(SLOW_BASE_SPEED, level):
+		speed_nudge = 1
+	return clampi(size_band + speed_nudge, SMALLEST_SIZE_BAND, LARGEST_SIZE_BAND)
 
 
 ## Damage multiplier of an attacking type on a defender's one or two types (0, 0.25, 0.5, 1, 2 or 4).

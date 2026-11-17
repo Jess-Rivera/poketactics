@@ -1,8 +1,8 @@
 # TODO (next-session handoff)
 
-1. Pick the next slice: M2 (start with the #20 and #23 sub-grillings) or #26 (widen the hotseat pool). 
-   view/test_map.gd (674 lines) is not split for length alone; split only if it takes on a second job.
-2. #25 (show what the AI chose) later, possibly folded into M2 intent telegraphs. Sub-grillings #20 and #23 before
-   their M2 slices.
-3. Later move review: Flamethrower as a line or cone rather than single {other}.
-4. Open call from #10: should Night Shade's fixed damage ignore the 0.5x at range 1? (now halved)
+1. Pick the next M2 slice: #17 facing and height (then #18 line of sight) or #19 push. Sub-grillings #20 and
+   #23 before #21, #22 and the boss AI.
+2. Turn bar shows 8 turns; widening to all 12 needs smaller entries (feel-test call, #13 as built).
+3. #26 (Kanto move grid) and #25 (show what the AI chose, maybe in M2 intent telegraphs) when convenient.
+4. view/test_map.gd (812 lines) is not split for length alone; split only if it takes on a second job.
+5. Later move review: Flamethrower as a line or cone. Open call from #10: Night Shade's 0.5x at range 1.

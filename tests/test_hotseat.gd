@@ -88,9 +88,11 @@ func test_a_driven_hotseat_battle_ends() -> void:
 		var choice := TurnAi.choose(battle, pack, unit)
 		if choice.has_walk():
 			turn_order.move_unit(unit, choice.path, Movement.last_step_facing(unit.cell, choice.path))
-		if choice.has_move():
+		elif choice.has_move():
 			var use := MoveUse.new(battle, pack, unit, choice.move_name, choice.target_cell, choice.direction)
 			turn_order.use_move(use, random)
+		else:
+			turn_order.wait(unit, TurnAi.FALLBACK_WAIT)
 		if not unit.has_fainted():
 			turn_order.end_turn(choice.end_facing)
 	assert_bool(battle.is_over()).is_true()

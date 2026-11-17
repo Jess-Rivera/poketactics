@@ -118,25 +118,28 @@ func test_ai_battle_is_legal_and_ends() -> void:
 		).is_true()
 
 
-## One AI turn through the turn order, checking the choice is legal first (relation 1).
+## One AI turn through the turn order, checking the choice is legal first (relation 1): exactly one action, a
+## walk along a reachable path, a move in reach from where the unit stands, or the fallback Wait (#13).
 func _play_turn(battle: Battle, turn_order: TurnOrder, random: RandomNumberGenerator) -> void:
 	var unit := turn_order.active_unit()
 	var paths := Movement.reachable_paths(battle, unit)
 	var choice := TurnAi.choose(battle, pack, unit)
+	assert_bool(choice.has_walk() and choice.has_move()).is_false()
 	if choice.has_walk():
 		assert_array(paths.get(choice.stand_cell, [])).is_equal(choice.path)
 		var walk_facing := Movement.last_step_facing(unit.cell, choice.path)
 		assert_bool(turn_order.move_unit(unit, choice.path, walk_facing)).is_true()
-	else:
+	elif choice.has_move():
 		assert_that(choice.stand_cell).is_equal(unit.cell)
-	if choice.has_move():
 		assert_bool(unit.move_names.has(choice.move_name)).is_true()
 		var grid_entry: Dictionary = pack.move(choice.move_name)["grid"]
 		assert_bool(MoveArea.can_reach(grid_entry, unit.cell, choice.target_cell)).is_true()
 		var move_use := MoveUse.new(battle, pack, unit, choice.move_name, choice.target_cell, choice.direction)
 		assert_bool(turn_order.use_move(move_use, random)).is_true()
-	if not unit.has_fainted():
-		turn_order.end_turn(choice.end_facing)
+	else:
+		assert_bool(turn_order.wait(unit, TurnAi.FALLBACK_WAIT)).is_true()
+	if not unit.has_fainted() and not battle.is_over():
+		assert_bool(turn_order.end_turn(choice.end_facing)).is_true()
 
 
 func _battle() -> Battle:

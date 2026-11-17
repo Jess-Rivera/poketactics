@@ -51,7 +51,8 @@ When unsure between two of them, pick the one with fewer moving parts and say wh
   - rules/movement.gd: reachable cells and paths, step legality, facing after a walk.
   - rules/move_area.gd: move reach, target cells, footprints, units hit, grid distance.
   - rules/move_use.gd: one use of a move and its outcomes.
-  - rules/turn_order.gd: whose turn it is, move and act once each, end of turn, forecast.
+  - rules/turn_order.gd: the strike rank clock, whose turn it is, one action per turn (walk, move or Wait),
+    end of turn, upkeep, forecast.
   - rules/facing.gd, rules/battle.gd, rules/battle_grid.gd, rules/battle_unit.gd: directions, the board, cells,
     units.
   - view/: the existing node patterns next to the change (tile_highlight, cell_picker, move_menu, turn_bar).

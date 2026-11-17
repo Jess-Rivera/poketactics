@@ -22,6 +22,7 @@ Usage (repo root):
 import csv
 import filecmp
 import json
+import math
 import re
 import sys
 import tempfile
@@ -37,6 +38,9 @@ PACK_FOLDER = REPO_ROOT / "data"
 SPRITE_TRACKER = REPO_ROOT / "source" / "spritecollab" / "tracker.json"
 PACKED_SPRITE_FOLDER = REPO_ROOT / "assets" / "pokemon"
 MOVE_GRID_OVERRIDES = REPO_ROOT / "authored" / "move_grid_overrides.json"
+# Shares of default species per size band, smallest first; the band is the base strike rank before the Speed nudge
+# (docs/decisions/2026-11-17-size-bands.md).
+SIZE_BAND_SHARES = [0.10, 0.20, 0.40, 0.20, 0.10]
 PACK_FILES = ["units.json", "moves.json", "abilities.json", "types.json", "shapes.json", "README.md"]
 
 ENGLISH = "9"
@@ -429,6 +433,35 @@ def build_units(source, sprite_sets):
     return units, sorted(left_out_transformations), sorted(dropped_evolutions)
 
 
+def size_score(entry, log_size_stats):
+    """The average of the z scores of log height and log weight (2026-11-17-size-bands)."""
+    total = 0.0
+    for field, (mean, deviation) in log_size_stats.items():
+        total += (math.log10(entry[field]) - mean) / deviation
+    return total / len(log_size_stats)
+
+
+def add_size_bands(units):
+    """Gives every unit and transformation a size_band (0 smallest to 4 largest): default species are ranked by
+    size score and cut at the SIZE_BAND_SHARES; other forms are placed against the same cutoffs."""
+    defaults = [unit for unit in units.values() if unit["is_species_default"]]
+    log_size_stats = {}
+    for field in ("height_decimetres", "weight_hectograms"):
+        logs = [math.log10(unit[field]) for unit in defaults]
+        mean = sum(logs) / len(logs)
+        log_size_stats[field] = (mean, math.sqrt(sum((value - mean) ** 2 for value in logs) / len(logs)))
+    ranked_scores = sorted(size_score(unit, log_size_stats) for unit in defaults)
+    cutoffs = []
+    share_so_far = 0.0
+    for share in SIZE_BAND_SHARES[:-1]:
+        share_so_far += share
+        cutoffs.append(ranked_scores[round(share_so_far * len(ranked_scores))])
+    for unit in units.values():
+        for entry in [unit, *unit["transformations"]]:
+            score = size_score(entry, log_size_stats)
+            entry["size_band"] = sum(1 for cutoff in cutoffs if score >= cutoff)
+
+
 def build_moves(source):
     moves = {}
     flavor_count = 0
@@ -584,6 +617,8 @@ def readme(units, moves, abilities, types, left_out, dropped, flavor_count, grid
         "## Units of measure",
         "",
         "- height_decimetres, weight_hectograms: as pokeapi stores them.",
+        "- size_band: 0 (smallest) to 4, from one size score (log height and weight) ranked over default species in",
+        "  shares of 10/20/40/20/10%; the base strike rank before the Speed nudge (2026-11-17-size-bands).",
         "- gender_rate: chance of female in eighths; -1 means genderless.",
         "- types.json `against`: damage multiplier of the attacking type (the entry) on each defending type.",
         "- A learnset entry's level is present only for level-up moves; 0 means learned on evolution.",
@@ -619,6 +654,7 @@ def readme(units, moves, abilities, types, left_out, dropped, flavor_count, grid
 def write_pack(folder):
     source = Source()
     units, left_out, dropped = build_units(source, SpriteSets())
+    add_size_bands(units)
     moves, flavor_count = build_moves(source)
     grid_count = move_grid.add_grid_entries(moves, MOVE_GRID_OVERRIDES)
     abilities = build_abilities(source)

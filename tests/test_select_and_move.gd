@@ -1,7 +1,8 @@
 extends GdUnitTestSuite
-## Issue #7 relations (docs/discussion-outputs/select-and-move-plan.md): reachability from the movement ruling
-## (4 orthogonal steps, climb 1, drop 2; allies passable, enemies block, nobody ends on a unit), moving to a chosen
-## facing, picking the cell under a screen point in every view and zoom, and whole-step zoom limits.
+## Issue #7 relations (docs/discussion-outputs/select-and-move-plan.md), with #13's walk cost
+## (2026-11-17-elevation-cost): reachability (orthogonal steps, climb 1, drop 2, at most MAX_WALK_COST SR; allies
+## passable, enemies block, nobody ends on a unit), moving to a chosen facing, picking the cell under a screen point
+## in every view and zoom, and whole-step zoom limits.
 
 const FLAT_ROWS := ["000000000000", "000000000000", "000000000000", "000000000000", "000000000000", "000000000000",
 	"000000000000", "000000000000", "000000000000", "000000000000", "000000000000", "000000000000"]
@@ -34,11 +35,13 @@ func test_every_path_in_the_test_battle_obeys_the_movement_rules() -> void:
 			failures.append("%s can reach nothing" % unit.unit_name)
 		for target in paths:
 			var path: Array[Vector2i] = paths[target]
-			if not battle.grid.contains(target) or _manhattan(unit.cell, target) > Movement.STEPS_PER_TURN:
-				failures.append("%s reaches %s, outside 4 steps or the grid" % [unit.unit_name, target])
-			if path.is_empty() or path.back() != target or path.size() > Movement.STEPS_PER_TURN:
+			if not battle.grid.contains(target):
+				failures.append("%s reaches %s, outside the grid" % [unit.unit_name, target])
+			if path.is_empty() or path.back() != target:
 				failures.append("%s has a bad path to %s: %s" % [unit.unit_name, target, path])
 				continue
+			if Movement.walk_cost(battle.grid, unit.cell, path) > Movement.MAX_WALK_COST:
+				failures.append("%s path to %s costs more than %d SR" % [unit.unit_name, target, Movement.MAX_WALK_COST])
 			if battle.unit_at(target) != null:
 				failures.append("%s would end on a unit at %s" % [unit.unit_name, target])
 			var previous := unit.cell
@@ -55,18 +58,23 @@ func test_every_path_in_the_test_battle_obeys_the_movement_rules() -> void:
 	assert_array(failures).is_empty()
 
 
-## Relation 2: on flat open ground, reachable is exactly the diamond of Manhattan distance 1 to 4.
-func test_flat_open_ground_reaches_the_four_step_diamond() -> void:
+## Relation 2: on flat open ground every cell within the SR cap is reachable, at round up(distance / 2) SR, the
+## cheapest a flat walk can be (2026-11-17-elevation-cost).
+func test_flat_open_ground_costs_half_the_distance() -> void:
 	var battle := _flat_battle()
 	var unit := _add(battle, FLAT_START, Battle.Side.PLAYER)
+	var paths := Movement.reachable_paths(battle, unit)
 	var expected := []
 	for grid_y in battle.grid.depth:
 		for grid_x in battle.grid.width:
 			var cell := Vector2i(grid_x, grid_y)
 			var distance := _manhattan(FLAT_START, cell)
-			if distance >= 1 and distance <= Movement.STEPS_PER_TURN:
+			if distance >= 1 and (distance + 1) / 2 <= Movement.MAX_WALK_COST:
 				expected.append(cell)
-	assert_array(Movement.reachable_paths(battle, unit).keys()).contains_exactly_in_any_order(expected)
+	assert_array(paths.keys()).contains_exactly_in_any_order(expected)
+	for cell in paths:
+		var cost := Movement.walk_cost(battle.grid, FLAT_START, paths[cell])
+		assert_int(cost).is_equal((_manhattan(FLAT_START, cell) + 1) / 2)
 
 
 ## Relation 5: a pillar 2 levels above everything around it is not reachable, and becomes reachable once one

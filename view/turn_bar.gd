@@ -4,7 +4,9 @@ extends CanvasLayer
 ## bottom and larger, the turns after it stacked above, leaning so the top sits closer to the screen edge. A thin
 ## divider with the round number marks where a new round starts. Each entry is the unit's Normal portrait (#16),
 ## whole in the active entry and a centred crop in the others, never scaled, in a frame of its side's colour, with
-## an HP sliver. Hovering an entry or clicking it is announced by signal.
+## an HP sliver. Hovering an entry or clicking it is announced by signal. Since #13 (strike rank) each entry shows
+## the SR of that turn in its corner, and a faded copy of the active unit previews where the action being chosen
+## would put its next turn.
 
 signal unit_hovered(unit: BattleUnit)
 signal unit_clicked(unit: BattleUnit)
@@ -29,6 +31,10 @@ const SIDE_COLOURS := {Battle.Side.PLAYER: Color(0.35, 0.6, 1.0), Battle.Side.EN
 const HIT_POINTS_COLOUR := Color(0.4, 0.9, 0.4)
 const HIT_POINTS_HEIGHT := 2.0
 const DIVIDER_COLOUR := Color(1.0, 1.0, 1.0, 0.5)
+## The landing preview is drawn this opaque.
+const LANDING_OPACITY := 0.45
+const STRIKE_RANK_FONT_SIZE := 8
+const STRIKE_RANK_OUTLINE := 3
 
 var _pack: PackData
 var _portraits_by_unit := {}
@@ -81,7 +87,11 @@ func show_forecast(slots: Array) -> void:
 	var rects := entry_rects(slot_rounds)
 	for index in slots.size():
 		var slot: TurnOrder.Slot = slots[index]
-		add_child(_entry(slot.unit, rects[index], index == 0))
+		var entry := _entry(slot.unit, rects[index], index == 0)
+		entry.add_child(_strike_rank_label(slot.strike_rank))
+		if slot.is_landing:
+			entry.modulate.a = LANDING_OPACITY
+		add_child(entry)
 		if index > 0 and slot.round_number != slots[index - 1].round_number:
 			_add_divider(rects[index], slot.round_number)
 
@@ -122,6 +132,18 @@ func _entry(unit: BattleUnit, rect: Rect2, is_active: bool) -> Panel:
 		hit_points_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		entry.add_child(hit_points_bar)
 	return entry
+
+
+## The turn's SR within its round, in the entry's top left corner.
+func _strike_rank_label(strike_rank: int) -> Label:
+	var label := Label.new()
+	label.text = str(strike_rank)
+	label.add_theme_font_size_override("font_size", STRIKE_RANK_FONT_SIZE)
+	label.add_theme_constant_override("outline_size", STRIKE_RANK_OUTLINE)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.position = Vector2(2, -2)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
 
 
 func _on_entry_input(event: InputEvent, unit: BattleUnit) -> void:

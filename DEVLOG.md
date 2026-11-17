@@ -132,3 +132,10 @@
 ## 2026-11-17, #15 closed, M1b done
 - Jess played hotseat: passed. #15 closed, board card Shipped. M1b is done.
 - Speed ties (Charmander and Alolan Vulpix at 65) interleave by the seeded tiebreak, as designed (#8).
+
+## 2026-11-17, #9 closed; #13 strike rank clock (built and closed)
+- #9 closed with the 45 roster moves; M1 merged to main, M2 on slice/m2-build. Board drift on #3, #4 cleared.
+- Grilling: base SR 0 to 4 from one size score ranked 10/20/40/20/10%, level Speed nudge; one action per turn
+  (walk, move or Wait); walk cost by segment. Rulings size-bands, wait-action, elevation-cost.
+- Built: pack size_band, clock in TurnOrder, cost search in Movement, AI one action (fallback Wait), forecast
+  bar with landing ghost, Wait row, hover cost. 11 new relation tests, 117 in all; Jess's feel test passed.

@@ -69,6 +69,12 @@ func is_allowed() -> bool:
 	return MoveArea.can_reach(_grid_entry, user.cell, target_cell) and _battle.grid.contains(target_cell)
 
 
+## The SR using the move costs, from its grid entry (2026-11-16-act-cost; placeholder bands until tuned). Call only
+## when is_allowed(), which needs a grid entry.
+func strike_rank_cost() -> int:
+	return int(_grid_entry["sr_cost"])
+
+
 ## Every tile the move covers, for the preview.
 func footprint() -> Array[Vector2i]:
 	return MoveArea.footprint(_pack.shapes, _grid_entry, user.cell, target_cell, direction)

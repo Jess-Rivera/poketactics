@@ -104,10 +104,11 @@ func test_reach_and_empty_targets() -> void:
 			.override_failure_message("%s reaches past adjacent" % move_name).is_false()
 	user.move_names.assign(["flamethrower"])
 	user.stats["speed"] = 999
+	user.base_strike_rank = BattleStats.SMALLEST_SIZE_BAND
 	var turn_order := TurnOrder.new(battle, _random(1))
 	var empty_use := _move_use(battle, user, "flamethrower", RANGED_TARGET_CELL)
 	assert_bool(turn_order.use_move(empty_use, _random(1))).is_true()
-	assert_bool(turn_order.can_act(user)).is_false()
+	assert_bool(turn_order.can_take_action(user)).is_false()
 	assert_int(bystander.hit_points).is_equal(bystander.max_hit_points)
 	assert_int(user.hit_points).is_equal(user.max_hit_points)
 
@@ -168,6 +169,7 @@ func test_a_unit_acts_once_per_turn() -> void:
 	var user := _unit(battle, "charmander", USER_CELL, Battle.Side.PLAYER, ["flamethrower"])
 	_unit(battle, "machop", RANGED_TARGET_CELL, Battle.Side.ENEMY)
 	user.stats["speed"] = 999
+	user.base_strike_rank = BattleStats.SMALLEST_SIZE_BAND
 	var turn_order := TurnOrder.new(battle, _random(1))
 	assert_bool(turn_order.use_move(_move_use(battle, user, "flamethrower", RANGED_TARGET_CELL), _random(1))).is_true()
 	assert_bool(turn_order.use_move(_move_use(battle, user, "flamethrower", RANGED_TARGET_CELL), _random(1))).is_false()

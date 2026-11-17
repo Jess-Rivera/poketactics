@@ -7,28 +7,20 @@ Updated 2026-11-17.
 - Sprites: raw SpriteCollab in source/spritecollab/ (2,151 sets, pinned at 2f5d22b505), packed in assets/pokemon/.
 - Godot 4.6.2 at the repo root: Compatibility, 640x360 integer scaling, gdUnit4 v6.2.3. Isometric view, Q/E
   4-way rotation, 3D greybox blocks plus 2D sprites (#1).
-- Data pack in data/ (#2): units, moves, abilities, types keyed by name, from tools/export_pack.py. Offline
-  wiki in wiki/ (#4, tools/build_wiki.py).
-- Rules: rules/pack_data.gd loads the pack once by name; rules/battle_stats.gd holds every formula (mainline
-  stats, no damage spread, seeded accuracy and crit rolls);
-  BattleUnit.from_pack builds a unit at a level with its last 4 level-up moves (#5).
-- Test battle (#6): rules/battle.gd (grid plus units by side), rules/test_battle_setup.gd (20 by 20 map, level 30);
-  camera pans; Tab shows a unit panel.
-- Select and move (#7, shipped): rules/movement.gd, facing chosen before the walk, cell picker, tile
-  highlight, zoom 1x to 3x.
-- Turn order (#8, shipped): rules/turn_order.gd rounds by Speed, seeded ties; view/turn_bar.gd.
-- 6 a side (#16, shipped): wild, trainer, boss enemy counts (F1 to F3); portraits in assets/portraits/, shown
-  in the turn bar.
-- Move schema (#9, shipped, 45 roster moves; the rest is #26): grid entry for the 45 roster moves in data/moves.json, overrides in authored/,
-  footprints in data/shapes.json, rules/move_area.gd gives tiles hit.
-- Shipped, M1 done: use a move (#10, rules/move_use.gd), enemy AI (#11, rules/turn_ai.gd), rout and end screen (#12).
-- Hotseat (#15, shipped, M1b done): start menu, blind picks from 12 units, handover banner and camera turn.
-- Tests: 109 gdUnit4 tests plus the pack and portrait checks, `tools\run-tests.cmd` (see CONTEXT.md).
+- Data pack in data/ (#2): units, moves, abilities, types keyed by name, from tools/export_pack.py; units carry
+  size_band (#13). Offline wiki in wiki/ (#4).
+- Rules: pack_data.gd, battle_stats.gd (every formula, base SR), battle.gd, movement.gd (walk cost by segment,
+  12 SR cap), move_area.gd, move_use.gd, turn_ai.gd, test_battle_setup.gd.
+- M1 done (#5 to #12, #16), M1b hotseat done (#15). #9 closed with 45 roster moves; the rest is #26.
+- M2 started on slice/m2-build. Strike rank clock shipped (#13): base SR 0 to 4 from size plus a Speed nudge;
+  a turn is one walk, move or Wait; 12 SR rounds with upkeep; forecast bar with landing ghost.
+- Tests: 117 gdUnit4 tests plus the pack and portrait checks, `tools\run-tests.cmd` (see CONTEXT.md).
 
 ## Next
-Design: game-design.md, battle-design.md. Roadmap: development-plan.md (M1, M1b hotseat, M2, M2b, M3 to M5).
-1. Next slice: M2 (development-plan.md) or #26; sub-grillings #20, #23 first.
-2. #25 (show the AI's choice) later, maybe inside M2 intent telegraphs.
+Design: game-design.md, battle-design.md. Roadmap: development-plan.md (M2, M2b, M3 to M5).
+1. Next M2 slice: #17 facing and height (then #18 line of sight), or #19 push. #20, #23 sub-grillings first
+   for #21, #22 and the boss AI.
+2. #26 (Kanto move grid), #25 (show the AI's choice) when convenient.
 
 ## Open decisions
 | Decision | Blocks | Note |
@@ -38,9 +30,9 @@ Design: game-design.md, battle-design.md. Roadmap: development-plan.md (M1, M1b 
 | Fallback for the 265 sets without sprites; Mega Charizard Y portrait shows Charizard | Sprites | sprites-primer.md q4 |
 | Can the work machine run Godot 4.6.2 and Python 3? | Work-side testing | Check there |
 | Starting PokeCoins, recovery lengths, prices | Economy | Economy sub-grilling |
-| Act cost formula (PP bands) | #13 tuning | 2026-11-16-act-cost |
+| Act cost formula (PP bands); sr_cost 3 to 6 placeholders | Tuning | 2026-11-16-act-cost |
 | Shipping sprite credits | First export slice | CC BY-NC needs source/spritecollab/CREDITS.md in builds; export includes data/*.json |
 
 ## Tracking
-Board: https://github.com/users/Jess-Rivera/projects/3. Open: UI #25; data #26; M2 #13, #17 to #22;
+Board: https://github.com/users/Jess-Rivera/projects/3. Open: UI #25; data #26; M2 #17 to #22;
 sub-grillings #20, #23; M2b #24.

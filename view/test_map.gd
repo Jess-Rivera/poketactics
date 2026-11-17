@@ -11,17 +11,21 @@ extends Node3D
 ## and the end screen offers the same battle again or a new one (#12, docs/discussion-outputs/win-lose-opening.md).
 ## In hotseat (#15, docs/discussion-outputs/hotseat-opening.md) two players control one side each; when control
 ## passes, a banner names the player and the camera turns to their home view.
+## Since #13 (docs/discussion-outputs/strike-rank-plan.md) turns run on the strike rank clock: a turn is one walk,
+## one move used or one Wait (Space: wheel or + and - pick the SR, click or Enter confirms). A walk ends the turn
+## facing the way chosen before it; a move or a Wait is followed by the facing choice. The hovered cell shows what
+## walking there costs, and the turn bar previews where the action being chosen would put the next turn.
 ## Q and E rotate, WASD or the arrow keys pan, wheel or + and - zoom, Tab shows the unit panel. F1, F2 and F3
 ## restart the battle as a wild, trainer or boss encounter with a new seed (#16): 6 player units against 2 to 4,
 ## 3 to 6 or 6 enemies.
 
-enum Mode { READY, INSPECTING, CHOOSING_FACING, WALKING, ENDING_TURN, AIMING, RESOLVING, AI_TURN, OVER }
+enum Mode { READY, INSPECTING, CHOOSING_FACING, WALKING, ENDING_TURN, AIMING, WAITING, RESOLVING, AI_TURN, OVER }
 
 const BACKGROUND_COLOUR := Color(0.11, 0.12, 0.15)
 const IDLE_ANIMATION := "Idle"
 ## While choosing a facing, the mouse must be this far (world units) from the target's centre to change it.
 const FACING_DEAD_ZONE := 0.3
-const HINT_TEXT := "Click: move / inspect   1-4: moves   Right click, Esc: back   Q / E: rotate   WASD: pan   Wheel: zoom   Tab: units   F1-F3: wild / trainer / boss"
+const HINT_TEXT := "Click: move / inspect   1-4: moves   Space: wait   Right click, Esc: back   Q / E: rotate   WASD: pan   Wheel: zoom   Tab: units   F1-F3: wild / trainer / boss"
 ## A name per side in each play mode.
 const SIDE_LABELS_BY_MODE := {
 	TestBattleSetup.PlayMode.AI_BATTLE: {Battle.Side.PLAYER: "You", Battle.Side.ENEMY: "Foe"},
@@ -55,6 +59,15 @@ const QUIET_TEXT_COLOUR := Color(0.7, 0.7, 0.7)
 ## Seconds an AI unit waits after the camera reaches it, and while its move's area is shown before the strike.
 const AI_THINK_SECONDS := 0.4
 const AI_PREVIEW_SECONDS := 0.5
+## Where the walk cost label sits relative to the mouse, in pixels.
+const COST_LABEL_OFFSET := Vector2(10, -14)
+const LABEL_OUTLINE := 3
+const WAIT_UP_KEYS := [KEY_EQUAL, KEY_PLUS, KEY_KP_ADD]
+const WAIT_DOWN_KEYS := [KEY_MINUS, KEY_KP_SUBTRACT]
+## No landing preview on the turn bar (a TurnOrder cost of NO_ACTION, not a Wait).
+const NO_LANDING := Vector2i(TurnOrder.NO_ACTION, 0)
+## Never equal to a real preview, so the next refresh redraws the bar.
+const STALE_LANDING := Vector2i(-2, 0)
 
 ## Kept across a scene reload, so keys 1 to 3 restart with the chosen encounter kind.
 static var encounter_kind := TestBattleSetup.EncounterKind.TRAINER
@@ -108,6 +121,12 @@ var _side_labels: Dictionary
 var _controlling_side := NO_SIDE
 var _handover_banner: Label
 var _banner_tween: Tween
+## The SR the Wait being chosen would take.
+var _wait_strike_ranks := 1
+## The SR cost of walking to the hovered cell, by the mouse.
+var _cost_label: Label
+## The landing preview the turn bar shows now (cost, 1 for a Wait), so the bar is redrawn only when it changes.
+var _shown_landing := STALE_LANDING
 
 
 func _ready() -> void:
@@ -159,10 +178,11 @@ func _ready() -> void:
 	_unit_panel = UnitPanel.new()
 	_unit_panel.name = "UnitPanel"
 	add_child(_unit_panel)
-	_unit_panel.show_battle(_battle, _pack, _side_labels)
+	_unit_panel.show_battle(_battle, _pack, _side_labels, _turn_order)
 	_move_menu = MoveMenu.new()
 	_move_menu.name = "MoveMenu"
 	_move_menu.move_clicked.connect(_pick_move)
+	_move_menu.wait_clicked.connect(_start_waiting)
 	add_child(_move_menu)
 
 	_turn_bar = TurnBar.new()
@@ -189,6 +209,12 @@ func _ready() -> void:
 	_handover_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_handover_banner.visible = false
 	hint_layer.add_child(_handover_banner)
+	_cost_label = Label.new()
+	_cost_label.add_theme_font_size_override("font_size", UnitPanel.FONT_SIZE)
+	_cost_label.add_theme_constant_override("outline_size", LABEL_OUTLINE)
+	_cost_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_cost_label.visible = false
+	hint_layer.add_child(_cost_label)
 	add_child(hint_layer)
 
 	_pause_timer = Timer.new()
@@ -209,6 +235,7 @@ func _process(_delta: float) -> void:
 	if _is_busy() or _camera_rig.camera == null:
 		return
 	var mouse_position := get_viewport().get_mouse_position()
+	_cost_label.position = mouse_position + COST_LABEL_OFFSET
 	var ray_origin := _camera_rig.camera.project_ray_origin(mouse_position)
 	var ray_direction := _camera_rig.camera.project_ray_normal(mouse_position)
 	if _mode == Mode.CHOOSING_FACING or _mode == Mode.ENDING_TURN:
@@ -227,6 +254,38 @@ func _process(_delta: float) -> void:
 	if cell != _hovered_cell:
 		_hovered_cell = cell
 		_refresh_marks()
+
+
+## While choosing a Wait, the wheel and + and - change its SR instead of zooming the camera.
+func _input(event: InputEvent) -> void:
+	if _mode != Mode.WAITING:
+		return
+	var change := _wait_change_from(event)
+	if change == 0:
+		return
+	_wait_strike_ranks = clampi(_wait_strike_ranks + change, 1, _turn_order.wait_limit())
+	_show_wait_label()
+	_refresh_marks()
+	get_viewport().set_input_as_handled()
+
+
+## +1 or -1 for a wheel turn or a + or - key press, else 0.
+func _wait_change_from(event: InputEvent) -> int:
+	var mouse_button := event as InputEventMouseButton
+	if mouse_button != null and mouse_button.pressed:
+		if mouse_button.button_index == MOUSE_BUTTON_WHEEL_UP:
+			return 1
+		if mouse_button.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			return -1
+		return 0
+	var key_event := event as InputEventKey
+	if key_event == null or not key_event.pressed:
+		return 0
+	if key_event.keycode in WAIT_UP_KEYS:
+		return 1
+	if key_event.keycode in WAIT_DOWN_KEYS:
+		return -1
+	return 0
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -251,10 +310,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_pick_move(MOVE_KEYS.find(key_event.keycode))
 	elif key_event.keycode in CONFIRM_KEYS and _mode == Mode.AIMING:
 		_use_aimed_move()
+	elif key_event.keycode in CONFIRM_KEYS and _mode == Mode.WAITING:
+		_confirm_wait()
 	elif key_event.keycode == KEY_ESCAPE:
 		_step_back()
 	elif key_event.keycode == KEY_SPACE and (_mode == Mode.READY or _mode == Mode.INSPECTING):
-		_start_ending_turn()
+		_start_waiting()
 
 
 ## Selects the new active unit and pans the camera to it: a player unit shows its range, an AI unit starts playing
@@ -262,19 +323,15 @@ func _unhandled_input(event: InputEvent) -> void:
 func _begin_turn() -> void:
 	_active_unit = _turn_order.active_unit()
 	_turn_bar.show_forecast(_turn_order.forecast(TurnBar.ENTRY_COUNT))
+	_shown_landing = NO_LANDING
+	_unit_panel.refresh()
 	if _active_unit == null:
 		_turn_label.text = "No unit can act"
 		_move_menu.show_moves(null, _pack, NO_MOVE, false)
 		_tile_highlight.clear()
 		return
 	var is_ai_turn := _is_ai_unit(_active_unit)
-	_turn_label.text = "%s   Round %d   %s (%s)   %s" % [
-		_battle_name(),
-		_turn_order.round_number,
-		_pack.unit(_active_unit.unit_name)["english_name"],
-		_side_labels[_active_unit.side],
-		"Thinking" if is_ai_turn else "Space: end turn",
-	]
+	_show_turn_label("Thinking" if is_ai_turn else "Space: wait")
 	_camera_rig.pan_to(_battle_map.top_center(_active_unit.cell))
 	if is_ai_turn:
 		_start_ai_turn()
@@ -283,14 +340,32 @@ func _begin_turn() -> void:
 	_show_active()
 
 
-## Back to the active unit: its range if it may still move, nothing inspected.
+## The battle, round, SR and active unit, then a hint for what to do now.
+func _show_turn_label(action_hint: String) -> void:
+	_turn_label.text = "%s   Round %d   SR %d   %s (%s)   %s" % [
+		_battle_name(),
+		_turn_order.round_number,
+		_turn_order.current_strike_rank(),
+		_pack.unit(_active_unit.unit_name)["english_name"],
+		_side_labels[_active_unit.side],
+		action_hint,
+	]
+
+
+func _show_wait_label() -> void:
+	_show_turn_label("Wait %d SR   Wheel, + / -: change   Click, Enter: confirm" % _wait_strike_ranks)
+
+
+## Back to the active unit: its range if it may still take its action, nothing inspected.
 func _show_active() -> void:
 	_inspected_unit = null
 	_target_cell = CellPicker.NO_CELL
 	_aimed_move_index = NO_MOVE
-	_reachable_paths = Movement.reachable_paths(_battle, _active_unit) if _turn_order.can_move(_active_unit) else {}
+	var may_act := _turn_order.can_take_action(_active_unit)
+	_reachable_paths = Movement.reachable_paths(_battle, _active_unit) if may_act else {}
 	_mode = Mode.READY
-	_move_menu.show_moves(_active_unit, _pack, NO_MOVE, _turn_order.can_act(_active_unit))
+	_show_turn_label("Space: wait")
+	_move_menu.show_moves(_active_unit, _pack, NO_MOVE, may_act)
 	_refresh_marks()
 
 
@@ -310,6 +385,8 @@ func _on_left_click() -> void:
 			_finish_turn()
 		Mode.AIMING:
 			_use_aimed_move()
+		Mode.WAITING:
+			_confirm_wait()
 		Mode.READY, Mode.INSPECTING:
 			var clicked_unit := _battle.unit_at(_hovered_cell) if _battle.grid.contains(_hovered_cell) else null
 			if clicked_unit != null and clicked_unit != _active_unit:
@@ -325,11 +402,32 @@ func _on_left_click() -> void:
 
 func _step_back() -> void:
 	match _mode:
-		Mode.CHOOSING_FACING, Mode.ENDING_TURN, Mode.INSPECTING, Mode.AIMING:
+		Mode.CHOOSING_FACING, Mode.INSPECTING, Mode.AIMING, Mode.WAITING:
 			_show_active()
 
 
+## Starts choosing a Wait of 1 SR, if the active unit may still take its action.
+func _start_waiting() -> void:
+	if not _turn_order.can_take_action(_active_unit):
+		return
+	_inspected_unit = null
+	_reachable_paths = {}
+	_wait_strike_ranks = 1
+	_mode = Mode.WAITING
+	_show_wait_label()
+	_refresh_marks()
+
+
+func _confirm_wait() -> void:
+	if _turn_order.wait(_active_unit, _wait_strike_ranks):
+		_move_menu.show_moves(_active_unit, _pack, NO_MOVE, false)
+		_start_ending_turn()
+
+
+## After the action: the unit picks the facing it ends on, and a click ends the turn.
 func _start_ending_turn() -> void:
+	_show_turn_label("Click: face and end turn")
+	_shown_landing = STALE_LANDING
 	_inspected_unit = null
 	_reachable_paths = {}
 	_target_cell = _active_unit.cell
@@ -340,7 +438,8 @@ func _start_ending_turn() -> void:
 
 func _finish_turn() -> void:
 	var unit := _active_unit
-	_turn_order.end_turn(_chosen_facing)
+	if not _turn_order.end_turn(_chosen_facing):
+		return
 	var unit_sprite: UnitSprite = _sprites_by_unit.get(unit)
 	if unit_sprite != null:
 		unit_sprite.show_unit_facing()
@@ -448,7 +547,7 @@ func _hand_over_if_needed() -> void:
 
 ## Starts aiming one of the active unit's moves, if it may still act.
 func _pick_move(move_index: int) -> void:
-	if not _turn_order.can_act(_active_unit) or move_index >= _active_unit.move_names.size():
+	if not _turn_order.can_take_action(_active_unit) or move_index >= _active_unit.move_names.size():
 		return
 	_aimed_move_index = move_index
 	_inspected_unit = null
@@ -535,8 +634,8 @@ func _outcome_text(outcome: MoveUse.Outcome) -> String:
 
 
 ## After the attack: the panels catch up and a user that fainted (Self-Destruct) fades. If that ended the battle
-## the end screen shows; otherwise a fainted user's turn passes on, an AI unit ends its turn, and a player unit goes
-## back to its menu.
+## the end screen shows; otherwise a fainted user's turn passes on, an AI unit ends its turn, and a player unit
+## chooses its end facing.
 func _after_move(move_use: MoveUse) -> void:
 	_unit_panel.refresh()
 	_hovered_cell = CellPicker.NO_CELL
@@ -553,8 +652,7 @@ func _after_move(move_use: MoveUse) -> void:
 	if _is_ai_unit(move_use.user):
 		_finish_ai_turn()
 		return
-	_turn_bar.show_forecast(_turn_order.forecast(TurnBar.ENTRY_COUNT))
-	_show_active()
+	_start_ending_turn()
 
 
 func _start_walk() -> void:
@@ -589,12 +687,13 @@ func _play_walk(path: Array[Vector2i], end_facing: Facing.Direction, on_finished
 	return true
 
 
+## A walk is the turn's action, so the turn ends facing the way chosen before the walk.
 func _after_walk() -> void:
 	_hovered_cell = CellPicker.NO_CELL
-	_show_active()
+	_finish_turn()
 
 
-## An AI unit's turn: choose, wait a moment, then walk, preview and strike as the choice says, then face and end.
+## An AI unit's turn: choose, wait a moment, then walk, or preview and strike, or Wait, then face and end.
 func _start_ai_turn() -> void:
 	_mode = Mode.AI_TURN
 	_inspected_unit = null
@@ -603,24 +702,22 @@ func _start_ai_turn() -> void:
 	_ai_choice = TurnAi.choose(_battle, _pack, _active_unit)
 	_move_menu.show_moves(_active_unit, _pack, NO_MOVE, false)
 	_refresh_marks()
-	_after_pause(AI_THINK_SECONDS, _play_ai_walk)
+	_after_pause(AI_THINK_SECONDS, _play_ai_choice)
 
 
-func _play_ai_walk() -> void:
-	if not _ai_choice.has_walk():
+func _play_ai_choice() -> void:
+	if _ai_choice.has_walk():
+		var walk_facing := Movement.last_step_facing(_active_unit.cell, _ai_choice.path)
+		if not _play_walk(_ai_choice.path, walk_facing, _finish_ai_turn):
+			_ai_wait()
+	elif _ai_choice.has_move():
 		_play_ai_move()
-		return
-	var walk_facing := Movement.last_step_facing(_active_unit.cell, _ai_choice.path)
-	if not _play_walk(_ai_choice.path, walk_facing, _play_ai_move):
-		_play_ai_move()
+	else:
+		_ai_wait()
 
 
-## Lights the chosen move's area, then strikes after the preview pause; ends the turn if there is no move.
+## Lights the chosen move's area, then strikes after the preview pause.
 func _play_ai_move() -> void:
-	_mode = Mode.AI_TURN
-	if not _ai_choice.has_move():
-		_finish_ai_turn()
-		return
 	var move_use := MoveUse.new(
 		_battle, _pack, _active_unit, _ai_choice.move_name, _ai_choice.target_cell, _ai_choice.direction
 	)
@@ -632,10 +729,17 @@ func _play_ai_move() -> void:
 func _strike_ai_move(move_use: MoveUse) -> void:
 	_ai_preview_cells.clear()
 	if not _play_move_use(move_use):
-		_finish_ai_turn()
+		_ai_wait()
+
+
+## The AI's fallback action when it has nothing better to do (TurnAi.FALLBACK_WAIT).
+func _ai_wait() -> void:
+	_turn_order.wait(_active_unit, TurnAi.FALLBACK_WAIT)
+	_finish_ai_turn()
 
 
 func _finish_ai_turn() -> void:
+	_mode = Mode.AI_TURN
 	_chosen_facing = _ai_choice.end_facing
 	_finish_turn()
 
@@ -672,3 +776,37 @@ func _refresh_marks() -> void:
 	_tile_highlight.facing_target = _target_cell if facing_mode else CellPicker.NO_CELL
 	_tile_highlight.chosen_facing = _chosen_facing
 	_tile_highlight.refresh()
+	var hovered_walk_cost := _walk_cost_to(_hovered_cell) if _mode == Mode.READY else TurnOrder.NO_ACTION
+	_cost_label.visible = hovered_walk_cost != TurnOrder.NO_ACTION
+	_cost_label.text = "%d SR" % hovered_walk_cost
+	_show_landing(_landing_preview(hovered_walk_cost))
+
+
+## The SR a walk to a cell costs, or TurnOrder.NO_ACTION if the active unit cannot walk there now.
+func _walk_cost_to(cell: Vector2i) -> int:
+	if not _reachable_paths.has(cell):
+		return TurnOrder.NO_ACTION
+	return Movement.walk_cost(_battle.grid, _active_unit.cell, _reachable_paths[cell])
+
+
+## The action being chosen as (cost, 1 for a Wait), or NO_LANDING when none is.
+func _landing_preview(hovered_walk_cost: int) -> Vector2i:
+	match _mode:
+		Mode.READY:
+			return Vector2i(hovered_walk_cost, 0)
+		Mode.CHOOSING_FACING:
+			return Vector2i(_walk_cost_to(_target_cell), 0)
+		Mode.AIMING:
+			return Vector2i(int(_aimed_grid_entry()["sr_cost"]), 0)
+		Mode.WAITING:
+			return Vector2i(_wait_strike_ranks, 1)
+	return NO_LANDING
+
+
+## Redraws the turn bar with a landing preview, only when the preview changed (a redraw under the mouse would
+## otherwise retrigger the bar's hover signal every frame).
+func _show_landing(landing: Vector2i) -> void:
+	if landing == _shown_landing or _active_unit == null:
+		return
+	_shown_landing = landing
+	_turn_bar.show_forecast(_turn_order.forecast(TurnBar.ENTRY_COUNT, landing.x, landing.y == 1))

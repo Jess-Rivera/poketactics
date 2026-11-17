@@ -28,6 +28,8 @@ Moves whose effect is pokeapi's newest English in-game description (no effect te
 ## Units of measure
 
 - height_decimetres, weight_hectograms: as pokeapi stores them.
+- size_band: 0 (smallest) to 4, from one size score (log height and weight) ranked over default species in
+  shares of 10/20/40/20/10%; the base strike rank before the Speed nudge (2026-11-17-size-bands).
 - gender_rate: chance of female in eighths; -1 means genderless.
 - types.json `against`: damage multiplier of the attacking type (the entry) on each defending type.
 - A learnset entry's level is present only for level-up moves; 0 means learned on evolution.

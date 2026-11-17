@@ -8,4 +8,5 @@ Date: 2026-11-17. Owner: Jess. Canonical: docs/discussion-outputs/battle-design.
   SR 1 of the next round, after upkeep). The next turn is at now + w, with no base SR added.
 - A waiter goes first on its SR regardless of Speed; among waiters, Speed then the seed. Priority moves (deferred)
   will beat a Wait.
-- The AI does not Wait in #13. Updates 2026-11-16-use-a-move-m1 (one move and one act per turn).
+- The AI does not choose to Wait in #13, except as a fallback: with no attack worth making and no closer cell, it
+  waits 1 SR (a turn cannot end without an action). Updates 2026-11-16-use-a-move-m1 (one move and one act per turn).

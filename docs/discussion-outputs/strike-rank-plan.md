@@ -3,6 +3,14 @@
 Rulings: 2026-11-16-strike-rank-clock, 2026-11-17-size-bands, 2026-11-17-wait-action, 2026-11-17-elevation-cost,
 2026-11-16-act-cost. Grilling: strike-rank-size-bands.md. Checked against the coding-principles skill.
 
+## As built (Jess approved, feel test passed 2026-11-17)
+- The AI waits 1 SR as a fallback when it can neither attack nor close in (wait-action ruling updated).
+- Space or the menu row opens Wait (W and the arrows already pan); the wheel or + and - set its length.
+- The bar shows the next 8 turns (12 do not fit at the current entry size).
+- Relation 7 reads: a climb costs at least the same drop, and more from 2 levels (1 level up or down both cost 2).
+- Move rows show their SR cost. Row 4 of Jess's walk table cannot happen on the grid (climb 1 per step); its cost is
+  measured directly.
+
 ## Opening (agreed 2026-11-17)
 
 | Item | Content |
@@ -113,7 +121,7 @@ New suite tests/test_strike_rank.gd, relations only:
 | Higher base Speed never gives a later turn, all else equal | size-bands |
 | A Wait of w lands exactly w later and goes before non-waiters on that SR | wait-action |
 | Every action lands strictly later than now | wait-action, size-bands |
-| A climb costs more than the same drop | elevation-cost |
+| A climb costs at least the same drop, and more from 2 levels | elevation-cost |
 | A stair run costs no more than the same steps split into segments | elevation-cost |
 | Upkeep runs exactly once per round boundary, also for a round no unit lands in | strike-rank-clock |
 | The same seed and actions give the same order | CLAUDE.md scope |

@@ -1,7 +1,8 @@
 class_name UnitPanel
 extends CanvasLayer
 ## Temporary text panel listing every unit in the battle: side, name, level, HP and moves. Tab shows or hides it.
-## For checking unit builds by eye; call refresh() after hit points change (#10).
+## For checking unit builds by eye; call refresh() after hit points change (#10) and after each turn (#13: size
+## band, base SR and the round and SR of the unit's next turn).
 
 const PANEL_MARGIN := 8
 const PANEL_COLOUR := Color(0.0, 0.0, 0.0, 0.7)
@@ -13,11 +14,13 @@ var _battle: Battle
 var _pack: PackData
 ## A name per side (a Battle.Side value to text), from the map: "You" and "Foe", or "Player 1" and "Player 2".
 var _side_labels: Dictionary
+var _turn_order: TurnOrder
 
 
-func show_battle(battle: Battle, pack: PackData, side_labels: Dictionary) -> void:
+func show_battle(battle: Battle, pack: PackData, side_labels: Dictionary, turn_order: TurnOrder) -> void:
 	_battle = battle
 	_pack = pack
+	_turn_order = turn_order
 	_side_labels = side_labels
 	_background = PanelContainer.new()
 	var style := StyleBoxFlat.new()
@@ -41,12 +44,17 @@ func refresh() -> void:
 		var move_names: Array[String] = []
 		for move_name in unit.move_names:
 			move_names.append(_pack.move(move_name)["english_name"])
-		lines.append("%s  %s  Lv %d  HP %d/%d  %s" % [
+		var next_turn := _turn_order.next_turn_of(unit)
+		lines.append("%s  %s  Lv %d  HP %d/%d  Size %d  Base SR %d  Next R%d SR %d  %s" % [
 			_side_labels[unit.side],
 			_pack.unit(unit.unit_name)["english_name"],
 			unit.level,
 			unit.hit_points,
 			unit.max_hit_points,
+			unit.size_band,
+			unit.base_strike_rank,
+			TurnOrder.round_of(next_turn),
+			TurnOrder.strike_rank_in_round(next_turn),
 			", ".join(move_names),
 		])
 	_label.text = "\n".join(lines)

@@ -1,15 +1,18 @@
 class_name TurnAi
 extends RefCounted
-## The M1 enemy AI (issue #11, docs/discussion-outputs/enemy-turn-opening.md, ruling 2026-11-17-enemy-ai-m1): a
-## one-turn scorer. It lists every cell the unit can stand on, every damaging move and every target from there,
-## scores each option by what it would hit, and takes the best. With no attack worth making it walks toward the
-## nearest foe. Rules only: it reads the board and returns a Choice, never changes the board, and never rolls, so
-## the same board always gives the same choice.
+## The enemy AI (issue #11, ruling 2026-11-17-enemy-ai-m1; strike rank turns from #13, 2026-11-17-wait-action): a
+## one-turn scorer. A turn is one action, so it scores every damaging move and target from where the unit stands
+## and uses the best. With no attack worth making it walks toward the nearest foe instead. Rules only: it reads the
+## board and returns a Choice, never changes the board, and never rolls, so the same board always gives the same
+## choice. It does not weigh SR costs (#23).
 ##
 ## Score of one option, per unit in its footprint: hit chance x (expected non-crit damage, capped at the unit's HP,
 ## as a fraction of its max HP), plus KNOCKOUT_BONUS if that damage knocks it out. Foes add, allies and the user
 ## subtract; a move that makes its user faint subtracts the user as if knocked out. An option that knocks out every
-## standing foe wins the battle and adds WIN_BONUS. Ties go to the shorter walk.
+## standing foe wins the battle and adds WIN_BONUS. Ties go to the option found first.
+##
+## A unit with no attack worth making and no closer cell to walk to (walled in, or next to a foe it cannot hurt)
+## waits FALLBACK_WAIT SR, the only action left that harms nobody.
 
 ## Worth a full unit, so any knockout outscores any hit that does not knock out (HP fractions never reach 1 without
 ## a knockout).
@@ -18,15 +21,16 @@ const KNOCKOUT_BONUS := 1.0
 ## 2026-11-17-battle-end-m1, even if the user faints too). Far above the most a non-winning option can score (each
 ## foe is worth at most 1 plus KNOCKOUT_BONUS), so a winning option is always taken.
 const WIN_BONUS := 100.0
+const FALLBACK_WAIT := 1
 
 
-## What the unit does this turn: walk (path may be empty), then use a move (move_name may be empty), then face.
+## What the unit does this turn, then the facing it ends on: one of a walk (path), a move used (move_name) or a Wait.
 class Choice:
-	## The cells stepped on in order, the start left out; empty to stay put.
+	## The cells stepped on in order, the start left out; empty when the unit does not walk.
 	var path: Array[Vector2i] = []
-	## Where the unit stands when it acts and ends its turn.
+	## Where the unit stands when it ends its turn.
 	var stand_cell: Vector2i
-	## The move to use, or empty for no action.
+	## The move to use, or empty when the unit does not use one.
 	var move_name := ""
 	var target_cell: Vector2i
 	var direction: Facing.Direction
@@ -40,41 +44,29 @@ class Choice:
 	func has_move() -> bool:
 		return not move_name.is_empty()
 
+	## A Wait: neither a walk nor a move.
+	func has_wait() -> bool:
+		return not has_walk() and not has_move()
+
 
 ## The unit's choice for this turn on the board as it stands.
 static func choose(battle: Battle, pack: PackData, unit: BattleUnit) -> Choice:
-	var paths := Movement.reachable_paths(battle, unit)
-	var choice := _best_attack(battle, pack, unit, paths)
+	var choice := _best_attack(battle, pack, unit)
 	if choice == null:
-		choice = _approach(battle, unit, paths)
+		choice = _approach(battle, unit, Movement.reachable_paths(battle, unit))
 	choice.end_facing = _facing_toward_nearest_foe(battle, unit, choice.stand_cell)
 	return choice
 
 
-## The highest scoring attack from any stand cell, or null when no option scores above 0.
-static func _best_attack(battle: Battle, pack: PackData, unit: BattleUnit, paths: Dictionary) -> Choice:
+## The highest scoring attack from where the unit stands (the first found of equal scores), or null when no
+## option scores above 0.
+static func _best_attack(battle: Battle, pack: PackData, unit: BattleUnit) -> Choice:
 	var best: Choice = null
-	for stand_cell in _stand_cells(unit, paths):
-		for option in _options_from(battle, pack, unit, stand_cell):
-			option.path = paths.get(stand_cell, [] as Array[Vector2i])
-			option.score = _score(battle, pack, unit, option)
-			if option.score > 0.0 and _beats(option, best):
-				best = option
+	for option in _options_from(battle, pack, unit, unit.cell):
+		option.score = _score(battle, pack, unit, option)
+		if option.score > 0.0 and (best == null or option.score > best.score):
+			best = option
 	return best
-
-
-## The unit's own cell, then every cell it can walk to.
-static func _stand_cells(unit: BattleUnit, paths: Dictionary) -> Array[Vector2i]:
-	var cells: Array[Vector2i] = [unit.cell]
-	cells.append_array(paths.keys())
-	return cells
-
-
-## A higher score wins; an equal score wins only with a shorter walk, so the first found keeps the rest of the ties.
-static func _beats(option: Choice, best: Choice) -> bool:
-	if best == null or option.score > best.score:
-		return true
-	return option.score == best.score and option.path.size() < best.path.size()
 
 
 ## Every damaging move and target the unit could use from a stand cell: each target cell in reach, or each of the
@@ -170,8 +162,8 @@ static func _unit_seen_at(battle: Battle, unit: BattleUnit, stand_cell: Vector2i
 	return battle.unit_at(cell)
 
 
-## No attack worth making: walk to the reachable cell closest by path to any foe, or stay if none is closer.
-## Paths come in breadth-first order, so of equally close cells the shortest walk is found first and kept.
+## No attack worth making: walk to the reachable cell closest by path to any foe, or Wait if none is closer.
+## Paths come cheapest first, so of equally close cells the cheapest walk is found first and kept.
 static func _approach(battle: Battle, unit: BattleUnit, paths: Dictionary) -> Choice:
 	var steps_to_foe := _steps_to_nearest_foe(battle, unit)
 	var best_cell := unit.cell

@@ -37,6 +37,7 @@ func test_ongoing_while_both_sides_stand() -> void:
 	var battle := _battle()
 	var attacker := _unit(battle, "machop", ATTACKER_CELL, Battle.Side.PLAYER, ["strength"])
 	attacker.stats["speed"] = FASTEST_SPEED
+	attacker.base_strike_rank = BattleStats.SMALLEST_SIZE_BAND
 	_unit(battle, "eevee", ADJACENT_CELL, Battle.Side.ENEMY)
 	_unit(battle, "eevee", FAR_CELL, Battle.Side.ENEMY)
 	var turn_order := TurnOrder.new(battle, _random())
@@ -53,6 +54,7 @@ func test_routing_a_side_gives_the_other_side_the_win() -> void:
 		var battle := _battle()
 		var attacker := _unit(battle, "machop", ATTACKER_CELL, attacking_side, ["strength"])
 		attacker.stats["speed"] = FASTEST_SPEED
+		attacker.base_strike_rank = BattleStats.SMALLEST_SIZE_BAND
 		var last_defender := _unit(battle, "eevee", ADJACENT_CELL, defending_side)
 		last_defender.hit_points = 1
 		var turn_order := TurnOrder.new(battle, _random())
@@ -67,6 +69,7 @@ func test_nothing_acts_after_the_end() -> void:
 	var battle := _battle()
 	var attacker := _unit(battle, "machop", ATTACKER_CELL, Battle.Side.PLAYER, ["strength"])
 	attacker.stats["speed"] = FASTEST_SPEED
+	attacker.base_strike_rank = BattleStats.SMALLEST_SIZE_BAND
 	var last_foe := _unit(battle, "eevee", ADJACENT_CELL, Battle.Side.ENEMY)
 	last_foe.hit_points = 1
 	var turn_order := TurnOrder.new(battle, _random())
@@ -75,8 +78,7 @@ func test_nothing_acts_after_the_end() -> void:
 	var facing_at_end := attacker.facing
 	assert_bool(battle.is_over()).is_true()
 	assert_object(turn_order.active_unit()).is_null()
-	assert_bool(turn_order.can_move(attacker)).is_false()
-	assert_bool(turn_order.can_act(attacker)).is_false()
+	assert_bool(turn_order.can_take_action(attacker)).is_false()
 	var path: Array[Vector2i] = [ATTACKER_CELL + Vector2i(0, 1)]
 	assert_bool(turn_order.move_unit(attacker, path, Facing.Direction.SOUTH)).is_false()
 	assert_that(attacker.cell).is_equal(ATTACKER_CELL)
@@ -90,6 +92,7 @@ func test_last_self_destruct_wins_for_its_user() -> void:
 	var battle := _battle()
 	var user := _unit(battle, "geodude", ATTACKER_CELL, Battle.Side.ENEMY, ["self-destruct"])
 	user.stats["speed"] = FASTEST_SPEED
+	user.base_strike_rank = BattleStats.SMALLEST_SIZE_BAND
 	var last_foe := _unit(battle, "eevee", ADJACENT_CELL, Battle.Side.PLAYER)
 	last_foe.hit_points = 1
 	var turn_order := TurnOrder.new(battle, _random())
@@ -134,9 +137,11 @@ func _ai_battle_record(encounter_kind: TestBattleSetup.EncounterKind, battle_see
 		var choice := TurnAi.choose(battle, pack, unit)
 		if choice.has_walk():
 			turn_order.move_unit(unit, choice.path, Movement.last_step_facing(unit.cell, choice.path))
-		if choice.has_move():
+		elif choice.has_move():
 			var use := MoveUse.new(battle, pack, unit, choice.move_name, choice.target_cell, choice.direction)
 			turn_order.use_move(use, random)
+		else:
+			turn_order.wait(unit, TurnAi.FALLBACK_WAIT)
 		if not unit.has_fainted():
 			turn_order.end_turn(choice.end_facing)
 	return [battle.winning_side, turn_order.round_number]

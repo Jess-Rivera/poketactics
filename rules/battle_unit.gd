@@ -16,6 +16,10 @@ var hit_points: int
 var types: Array[String] = []
 var abilities: Array[String] = []
 var move_names: Array[String] = []
+## Size band from the pack (0 smallest to 4) and the SR added after each turn (2026-11-17-size-bands); a bare unit
+## sits in the middle band.
+var size_band := BattleStats.MIDDLE_SIZE_BAND
+var base_strike_rank := BattleStats.MIDDLE_SIZE_BAND
 
 
 func _init(start_cell: Vector2i = Vector2i.ZERO, start_facing: Facing.Direction = Facing.Direction.SOUTH) -> void:
@@ -50,6 +54,8 @@ static func from_pack(
 	unit.level = unit_level
 	unit.stats = BattleStats.battle_stats(pack_unit["base_stats"], unit_level)
 	unit.max_hit_points = unit.stats["hp"]
+	unit.size_band = int(pack_unit["size_band"])
+	unit.base_strike_rank = BattleStats.base_strike_rank(unit.size_band, unit.stats["speed"], unit_level)
 	unit.hit_points = unit.max_hit_points
 	for type_name in pack_unit["types"]:
 		unit.types.append(type_name)

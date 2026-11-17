@@ -1,11 +1,13 @@
 class_name EndScreen
 extends CanvasLayer
 ## The battle's end (issue #12, docs/discussion-outputs/win-lose-opening.md, ruling 2026-11-17-battle-end-m1): a
-## centred panel with Victory or Defeat from the player side's view, the rounds played, the units standing per side,
-## and two buttons. Hidden until show_result; the buttons are announced by signal and the map does the restart.
+## centred panel with the result title from the map (Victory or Defeat, or Player N wins in hotseat, #15), the rounds
+## played, the units standing per side, and three buttons. Hidden until show_result; the buttons are announced by
+## signal and the map acts on them.
 
 signal same_battle_pressed
 signal new_battle_pressed
+signal menu_pressed
 
 ## Above the map's other panels.
 const SCREEN_LAYER := 2
@@ -13,8 +15,8 @@ const PANEL_COLOUR := Color(0.0, 0.0, 0.0, 0.8)
 const PANEL_PADDING := 10
 const ROW_GAP := 4
 const TITLE_FONT_SIZE := 20
-const VICTORY_COLOUR := Color(1.0, 0.85, 0.3)
-const DEFEAT_COLOUR := Color(0.85, 0.35, 0.35)
+const WIN_COLOUR := Color(1.0, 0.85, 0.3)
+const LOSS_COLOUR := Color(0.85, 0.35, 0.35)
 
 var _title: Label
 var _summary: Label
@@ -47,22 +49,18 @@ func _ready() -> void:
 	rows.add_child(buttons)
 	buttons.add_child(_button("Same battle", same_battle_pressed.emit))
 	buttons.add_child(_button("New battle", new_battle_pressed.emit))
+	buttons.add_child(_button("Menu", menu_pressed.emit))
 
 
-## "Victory" or "Defeat" for a battle that is over, from the player side's view (until hotseat, #15).
-static func result_title(battle: Battle) -> String:
-	return "Victory" if battle.winning_side == Battle.Side.PLAYER else "Defeat"
-
-
-## Shows the result of a battle that is over, after round_number rounds.
-func show_result(battle: Battle, round_number: int) -> void:
-	_title.text = result_title(battle)
-	var player_won := battle.winning_side == Battle.Side.PLAYER
-	_title.add_theme_color_override("font_color", VICTORY_COLOUR if player_won else DEFEAT_COLOUR)
+## Shows the result of a battle that is over, after round_number rounds. is_win colours the title as a win (always
+## in hotseat, where someone won); side_labels names each side in the summary.
+func show_result(title: String, is_win: bool, battle: Battle, round_number: int, side_labels: Dictionary) -> void:
+	_title.text = title
+	_title.add_theme_color_override("font_color", WIN_COLOUR if is_win else LOSS_COLOUR)
 	var lines: Array[String] = ["Rounds played: %d" % round_number]
 	for unit_side in Battle.Side.values():
 		lines.append("%s: %d of %d standing" % [
-			UnitPanel.SIDE_LABELS[unit_side], battle.standing_count(unit_side), battle.units_on_side(unit_side).size()
+			side_labels[unit_side], battle.standing_count(unit_side), battle.units_on_side(unit_side).size()
 		])
 	_summary.text = "\n".join(lines)
 	visible = true

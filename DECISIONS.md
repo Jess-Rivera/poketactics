@@ -56,3 +56,4 @@ One file per ruling in docs/decisions/. Each file's `Canonical:` line names the 
 - [2026-11-16-use-a-move-m1](docs/decisions/2026-11-16-use-a-move-m1.md): M1 move use: one move and one act per turn, empty targets allowed, damage only
 - [2026-11-17-enemy-ai-m1](docs/decisions/2026-11-17-enemy-ai-m1.md): M1 enemy AI: one-turn scorer, knockouts first, avoid allies, move then act, enemy side always AI
 - [2026-11-17-battle-end-m1](docs/decisions/2026-11-17-battle-end-m1.md): M1 battle end: rout the moment a side is gone; a double wipe goes to the side that used the move; end screen with Same and New battle
+- [2026-11-17-hotseat-m1b](docs/decisions/2026-11-17-hotseat-m1b.md): M1b hotseat: 12-unit pool at level 30, blind picks, species once per team, start menu, handover banner and camera turn

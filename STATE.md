@@ -23,13 +23,14 @@ Updated 2026-11-17.
   footprints in data/shapes.json, rules/move_area.gd gives tiles hit.
 - Use a move (#10, shipped): rules/move_use.gd, keys 1 to 4, area preview, HP bars, faint.
 - Enemy turn (#11, shipped): rules/turn_ai.gd one-turn scorer; enemies play out with pauses.
-- Win, lose (#12, shipped): rout ends the battle in rules; end screen with Same or New battle. M1 done.
-- Tests: 103 gdUnit4 tests plus the pack and portrait checks, `tools\run-tests.cmd` (see CONTEXT.md).
+- Win, lose (#12, shipped): rout ends the battle in rules; end screen. M1 done.
+- Hotseat (#15, built): start menu, blind picks from 12 units, handover banner and camera turn. Feel test owed.
+- Tests: 109 gdUnit4 tests plus the pack and portrait checks, `tools\run-tests.cmd` (see CONTEXT.md).
 
 ## Next
 Design: game-design.md, battle-design.md. Roadmap: development-plan.md (M1, M1b hotseat, M2, M2b, M3 to M5).
-1. #15 hotseat versus (M1b): opening drafted. Jess closes #9.
-2. Then M2. #25 (show the AI's choice) later. Sub-grillings #20, #23 before M2.
+1. Jess and a second player feel-test #15 (M1b done when it passes). Jess closes #9.
+2. Then M2; #26 widens the hotseat pool. #25 (show the AI's choice) later. Sub-grillings #20, #23 before M2.
 
 ## Open decisions
 | Decision | Blocks | Note |

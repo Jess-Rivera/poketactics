@@ -121,3 +121,10 @@
 ## 2026-11-17, #12 closed, M1 done
 - Jess played a full battle: end screen and restart feel great. #12 closed, board card Shipped. M1 is done.
 - Next: #15 hotseat versus (M1b) opening.
+
+## 2026-11-17, #15 hotseat versus (built)
+- Opening and plan hotseat-opening.md; ruling 2026-11-17-hotseat-m1b; #26 filed to widen the pool to Kanto.
+- TestBattleSetup: hotseat pool, team checks (species once), build from two teams, AI sides per play mode.
+- New start menu (main scene) and blind pick screen; end screen gains Menu; labels and title come from the map.
+- Handover: banner plus the camera turning to the incoming player's home view (CameraRig.turn_to_view_step).
+- 6 new tests, 109 in all, pass; headless smoke runs of the menu, pick screen and a hotseat handover.

@@ -152,10 +152,23 @@ func is_turning() -> bool:
 
 ## Starts a 90 degree turn left (-1) or right (+1). Ignored while a turn is still running.
 func turn(rotation_direction: int) -> void:
-	if _turn_tween != null and _turn_tween.is_running():
+	if is_turning():
 		return
-	var new_view_step := SpriteDirection.next_view_step(view_step, rotation_direction)
-	var target_yaw := rotation_degrees.y + SpriteDirection.DEGREES_PER_VIEW_STEP * rotation_direction
+	turn_to_view_step(SpriteDirection.next_view_step(view_step, rotation_direction))
+
+
+## Turns the shortest way to a view step (90 or 180 degrees in one turn), cutting short any turn still running.
+## Used for a hotseat handover (#15) to show the incoming player's home view.
+func turn_to_view_step(new_view_step: int) -> void:
+	if is_turning():
+		_turn_tween.kill()
+		_settle_yaw()
+	var steps := posmod(new_view_step - view_step, SpriteDirection.VIEW_STEP_COUNT)
+	if steps == 0:
+		return
+	if steps > SpriteDirection.VIEW_STEP_COUNT / 2:
+		steps -= SpriteDirection.VIEW_STEP_COUNT
+	var target_yaw := rotation_degrees.y + SpriteDirection.DEGREES_PER_VIEW_STEP * steps
 	_turn_tween = create_tween()
 	_turn_tween.tween_property(self, "rotation_degrees:y", target_yaw, TURN_SECONDS) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)

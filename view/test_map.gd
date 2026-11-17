@@ -1,3 +1,4 @@
+class_name TestMap
 extends Node3D
 ## Greybox test battle: the 20 by 20 map and pack units from rules/test_battle_setup.gd (issue #6), with select
 ## and move (issue #7) and turn order (issue #8, docs/discussion-outputs/turn-order-plan.md). Units act one at a
@@ -8,6 +9,8 @@ extends Node3D
 ## player side; enemy units choose with TurnAi (#11, docs/discussion-outputs/enemy-turn-opening.md) and play their
 ## turn out with short pauses: camera, walk, area preview, strike, facing. When a side is routed the board freezes
 ## and the end screen offers the same battle again or a new one (#12, docs/discussion-outputs/win-lose-opening.md).
+## In hotseat (#15, docs/discussion-outputs/hotseat-opening.md) two players control one side each; when control
+## passes, a banner names the player and the camera turns to their home view.
 ## Q and E rotate, WASD or the arrow keys pan, wheel or + and - zoom, Tab shows the unit panel. F1, F2 and F3
 ## restart the battle as a wild, trainer or boss encounter with a new seed (#16): 6 player units against 2 to 4,
 ## 3 to 6 or 6 enemies.
@@ -19,7 +22,24 @@ const IDLE_ANIMATION := "Idle"
 ## While choosing a facing, the mouse must be this far (world units) from the target's centre to change it.
 const FACING_DEAD_ZONE := 0.3
 const HINT_TEXT := "Click: move / inspect   1-4: moves   Right click, Esc: back   Q / E: rotate   WASD: pan   Wheel: zoom   Tab: units   F1-F3: wild / trainer / boss"
-const SIDE_LABELS := {Battle.Side.PLAYER: "You", Battle.Side.ENEMY: "Foe"}
+## A name per side in each play mode.
+const SIDE_LABELS_BY_MODE := {
+	TestBattleSetup.PlayMode.AI_BATTLE: {Battle.Side.PLAYER: "You", Battle.Side.ENEMY: "Foe"},
+	TestBattleSetup.PlayMode.HOTSEAT: {Battle.Side.PLAYER: "Player 1", Battle.Side.ENEMY: "Player 2"},
+}
+const HOTSEAT_NAME := "Hotseat"
+## Each hotseat player's home view (a CameraRig view step): player 1 the view the battle opens in, player 2 the
+## opposite one, so their own start corner is nearest the screen (ruling 2026-11-17-hotseat-m1b).
+const HOME_VIEW_STEPS := {Battle.Side.PLAYER: 0, Battle.Side.ENEMY: 2}
+## The handover banner shows this long, then fades out.
+const HANDOVER_SECONDS := 1.2
+const BANNER_FADE_SECONDS := 0.3
+## The banner's distance from the top of the screen, in pixels (below the turn bar).
+const BANNER_TOP := 60.0
+const START_MENU_SCENE := "res://view/start_menu.tscn"
+const TEAM_PICK_SCENE := "res://view/team_pick.tscn"
+## No player has had control yet (the first hotseat turn is a handover).
+const NO_SIDE := -1
 const ENCOUNTER_KEYS := {
 	KEY_F1: TestBattleSetup.EncounterKind.WILD,
 	KEY_F2: TestBattleSetup.EncounterKind.TRAINER,
@@ -32,8 +52,6 @@ const HURT_ANIMATION := "Hurt"
 const NO_MOVE := -1
 const DAMAGE_TEXT_COLOUR := Color(1.0, 1.0, 1.0)
 const QUIET_TEXT_COLOUR := Color(0.7, 0.7, 0.7)
-## The side TurnAi plays (2026-11-17-enemy-ai-m1); a hotseat toggle comes with #15.
-const AI_SIDE := Battle.Side.ENEMY
 ## Seconds an AI unit waits after the camera reaches it, and while its move's area is shown before the strike.
 const AI_THINK_SECONDS := 0.4
 const AI_PREVIEW_SECONDS := 0.5
@@ -43,6 +61,10 @@ static var encounter_kind := TestBattleSetup.EncounterKind.TRAINER
 ## The seed the last battle started with, and whether the next load reuses it (the end screen's Same battle, #12).
 static var last_seed := 0
 static var replay_seed_requested := false
+## Set by the start menu and the pick screen (#15); kept across reloads like encounter_kind.
+static var play_mode := TestBattleSetup.PlayMode.AI_BATTLE
+static var player_one_team: Array[String] = []
+static var player_two_team: Array[String] = []
 
 var _battle: Battle
 var _pack: PackData
@@ -80,6 +102,12 @@ var _ai_choice: TurnAi.Choice
 var _ai_preview_cells: Array[Vector2i] = []
 ## Times the AI pauses; a child of this scene, so a restart mid-turn drops its pending step.
 var _pause_timer: Timer
+## The names of the sides for this play mode.
+var _side_labels: Dictionary
+## In hotseat, the side whose player last had control, or NO_SIDE before the first turn.
+var _controlling_side := NO_SIDE
+var _handover_banner: Label
+var _banner_tween: Tween
 
 
 func _ready() -> void:
@@ -92,8 +120,12 @@ func _ready() -> void:
 	else:
 		_random.randomize()
 	last_seed = _random.seed
-	print("%s battle, seed %d" % [TestBattleSetup.ENCOUNTER_NAMES[encounter_kind], _random.seed])
-	_battle = TestBattleSetup.build(_pack, encounter_kind, _random.seed)
+	_side_labels = SIDE_LABELS_BY_MODE[play_mode]
+	print("%s battle, seed %d" % [_battle_name(), _random.seed])
+	if play_mode == TestBattleSetup.PlayMode.HOTSEAT:
+		_battle = TestBattleSetup.build_from_teams(_pack, player_one_team, player_two_team)
+	else:
+		_battle = TestBattleSetup.build(_pack, encounter_kind, _random.seed)
 	_turn_order = TurnOrder.new(_battle, _random)
 
 	_battle_map = BattleMap.new()
@@ -127,7 +159,7 @@ func _ready() -> void:
 	_unit_panel = UnitPanel.new()
 	_unit_panel.name = "UnitPanel"
 	add_child(_unit_panel)
-	_unit_panel.show_battle(_battle, _pack)
+	_unit_panel.show_battle(_battle, _pack, _side_labels)
 	_move_menu = MoveMenu.new()
 	_move_menu.name = "MoveMenu"
 	_move_menu.move_clicked.connect(_pick_move)
@@ -150,6 +182,13 @@ func _ready() -> void:
 	_turn_label.add_theme_font_size_override("font_size", UnitPanel.FONT_SIZE)
 	_turn_label.position = Vector2(8, 16)
 	hint_layer.add_child(_turn_label)
+	_handover_banner = Label.new()
+	_handover_banner.add_theme_font_size_override("font_size", EndScreen.TITLE_FONT_SIZE)
+	_handover_banner.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_handover_banner.offset_top = BANNER_TOP
+	_handover_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_handover_banner.visible = false
+	hint_layer.add_child(_handover_banner)
 	add_child(hint_layer)
 
 	_pause_timer = Timer.new()
@@ -160,6 +199,7 @@ func _ready() -> void:
 	_end_screen.name = "EndScreen"
 	_end_screen.same_battle_pressed.connect(_restart_same_battle)
 	_end_screen.new_battle_pressed.connect(_restart_new_battle)
+	_end_screen.menu_pressed.connect(_open_start_menu)
 	add_child(_end_screen)
 
 	_begin_turn()
@@ -193,6 +233,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	var key_event := event as InputEventKey
 	if key_event != null and key_event.pressed and ENCOUNTER_KEYS.has(key_event.keycode):
 		encounter_kind = ENCOUNTER_KEYS[key_event.keycode]
+		play_mode = TestBattleSetup.PlayMode.AI_BATTLE
 		get_tree().reload_current_scene()
 		return
 	if _is_busy() or _active_unit == null:
@@ -226,19 +267,20 @@ func _begin_turn() -> void:
 		_move_menu.show_moves(null, _pack, NO_MOVE, false)
 		_tile_highlight.clear()
 		return
-	var is_ai_turn := _active_unit.side == AI_SIDE
+	var is_ai_turn := _is_ai_unit(_active_unit)
 	_turn_label.text = "%s   Round %d   %s (%s)   %s" % [
-		TestBattleSetup.ENCOUNTER_NAMES[encounter_kind],
+		_battle_name(),
 		_turn_order.round_number,
 		_pack.unit(_active_unit.unit_name)["english_name"],
-		SIDE_LABELS[_active_unit.side],
+		_side_labels[_active_unit.side],
 		"Thinking" if is_ai_turn else "Space: end turn",
 	]
 	_camera_rig.pan_to(_battle_map.top_center(_active_unit.cell))
 	if is_ai_turn:
 		_start_ai_turn()
-	else:
-		_show_active()
+		return
+	_hand_over_if_needed()
+	_show_active()
 
 
 ## Back to the active unit: its range if it may still move, nothing inspected.
@@ -343,22 +385,65 @@ func _show_end() -> void:
 	_tile_highlight.cursor_cell = CellPicker.NO_CELL
 	_tile_highlight.refresh()
 	_move_menu.show_moves(null, _pack, NO_MOVE, false)
-	_turn_label.text = "%s   Round %d   %s" % [
-		TestBattleSetup.ENCOUNTER_NAMES[encounter_kind],
-		_turn_order.round_number,
-		EndScreen.result_title(_battle),
-	]
-	_end_screen.show_result(_battle, _turn_order.round_number)
+	var title := _result_title()
+	_turn_label.text = "%s   Round %d   %s" % [_battle_name(), _turn_order.round_number, title]
+	var is_win := play_mode == TestBattleSetup.PlayMode.HOTSEAT or _battle.winning_side == Battle.Side.PLAYER
+	_end_screen.show_result(title, is_win, _battle, _turn_order.round_number, _side_labels)
 
 
-## Restarts with the seed this battle used, so the same units start in the same places and the same turn order.
+## Victory or Defeat from the player side's view against the AI; in hotseat, which player won.
+func _result_title() -> String:
+	if play_mode == TestBattleSetup.PlayMode.HOTSEAT:
+		return "%s wins" % _side_labels[_battle.winning_side]
+	return "Victory" if _battle.winning_side == Battle.Side.PLAYER else "Defeat"
+
+
+## The encounter kind against the AI, or Hotseat.
+func _battle_name() -> String:
+	if play_mode == TestBattleSetup.PlayMode.HOTSEAT:
+		return HOTSEAT_NAME
+	return TestBattleSetup.ENCOUNTER_NAMES[encounter_kind]
+
+
+## Restarts with the seed this battle used (and in hotseat the same teams), so the same units start in the same
+## places with the same turn order.
 func _restart_same_battle() -> void:
 	replay_seed_requested = true
 	get_tree().reload_current_scene()
 
 
+## A new seed against the AI; back to the pick screen in hotseat.
 func _restart_new_battle() -> void:
+	if play_mode == TestBattleSetup.PlayMode.HOTSEAT:
+		get_tree().change_scene_to_file(TEAM_PICK_SCENE)
+		return
 	get_tree().reload_current_scene()
+
+
+func _open_start_menu() -> void:
+	get_tree().change_scene_to_file(START_MENU_SCENE)
+
+
+func _is_ai_unit(unit: BattleUnit) -> bool:
+	return TestBattleSetup.AI_SIDES_BY_MODE[play_mode].has(unit.side)
+
+
+## In hotseat, when control passes to the other player (or at the first turn): a banner names them and the camera
+## turns to their home view. Does nothing against the AI or while the same player keeps control.
+func _hand_over_if_needed() -> void:
+	if play_mode != TestBattleSetup.PlayMode.HOTSEAT or _active_unit.side == _controlling_side:
+		return
+	_controlling_side = _active_unit.side
+	_camera_rig.turn_to_view_step(HOME_VIEW_STEPS[_controlling_side])
+	_handover_banner.text = "%s's turn" % _side_labels[_controlling_side]
+	_handover_banner.modulate.a = 1.0
+	_handover_banner.visible = true
+	if _banner_tween != null:
+		_banner_tween.kill()
+	_banner_tween = create_tween()
+	_banner_tween.tween_interval(HANDOVER_SECONDS)
+	_banner_tween.tween_property(_handover_banner, "modulate:a", 0.0, BANNER_FADE_SECONDS)
+	_banner_tween.tween_callback(_handover_banner.hide)
 
 
 ## Starts aiming one of the active unit's moves, if it may still act.
@@ -465,7 +550,7 @@ func _after_move(move_use: MoveUse) -> void:
 	if move_use.user.has_fainted():
 		_begin_turn()
 		return
-	if move_use.user.side == AI_SIDE:
+	if _is_ai_unit(move_use.user):
 		_finish_ai_turn()
 		return
 	_turn_bar.show_forecast(_turn_order.forecast(TurnBar.ENTRY_COUNT))

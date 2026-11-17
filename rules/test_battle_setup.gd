@@ -52,23 +52,69 @@ const ENEMY_START_CELLS: Array[Vector2i] = [
 const PLAYER_FACING := Facing.Direction.NORTH
 const ENEMY_FACING := Facing.Direction.SOUTH
 
+## Who plays the battle (#15, ruling 2026-11-17-hotseat-m1b): the player against TurnAi, or two players on one
+## machine (player 1 on the player side, player 2 on the enemy side).
+enum PlayMode { AI_BATTLE, HOTSEAT }
+
+## The sides TurnAi plays in each mode.
+const AI_SIDES_BY_MODE := {
+	PlayMode.AI_BATTLE: [Battle.Side.ENEMY],
+	PlayMode.HOTSEAT: [],
+}
+## A hotseat team: this many units from HOTSEAT_POOL, no species twice.
+const TEAM_SIZE := 6
+## The units hotseat players pick from: every unit whose level-up moves at UNIT_LEVEL have grid behaviour (#26
+## widens it).
+const HOTSEAT_POOL := PLAYER_ROSTER + ENEMY_POOL
+
 
 ## The test battle for an encounter kind. The seed picks the enemy count inside the kind's range and which units
 ## of the pool appear, so the same seed always gives the same battle. The default is a full 6 against 6.
 static func build(pack: PackData, encounter_kind := EncounterKind.BOSS, battle_seed := 0) -> Battle:
+	var player_team: Array[String] = []
+	player_team.assign(PLAYER_ROSTER)
+	return build_from_teams(pack, player_team, enemy_roster(encounter_kind, battle_seed))
+
+
+## The test map with the first team on the player side and the second on the enemy side, at UNIT_LEVEL, in
+## start-cell order.
+static func build_from_teams(pack: PackData, player_team: Array[String], enemy_team: Array[String]) -> Battle:
 	var battle := Battle.new(BattleGrid.from_rows(PackedStringArray(HEIGHT_ROWS)))
-	for index in PLAYER_ROSTER.size():
+	for index in player_team.size():
 		battle.add_unit(
-			BattleUnit.from_pack(pack, PLAYER_ROSTER[index], UNIT_LEVEL, PLAYER_START_CELLS[index], PLAYER_FACING),
+			BattleUnit.from_pack(pack, player_team[index], UNIT_LEVEL, PLAYER_START_CELLS[index], PLAYER_FACING),
 			Battle.Side.PLAYER
 		)
-	var enemy_names := enemy_roster(encounter_kind, battle_seed)
-	for index in enemy_names.size():
+	for index in enemy_team.size():
 		battle.add_unit(
-			BattleUnit.from_pack(pack, enemy_names[index], UNIT_LEVEL, ENEMY_START_CELLS[index], ENEMY_FACING),
+			BattleUnit.from_pack(pack, enemy_team[index], UNIT_LEVEL, ENEMY_START_CELLS[index], ENEMY_FACING),
 			Battle.Side.ENEMY
 		)
 	return battle
+
+
+## Whether a unit may join a hotseat team: it is in the pool, the team is not full, and no unit of its species is
+## on the team yet (Vulpix and Alolan Vulpix are one species).
+static func can_join_team(pack: PackData, team: Array[String], unit_name: String) -> bool:
+	if not HOTSEAT_POOL.has(unit_name) or team.size() >= TEAM_SIZE:
+		return false
+	var species: String = pack.unit(unit_name)["species"]
+	for member in team:
+		if pack.unit(member)["species"] == species:
+			return false
+	return true
+
+
+## Whether a team is ready for battle: exactly TEAM_SIZE units, each allowed to join the ones before it.
+static func is_valid_team(pack: PackData, team: Array[String]) -> bool:
+	if team.size() != TEAM_SIZE:
+		return false
+	var built: Array[String] = []
+	for unit_name in team:
+		if not can_join_team(pack, built, unit_name):
+			return false
+		built.append(unit_name)
+	return true
 
 
 ## Which pool units the enemy fields for an encounter kind and seed, in start-cell order.

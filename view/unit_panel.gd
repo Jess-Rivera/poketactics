@@ -3,7 +3,6 @@ extends CanvasLayer
 ## Temporary text panel listing every unit in the battle: side, name, level, HP and moves. Tab shows or hides it.
 ## For checking unit builds by eye; call refresh() after hit points change (#10).
 
-const SIDE_LABELS := {Battle.Side.PLAYER: "You", Battle.Side.ENEMY: "Foe"}
 const PANEL_MARGIN := 8
 const PANEL_COLOUR := Color(0.0, 0.0, 0.0, 0.7)
 const FONT_SIZE := 10
@@ -12,11 +11,14 @@ var _background: PanelContainer
 var _label: Label
 var _battle: Battle
 var _pack: PackData
+## A name per side (a Battle.Side value to text), from the map: "You" and "Foe", or "Player 1" and "Player 2".
+var _side_labels: Dictionary
 
 
-func show_battle(battle: Battle, pack: PackData) -> void:
+func show_battle(battle: Battle, pack: PackData, side_labels: Dictionary) -> void:
 	_battle = battle
 	_pack = pack
+	_side_labels = side_labels
 	_background = PanelContainer.new()
 	var style := StyleBoxFlat.new()
 	style.bg_color = PANEL_COLOUR
@@ -40,7 +42,7 @@ func refresh() -> void:
 		for move_name in unit.move_names:
 			move_names.append(_pack.move(move_name)["english_name"])
 		lines.append("%s  %s  Lv %d  HP %d/%d  %s" % [
-			SIDE_LABELS[unit.side],
+			_side_labels[unit.side],
 			_pack.unit(unit.unit_name)["english_name"],
 			unit.level,
 			unit.hit_points,

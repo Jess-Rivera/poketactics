@@ -3,7 +3,7 @@
 Rulings: 2026-11-16-facing-arcs, 2026-11-16-height-and-sight, 2026-11-17-facing-height-rules. Design:
 battle-design.md "Positioning". Checked against the coding-principles skill. No code in this plan.
 
-## As built (2026-11-17, awaiting Jess's feel test)
+## As built (2026-11-17, Jess's feel test passed)
 - D1 to D3 as recommended: parity fixture and its two tests deleted; arc tint 4 steps; labels are words only.
 - Relation 6 reworded: with whole tiles, floor(sqrt) cannot shrink at every level (0, 1, 1, 1, 2, ...). The test
   checks the true diminishing shape instead: never more than one tile per level, never shrinking, and each further

@@ -155,3 +155,4 @@
 - Built: Facing.arc_of, BattleStats factors and range change, MoveArea height reach and hit origin, new
   HitModifiers list (rounded once); AI scores through it; aim labels and inspect arc tint. Parity fixture retired.
 - 129 tests pass. Awaiting Jess's feel test.
+- Jess's feel test passed; #17 closed. Guard hook fixed: heredoc stripping hid any git command after it.

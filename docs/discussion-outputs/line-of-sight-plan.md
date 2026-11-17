@@ -2,7 +2,7 @@
 
 Rulings: 2026-11-16-height-and-sight, 2026-11-17-line-of-sight-rules, 2026-11-17-height-range-all-ranged.
 Opening: line-of-sight-opening.md (goal, done when, the 11 relations). Checked against the coding-principles skill.
-No code in this plan. Status: approved and built 2026-11-17; awaiting Jess's feel test.
+No code in this plan. Status: built 2026-11-17; Jess's feel test passed, #18 closed.
 
 ## As built (2026-11-17)
 - D1 reading order (lower grid y, then lower x); D3 and D4 as recommended.

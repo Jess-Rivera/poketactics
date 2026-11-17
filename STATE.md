@@ -19,13 +19,13 @@ Updated 2026-11-17.
   Upgrades (#28) are M3.
 - Facing and height (#17, closed, feel test passed): hit modifier list (close range, facing arc, height) in
   hit_modifiers.gd; ranged reach changes with height by floor(sqrt); aim labels and inspect arc tint.
-- Line of sight (#18, built, awaiting Jess's feel test): recipe tags (21 pokeapi flags plus arcing); walls block
+- Line of sight (#18, closed, feel test passed): recipe tags (21 pokeapi flags plus arcing); walls block
   and shelter; non-arcing centred moves stop at the first unit; grey walled tint. Free aim later (#29).
 - Tests: 140 gdUnit4 tests plus the pack and portrait checks, `tools\run-tests.cmd` (see CONTEXT.md).
 
 ## Next
 Design: game-design.md, battle-design.md. Roadmap: development-plan.md (M2, M2b, M3 to M5).
-1. Feel-test #18 (targeting past units and walls). Then #19 push. #20, #23 sub-grillings first for #21, #22
+1. Next M2 slice: #19 push. #20, #23 sub-grillings first for #21, #22
    and the boss AI.
 2. #26 (Kanto move grid), #25 (show the AI's choice) when convenient.
 

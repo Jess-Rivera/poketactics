@@ -117,3 +117,7 @@
 - Battle holds the winning side; TurnOrder.use_move settles a rout and gives no active unit once it is over.
 - TurnAi adds a win bonus for an option that knocks out every standing foe. view/end_screen.gd: Victory or Defeat,
   rounds, units left, Same battle (seed kept) and New battle. 6 new tests, 103 in all. Awaiting Jess's full battle.
+
+## 2026-11-17, #12 closed, M1 done
+- Jess played a full battle: end screen and restart feel great. #12 closed, board card Shipped. M1 is done.
+- Next: #15 hotseat versus (M1b) opening.

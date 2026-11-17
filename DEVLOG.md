@@ -139,3 +139,10 @@
   (walk, move or Wait); walk cost by segment. Rulings size-bands, wait-action, elevation-cost.
 - Built: pack size_band, clock in TurnOrder, cost search in Movement, AI one action (fallback Wait), forecast
   bar with landing ghost, Wait row, hover cost. 11 new relation tests, 117 in all; Jess's feel test passed.
+
+## 2026-11-17, ECS question; #27 move recipes (built)
+- Jess asked about an ECS; settled on composition without one: moves are recipes, upgrades are filter plus change.
+- Grilled with Jess's Excalidraw: square or circle shapes, range span, centred or forward; components with effect,
+  timing, touches, who and chance. Rulings move-recipes, move-recipe-structure, move-recipes-build; #27 and #28.
+- Built #27: recipe export, MoveRecipe, MoveEffects handlers, generic MoveUse loop; AI and view read built moves.
+- Parity fixture (footprints and 24 seeded battles) recorded before the change; 122 tests pass.

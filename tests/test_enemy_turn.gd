@@ -132,8 +132,8 @@ func _play_turn(battle: Battle, turn_order: TurnOrder, random: RandomNumberGener
 	elif choice.has_move():
 		assert_that(choice.stand_cell).is_equal(unit.cell)
 		assert_bool(unit.move_names.has(choice.move_name)).is_true()
-		var grid_entry: Dictionary = pack.move(choice.move_name)["grid"]
-		assert_bool(MoveArea.can_reach(grid_entry, unit.cell, choice.target_cell)).is_true()
+		var recipe := MoveRecipe.built(pack, unit, choice.move_name)
+		assert_bool(MoveArea.can_reach(recipe, unit.cell, choice.target_cell)).is_true()
 		var move_use := MoveUse.new(battle, pack, unit, choice.move_name, choice.target_cell, choice.direction)
 		assert_bool(turn_order.use_move(move_use, random)).is_true()
 	else:

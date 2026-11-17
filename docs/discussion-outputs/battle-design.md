@@ -77,6 +77,7 @@ gets its own sub-grilling.
 | Objectives | Nodes roll from rout, defeat the leader, hold a zone, rescue (catch boost), escape; bosses fixed | [Approved] |
 | Boss AI | Utility goals plus GOAP, designed ground-up for turns; Jess's own fork AI code may be used | [Approved] |
 | Move schema | Fork's three axes (space, delivery, payload) as a start, redesigned for tiles, SR and rounds | [Approved] |
+| Move recipes | Basics + shape (square or circle, range span, centered or forward) + components (effect, timing, touches, who, chance); upgrades as filter plus change, build-time and resolve-time (2026-11-17-move-recipe-structure, #27) | [Approved], code differs, see TODO |
 | Act cost | From PP bands with overrides | [Approved], formula [Open] |
 | Mainline systems | Everything portable (status, stat stages, immunities, weather, abilities, held items) in M2b | [Approved] |
 

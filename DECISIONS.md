@@ -60,3 +60,6 @@ One file per ruling in docs/decisions/. Each file's `Canonical:` line names the 
 - [2026-11-17-size-bands](docs/decisions/2026-11-17-size-bands.md): Base SR 0 to 4 from one size score (log height and weight) ranked 10/20/40/20/10%; Speed nudge -1/+1
 - [2026-11-17-wait-action](docs/decisions/2026-11-17-wait-action.md): A turn is a move, an act or a Wait; free facing after each; Wait 1 to n SR lands first on its SR
 - [2026-11-17-elevation-cost](docs/decisions/2026-11-17-elevation-cost.md): Walk cost by segment: flat and drops halved and rounded up, climbs 1 per level; stairs one segment; 12 SR cap
+- [2026-11-17-move-recipes](docs/decisions/2026-11-17-move-recipes.md): Moves are recipes of parts with one handler per part; upgrades are filter plus change, per Pokemon, enemies too, fixed order by kind
+- [2026-11-17-move-recipe-structure](docs/decisions/2026-11-17-move-recipe-structure.md): Recipe = basics + shape (square or circle, range span, centered or forward) + components (effect, timing, touches, who, chance); two upgrade channels
+- [2026-11-17-move-recipes-build](docs/decisions/2026-11-17-move-recipes-build.md): Recipes split into #27 (recipes, shapes, handlers; no behavior change) and #28 (upgrades, splash, Wide Breath, debug toggle); built move read everywhere

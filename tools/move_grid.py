@@ -1,43 +1,43 @@
-"""Move grid behaviour for the data pack (issue #9): derived defaults, hand-written overrides, the validator, and
+"""Move recipes for the data pack (issues #9, #27): derived defaults, hand-written overrides, the validator, and
 the shape footprint table.
 
-Rulings: 2026-11-16-move-shapes-and-range, 2026-11-16-move-schema-adaptation, 2026-11-16-act-cost,
-2026-11-16-height-and-sight, 2026-11-16-environment-model. Plan: docs/discussion-outputs/move-schema-opening.md.
+Rulings: 2026-11-17-move-recipe-structure, 2026-11-17-move-recipes-build, 2026-11-16-act-cost,
+2026-11-16-height-and-sight, 2026-11-16-environment-model. Plan: docs/discussion-outputs/move-recipes-plan.md.
 
-A move's grid entry holds:
-  shape            single, line, cone or circle
-  target           self, other or point (the allowed pairs are ALLOWED_PAIRS)
-  radius           circle and cone: tiles whose centre lies within radius + 0.5 of the origin's centre
-  spread_degrees   cone only: total angle, a multiple of SPREAD_STEP_DEGREES
-  length           line only: tiles in the line
-  range_min, range_max   grid steps (no diagonals) from the user to the chosen target; 0 and 0 for self
-  close_penalty    damage is halved at range 1 (ranged damaging moves)
+A move's recipe holds:
+  type, damage_class, accuracy   the move's pokeapi facts, as the game reads them (upgrades may change them, #28)
   sr_cost          strike rank cost of using the move (placeholder PP bands, a tuning item)
-  tile_element     the element the move leaves on tiles it hits, or null
   arcing           ignores units (not walls) for line of sight
-  payload          ordered effects; M1 runs damage, fixed_damage and user_faints
-                   fixed_damage: damage set by FIXED_DAMAGE_AMOUNTS, not the formula (Night Shade: the user's level)
-Only the moves named in authored/move_grid_overrides.json get an entry (Jess, #9: the 45 roster moves).
+  shape            kind square (length along the aim, width across it; width always odd, length odd when
+                   centred) or circle (radius: tiles whose centre lies within radius + 0.5; angle: a multiple of
+                   SPREAD_STEP_DEGREES, under 360 for a cone), range_min and range_max in grid steps (0 and 0 for a
+                   move on the user's own tile), anchor centered (on the aimed tile) or forward (runs away from the
+                   user; a circle under 360 is always forward)
+  components       ordered effects, each with effect, timing (on_hit: only units that passed the accuracy roll;
+                   on_use: not gated by accuracy), touches (units or tiles), who (units only: all, foes, allies or
+                   self; all leaves out the user) and an optional chance. #27 runs damage, fixed_damage and faint.
+  modifiers        resolve-time number changes the move brings: close_range (ranged damage halved at range 1)
+Only the moves named in authored/move_recipe_overrides.json get a recipe (Jess, #9: the 45 roster moves). An
+override replaces whole top-level fields (a whole shape, a whole component list).
 """
 
 import json
 import math
 
-ALLOWED_PAIRS = {
-    "single": {"self", "other", "point"},
-    "line": {"self", "point"},
-    "cone": {"self"},
-    "circle": {"self", "other", "point"},
-}
-SHAPE_FIELDS = {"single": set(), "line": {"length"}, "cone": {"radius", "spread_degrees"}, "circle": {"radius"}}
-COMMON_FIELDS = {"shape", "target", "range_min", "range_max", "close_penalty", "sr_cost", "tile_element", "arcing", "payload"}
-ALL_FIELDS = COMMON_FIELDS | {"length", "radius", "spread_degrees"}
+SHAPE_KINDS = {"square", "circle"}
+ANCHORS = {"centered", "forward"}
+TIMINGS = {"on_use", "on_hit"}
+TOUCHES = {"units", "tiles"}
+WHO = {"all", "foes", "allies", "self"}
+MODIFIERS = {"close_range"}
 EFFECTS = {
-    "damage", "fixed_damage", "ailment", "stat", "drain", "recoil", "heal", "multi_hit", "flinch", "user_faints",
+    "damage", "fixed_damage", "status", "stat", "drain", "recoil", "heal", "multi_hit", "flinch", "faint", "element",
     "needs_rule",
 }
 FIXED_DAMAGE_AMOUNTS = {"user_level"}
-EFFECT_SIDES = {"target", "user"}
+RECIPE_FIELDS = {"type", "damage_class", "accuracy", "sr_cost", "arcing", "shape", "components", "modifiers"}
+SHAPE_FIELDS = {"square": {"length", "width"}, "circle": {"radius", "angle"}}
+SHAPE_COMMON_FIELDS = {"kind", "range_min", "range_max", "anchor"}
 
 RADIUS_LIMIT = 50
 SPREAD_STEP_DEGREES = 15
@@ -48,11 +48,12 @@ RANGED_RANGE_MAX = 4
 DEFAULT_CONE_RADIUS = 3
 DEFAULT_CONE_SPREAD = 60
 DEFAULT_CIRCLE_RADIUS = 1
+HIGHEST_POWER = 1000
 # Placeholder act cost bands (2026-11-16-act-cost, exact formula open): (lowest PP in the band, SR cost).
 SR_COST_BANDS = [(35, 2), (25, 3), (15, 4), (10, 5), (0, 6)]
 SR_COST_WITHOUT_PP = 4
 
-# Which shape and target pokeapi's target picks by default.
+# Which shape pokeapi's target picks by default.
 SINGLE_OTHER_TARGETS = {
     "selected-pokemon", "selected-pokemon-me-first", "random-opponent", "specific-move", "ally", "user-or-ally",
     "fainting-pokemon",
@@ -77,132 +78,195 @@ def sr_cost_for(pp):
 
 
 def default_shape(move):
+    """The shape pokeapi's target picks, with its range: the user's own tile (0), melee or ranged."""
     target = move["target"]
-    if target in SINGLE_SELF_TARGETS:
-        return {"shape": "single", "target": "self"}
+    on_user_tile = True
     if target in CONE_TARGETS:
-        return {"shape": "cone", "target": "self", "radius": DEFAULT_CONE_RADIUS, "spread_degrees": DEFAULT_CONE_SPREAD}
-    if target in CIRCLE_SELF_TARGETS:
-        return {"shape": "circle", "target": "self", "radius": DEFAULT_CIRCLE_RADIUS}
-    if target in CIRCLE_POINT_TARGETS:
-        return {"shape": "circle", "target": "point", "radius": DEFAULT_CIRCLE_RADIUS}
-    return {"shape": "single", "target": "other"}
+        shape = {"kind": "circle", "radius": DEFAULT_CONE_RADIUS, "angle": DEFAULT_CONE_SPREAD, "anchor": "forward"}
+    elif target in CIRCLE_SELF_TARGETS | CIRCLE_POINT_TARGETS:
+        shape = {"kind": "circle", "radius": DEFAULT_CIRCLE_RADIUS, "angle": FULL_TURN_DEGREES, "anchor": "centered"}
+        on_user_tile = target in CIRCLE_SELF_TARGETS
+    else:
+        shape = {"kind": "square", "length": 1, "width": 1, "anchor": "centered"}
+        on_user_tile = target in SINGLE_SELF_TARGETS
+    if on_user_tile:
+        shape["range_min"], shape["range_max"] = 0, 0
+    elif move["contact"]:
+        shape["range_min"], shape["range_max"] = MELEE_RANGE, MELEE_RANGE
+    else:
+        shape["range_min"], shape["range_max"] = RANGED_RANGE_MIN, RANGED_RANGE_MAX
+    return shape
 
 
-def default_payload(move):
+def on_hit_units(component, chance=None):
+    """A component that lands on the units that passed the accuracy roll."""
+    component.update({"timing": "on_hit", "touches": "units", "who": "all"})
+    if chance is not None:
+        component["chance"] = chance
+    return component
+
+
+def on_user(component, chance=None):
+    """A component that lands on the user, whatever the accuracy roll."""
+    component.update({"timing": "on_use", "touches": "units", "who": "self"})
+    if chance is not None:
+        component["chance"] = chance
+    return component
+
+
+def default_components(move):
     details = move["battle_details"] or {}
     category = details.get("category", "")
-    effects = []
-    if move["damage_class"] != "status":
-        effects.append({"effect": "damage"})
+    damaging = move["damage_class"] != "status"
+    components = []
+    if damaging:
+        components.append(on_hit_units({"effect": "damage", "power": move["power"]}))
     if details.get("minimum_hits"):
-        effects.append({"effect": "multi_hit", "minimum": details["minimum_hits"], "maximum": details["maximum_hits"]})
+        hits = {"effect": "multi_hit", "minimum": details["minimum_hits"], "maximum": details["maximum_hits"]}
+        components.append(on_hit_units(hits))
     if details.get("ailment", "none") != "none":
         chance = details.get("ailment_chance") or 100
-        effects.append({"effect": "ailment", "ailment": details["ailment"], "chance": chance, "side": "target"})
-    stat_side = "user" if move["target"] == "user" or category in USER_STAT_CATEGORIES else "target"
+        components.append(on_hit_units({"effect": "status", "status": details["ailment"]}, chance))
+    stat_on_user = move["target"] == "user" or category in USER_STAT_CATEGORIES
     for change in details.get("stat_changes", []):
         chance = details.get("stat_chance") or 100
-        effects.append({"effect": "stat", "stat": change["stat"], "stages": change["change"], "chance": chance, "side": stat_side})
+        stat = {"effect": "stat", "stat": change["stat"], "stages": change["change"]}
+        components.append(on_user(stat, chance) if stat_on_user else on_hit_units(stat, chance))
     drain = details.get("drain_percent", 0)
     if drain > 0:
-        effects.append({"effect": "drain", "percent": drain})
+        components.append(on_user({"effect": "drain", "percent": drain}))
     elif drain < 0:
-        effects.append({"effect": "recoil", "percent": -drain})
+        components.append(on_user({"effect": "recoil", "percent": -drain}))
     if details.get("healing_percent", 0) > 0:
-        effects.append({"effect": "heal", "percent": details["healing_percent"], "side": "user"})
+        components.append(on_user({"effect": "heal", "percent": details["healing_percent"]}))
     if details.get("flinch_chance", 0) > 0:
-        effects.append({"effect": "flinch", "chance": details["flinch_chance"]})
+        components.append(on_hit_units({"effect": "flinch"}, details["flinch_chance"]))
     if category in RULE_NEEDED_CATEGORIES:
-        effects.append({"effect": "needs_rule", "kind": category})
-    return effects
+        components.append(on_hit_units({"effect": "needs_rule", "kind": category}))
+    if damaging:
+        components.append({"effect": "element", "element": move["type"], "timing": "on_use", "touches": "tiles"})
+    return components
 
 
-def default_entry(move):
-    entry = default_shape(move)
-    damaging = move["damage_class"] != "status"
-    if entry["target"] == "self":
-        entry["range_min"], entry["range_max"] = 0, 0
-    elif move["contact"]:
-        entry["range_min"], entry["range_max"] = MELEE_RANGE, MELEE_RANGE
-    else:
-        entry["range_min"], entry["range_max"] = RANGED_RANGE_MIN, RANGED_RANGE_MAX
-    entry["close_penalty"] = damaging and not move["contact"] and entry["target"] != "self"
-    entry["sr_cost"] = sr_cost_for(move["pp"])
-    entry["tile_element"] = move["type"] if damaging else None
-    entry["arcing"] = False
-    entry["payload"] = default_payload(move)
-    return entry
+def default_recipe(move):
+    shape = default_shape(move)
+    is_ranged_damage = move["damage_class"] != "status" and not move["contact"] and shape["range_max"] > 0
+    return {
+        "type": move["type"],
+        "damage_class": move["damage_class"],
+        "accuracy": move["accuracy"],
+        "sr_cost": sr_cost_for(move["pp"]),
+        "arcing": False,
+        "shape": shape,
+        "components": default_components(move),
+        "modifiers": [{"modifier": "close_range"}] if is_ranged_damage else [],
+    }
 
 
-def validation_problems(move_name, entry):
-    """Every reason an entry is invalid, as readable lines (empty when valid)."""
+def is_whole_number(value, lowest, highest):
+    return isinstance(value, int) and not isinstance(value, bool) and lowest <= value <= highest
+
+
+def size_problems(move_name, shape):
     problems = []
-    shape, target = entry.get("shape"), entry.get("target")
-    if shape not in ALLOWED_PAIRS:
-        return [f"{move_name}: unknown shape {shape}"]
-    if target not in ALLOWED_PAIRS[shape]:
-        problems.append(f"{move_name}: {shape} cannot take target {target}")
-    required = COMMON_FIELDS | SHAPE_FIELDS[shape]
-    missing = required - entry.keys()
-    extra = entry.keys() - required
-    if missing:
-        problems.append(f"{move_name}: missing {', '.join(sorted(missing))}")
-    if extra:
-        problems.append(f"{move_name}: {shape} has no field {', '.join(sorted(extra))}")
-    for size_field in ("radius", "length"):
-        if size_field in entry and not (isinstance(entry[size_field], int) and 1 <= entry[size_field] <= RADIUS_LIMIT):
+    for size_field in ("length", "width", "radius"):
+        if size_field in shape and not is_whole_number(shape[size_field], 1, RADIUS_LIMIT):
             problems.append(f"{move_name}: {size_field} must be 1 to {RADIUS_LIMIT}")
-    spread = entry.get("spread_degrees")
-    if "spread_degrees" in entry and not (
-        isinstance(spread, int) and SPREAD_STEP_DEGREES <= spread <= FULL_TURN_DEGREES and spread % SPREAD_STEP_DEGREES == 0
-    ):
-        problems.append(f"{move_name}: spread_degrees must be a multiple of {SPREAD_STEP_DEGREES} up to {FULL_TURN_DEGREES}")
-    range_min, range_max = entry.get("range_min"), entry.get("range_max")
-    if isinstance(range_min, int) and isinstance(range_max, int):
-        if target == "self" and (range_min, range_max) != (0, 0):
-            problems.append(f"{move_name}: a self move has range 0 to 0")
-        if target != "self" and not 1 <= range_min <= range_max:
-            problems.append(f"{move_name}: range must satisfy 1 <= range_min <= range_max")
-    elif not missing:
-        problems.append(f"{move_name}: range_min and range_max must be whole numbers")
-    for effect in entry.get("payload", []):
-        if effect.get("effect") not in EFFECTS:
-            problems.append(f"{move_name}: unknown effect {effect.get('effect')}")
-        if effect.get("effect") == "fixed_damage" and effect.get("amount") not in FIXED_DAMAGE_AMOUNTS:
-            allowed = ", ".join(sorted(FIXED_DAMAGE_AMOUNTS))
-            problems.append(f"{move_name}: fixed_damage amount must be one of {allowed}")
-        if "side" in effect and effect["side"] not in EFFECT_SIDES:
-            problems.append(f"{move_name}: unknown effect side {effect['side']}")
+    if shape["kind"] == "square":
+        odd_fields = ["width"] + (["length"] if shape.get("anchor") == "centered" else [])
+        for size_field in odd_fields:
+            if is_whole_number(shape.get(size_field), 1, RADIUS_LIMIT) and shape[size_field] % 2 == 0:
+                problems.append(f"{move_name}: {size_field} must be odd")
+    if shape["kind"] == "circle":
+        angle = shape.get("angle")
+        if not (is_whole_number(angle, SPREAD_STEP_DEGREES, FULL_TURN_DEGREES) and angle % SPREAD_STEP_DEGREES == 0):
+            problems.append(f"{move_name}: angle must be a multiple of {SPREAD_STEP_DEGREES} up to {FULL_TURN_DEGREES}")
+        elif angle < FULL_TURN_DEGREES and shape.get("anchor") != "forward":
+            problems.append(f"{move_name}: a circle under {FULL_TURN_DEGREES} degrees is forward")
     return problems
 
 
-def add_grid_entries(moves, overrides_path):
-    """Gives each move named in the overrides file its grid entry (defaults, then the override), and every other
-    move a null one. Stops the export with every problem listed if an override or entry is invalid."""
+def shape_problems(move_name, shape):
+    kind = shape.get("kind")
+    if kind not in SHAPE_KINDS:
+        return [f"{move_name}: unknown shape kind {kind}"]
+    problems = []
+    required = SHAPE_COMMON_FIELDS | SHAPE_FIELDS[kind]
+    missing, extra = required - shape.keys(), shape.keys() - required
+    if missing:
+        problems.append(f"{move_name}: shape missing {', '.join(sorted(missing))}")
+    if extra:
+        problems.append(f"{move_name}: {kind} has no field {', '.join(sorted(extra))}")
+    if shape.get("anchor") not in ANCHORS:
+        problems.append(f"{move_name}: unknown anchor {shape.get('anchor')}")
+    problems.extend(size_problems(move_name, shape))
+    range_min, range_max = shape.get("range_min"), shape.get("range_max")
+    if not (is_whole_number(range_min, 0, RADIUS_LIMIT) and is_whole_number(range_max, 0, RADIUS_LIMIT)):
+        problems.append(f"{move_name}: range_min and range_max must be whole numbers")
+    elif range_min > range_max or (range_min == 0 and range_max != 0):
+        problems.append(f"{move_name}: range must be 0 to 0, or satisfy 1 <= range_min <= range_max")
+    return problems
+
+
+def component_problems(move_name, component):
+    problems = []
+    effect = component.get("effect")
+    if effect not in EFFECTS:
+        problems.append(f"{move_name}: unknown effect {effect}")
+    if component.get("timing") not in TIMINGS:
+        problems.append(f"{move_name}: {effect} has unknown timing {component.get('timing')}")
+    touches = component.get("touches")
+    if touches not in TOUCHES:
+        problems.append(f"{move_name}: {effect} touches unknown {touches}")
+    if touches == "units" and component.get("who") not in WHO:
+        problems.append(f"{move_name}: {effect} has unknown who {component.get('who')}")
+    if "chance" in component and not is_whole_number(component["chance"], 1, 100):
+        problems.append(f"{move_name}: {effect} chance must be 1 to 100")
+    if effect == "fixed_damage" and component.get("amount") not in FIXED_DAMAGE_AMOUNTS:
+        allowed = ", ".join(sorted(FIXED_DAMAGE_AMOUNTS))
+        problems.append(f"{move_name}: fixed_damage amount must be one of {allowed}")
+    power = component.get("power")
+    if effect == "damage" and power is not None and not is_whole_number(power, 1, HIGHEST_POWER):
+        problems.append(f"{move_name}: damage power must be 1 to {HIGHEST_POWER} or null")
+    return problems
+
+
+def validation_problems(move_name, recipe):
+    """Every reason a recipe is invalid, as readable lines (empty when valid)."""
+    missing, extra = RECIPE_FIELDS - recipe.keys(), recipe.keys() - RECIPE_FIELDS
+    if missing or extra:
+        return [f"{move_name}: recipe fields differ: missing {sorted(missing)}, extra {sorted(extra)}"]
+    problems = shape_problems(move_name, recipe["shape"])
+    for component in recipe["components"]:
+        problems.extend(component_problems(move_name, component))
+    for modifier in recipe["modifiers"]:
+        if modifier.get("modifier") not in MODIFIERS:
+            problems.append(f"{move_name}: unknown modifier {modifier.get('modifier')}")
+    return problems
+
+
+def add_recipes(moves, overrides_path):
+    """Gives each move named in the overrides file its recipe (defaults, then the override's whole fields), and
+    every other move a null one. Stops the export with every problem listed if an override or recipe is invalid."""
     overrides = json.loads(overrides_path.read_text(encoding="utf-8"))
     problems = []
     for move in moves.values():
-        move["grid"] = None
+        move["recipe"] = None
     for move_name in sorted(overrides):
         override = overrides[move_name]
         if move_name not in moves:
             problems.append(f"override names unknown move {move_name}")
             continue
-        unknown_fields = override.keys() - ALL_FIELDS
+        unknown_fields = override.keys() - RECIPE_FIELDS
         if unknown_fields:
             problems.append(f"{move_name}: override has unknown field {', '.join(sorted(unknown_fields))}")
             continue
-        entry = default_entry(moves[move_name])
-        entry.update(override)
-        # An override that changes the shape drops the default's size fields the new shape does not use.
-        if entry["shape"] in SHAPE_FIELDS:
-            for field in ALL_FIELDS - COMMON_FIELDS - SHAPE_FIELDS[entry["shape"]] - override.keys():
-                entry.pop(field, None)
-        problems.extend(validation_problems(move_name, entry))
-        moves[move_name]["grid"] = entry
+        recipe = default_recipe(moves[move_name])
+        recipe.update(override)
+        problems.extend(validation_problems(move_name, recipe))
+        moves[move_name]["recipe"] = recipe
     if problems:
-        raise SystemExit("move grid entries are invalid:\n  " + "\n  ".join(problems))
+        raise SystemExit("move recipes are invalid:\n  " + "\n  ".join(problems))
     return len(overrides)
 
 

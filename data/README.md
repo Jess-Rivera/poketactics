@@ -9,7 +9,7 @@ Check that it is current: `python tools/export_pack.py --check` (also run by too
 | File | Entries |
 |---|---|
 | units.json | 1082 (1025 species defaults, alola 18, galar 19, hisui 16, paldea 4) |
-| moves.json | 919 (Shadow moves left out; 45 with a grid entry) |
+| moves.json | 919 (Shadow moves left out; 45 with a recipe) |
 | abilities.json | 314 (main series) |
 | types.json | 18 |
 | shapes.json | footprint table, radius 1 to 50, spread in 15 degree steps |
@@ -33,8 +33,8 @@ Moves whose effect is pokeapi's newest English in-game description (no effect te
 - gender_rate: chance of female in eighths; -1 means genderless.
 - types.json `against`: damage multiplier of the attacking type (the entry) on each defending type.
 - A learnset entry's level is present only for level-up moves; 0 means learned on evolution.
-- A move's `contact` is pokeapi's contact flag. Its `grid` (null for moves no slice fields yet) is described in
-  tools/move_grid.py; ranges are grid steps, sr_cost is strike rank (placeholder bands).
+- A move's `contact` is pokeapi's contact flag. Its `recipe` (null for moves no slice fields yet) is described
+  in tools/move_grid.py; ranges are grid steps, sr_cost is strike rank (placeholder bands).
 - shapes.json: every tile around an origin for a shape aimed east, with the smallest circle radius and cone
   spread that cover it (a tile is in when its centre lies within radius + 0.5).
 

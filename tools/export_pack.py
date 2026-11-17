@@ -8,8 +8,8 @@ Shaped by the rulings in docs/decisions/ (2026-11-15-*):
   unit-is-pokemon-variant, variant-scope   units are species defaults plus regional forms
   mega-gmax-transform                      Mega, Gigantamax and Primal attach to their base unit
   learnset-game, learn-methods             one learnset game per unit, all four learn methods kept
-Plan: docs/discussion-outputs/data-pack-plan.md (issue #2). Move grid entries and the shape table come from
-tools/move_grid.py and authored/move_grid_overrides.json (issue #9, move-schema-opening.md).
+Plan: docs/discussion-outputs/data-pack-plan.md (issue #2). Move recipes and the shape table come from
+tools/move_grid.py and authored/move_recipe_overrides.json (issues #9, #27, move-recipes-plan.md).
 
 Python 3 standard library only. Output is deterministic: sorted keys, LF, UTF-8, scalar-only lists and objects on
 one line (so one learnset entry is one line).
@@ -37,7 +37,7 @@ PIN_NOTE = REPO_ROOT / "source" / "pokeapi" / "README.md"
 PACK_FOLDER = REPO_ROOT / "data"
 SPRITE_TRACKER = REPO_ROOT / "source" / "spritecollab" / "tracker.json"
 PACKED_SPRITE_FOLDER = REPO_ROOT / "assets" / "pokemon"
-MOVE_GRID_OVERRIDES = REPO_ROOT / "authored" / "move_grid_overrides.json"
+MOVE_RECIPE_OVERRIDES = REPO_ROOT / "authored" / "move_recipe_overrides.json"
 # Shares of default species per size band, smallest first; the band is the base strike rank before the Speed nudge
 # (docs/decisions/2026-11-17-size-bands.md).
 SIZE_BAND_SHARES = [0.10, 0.20, 0.40, 0.20, 0.10]
@@ -575,7 +575,7 @@ def pinned_commit():
     return match.group(1) if match else "unknown"
 
 
-def readme(units, moves, abilities, types, left_out, dropped, flavor_count, grid_count):
+def readme(units, moves, abilities, types, left_out, dropped, flavor_count, recipe_count):
     regional = defaultdict(int)
     games = defaultdict(int)
     transformation_kinds = defaultdict(int)
@@ -600,7 +600,7 @@ def readme(units, moves, abilities, types, left_out, dropped, flavor_count, grid
         f"| units.json | {len(units)} ({sum(1 for u in units.values() if u['is_species_default'])} species defaults, "
         + ", ".join(f"{region} {regional[region]}" for region in REGIONS)
         + ") |",
-        f"| moves.json | {len(moves)} (Shadow moves left out; {grid_count} with a grid entry) |",
+        f"| moves.json | {len(moves)} (Shadow moves left out; {recipe_count} with a recipe) |",
         f"| abilities.json | {len(abilities)} (main series) |",
         f"| types.json | {len(types)} |",
         f"| shapes.json | footprint table, radius 1 to {move_grid.RADIUS_LIMIT}, spread in {move_grid.SPREAD_STEP_DEGREES} degree steps |",
@@ -622,8 +622,8 @@ def readme(units, moves, abilities, types, left_out, dropped, flavor_count, grid
         "- gender_rate: chance of female in eighths; -1 means genderless.",
         "- types.json `against`: damage multiplier of the attacking type (the entry) on each defending type.",
         "- A learnset entry's level is present only for level-up moves; 0 means learned on evolution.",
-        "- A move's `contact` is pokeapi's contact flag. Its `grid` (null for moves no slice fields yet) is described in",
-        "  tools/move_grid.py; ranges are grid steps, sr_cost is strike rank (placeholder bands).",
+        "- A move's `contact` is pokeapi's contact flag. Its `recipe` (null for moves no slice fields yet) is described",
+        "  in tools/move_grid.py; ranges are grid steps, sr_cost is strike rank (placeholder bands).",
         "- shapes.json: every tile around an origin for a shape aimed east, with the smallest circle radius and cone",
         "  spread that cover it (a tile is in when its centre lies within radius + 0.5).",
         "",
@@ -656,7 +656,7 @@ def write_pack(folder):
     units, left_out, dropped = build_units(source, SpriteSets())
     add_size_bands(units)
     moves, flavor_count = build_moves(source)
-    grid_count = move_grid.add_grid_entries(moves, MOVE_GRID_OVERRIDES)
+    recipe_count = move_grid.add_recipes(moves, MOVE_RECIPE_OVERRIDES)
     abilities = build_abilities(source)
     types = build_types(source)
     folder.mkdir(parents=True, exist_ok=True)
@@ -666,7 +666,7 @@ def write_pack(folder):
         "shapes.json": to_json(move_grid.shape_table()) + "\n",
         "abilities.json": to_json(abilities) + "\n",
         "types.json": to_json(types) + "\n",
-        "README.md": readme(units, moves, abilities, types, left_out, dropped, flavor_count, grid_count),
+        "README.md": readme(units, moves, abilities, types, left_out, dropped, flavor_count, recipe_count),
     }
     for name, text in contents.items():
         with open(folder / name, "w", encoding="utf-8", newline="\n") as handle:

@@ -45,7 +45,7 @@ func test_every_pool_unit_can_fight_on_the_grid() -> void:
 		var unit := BattleUnit.from_pack(pack, unit_name, TestBattleSetup.UNIT_LEVEL)
 		assert_array(unit.move_names).is_not_empty()
 		for move_name in unit.move_names:
-			assert_bool(pack.move(move_name).get("grid") != null).override_failure_message(
+			assert_bool(pack.move(move_name).get("recipe") != null).override_failure_message(
 				"%s's %s has no grid behaviour" % [unit_name, move_name]
 			).is_true()
 		assert_bool(pack.unit(unit_name)["sprite_set"] != null).is_true()

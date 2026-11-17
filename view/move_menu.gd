@@ -42,7 +42,9 @@ func show_moves(unit: BattleUnit, pack: PackData, picked_index: int, can_act: bo
 	if unit == null:
 		return
 	for move_index in unit.move_names.size():
-		var row := _row(_row_text(move_index, pack.move(unit.move_names[move_index])), move_index == picked_index, can_act)
+		var move_name := unit.move_names[move_index]
+		var row_text := _row_text(move_index, pack.move(move_name), MoveRecipe.built(pack, unit, move_name))
+		var row := _row(row_text, move_index == picked_index, can_act)
 		row.pressed.connect(func() -> void: move_clicked.emit(move_index))
 		_rows.add_child(row)
 	var wait_row := _row("Space  Wait", false, can_act)
@@ -67,12 +69,14 @@ func _row(text: String, is_picked: bool, can_act: bool) -> Button:
 	return row
 
 
-func _row_text(move_index: int, move: Dictionary) -> String:
-	var grid_entry: Dictionary = move["grid"]
+## One menu row from the built recipe (what the move does for this unit) and the pack entry (its name).
+func _row_text(move_index: int, move: Dictionary, recipe: Dictionary) -> String:
+	var shape: Dictionary = recipe["shape"]
 	var reach := "self"
-	if grid_entry["target"] != MoveArea.TARGET_SELF:
-		reach = "%d-%d" % [grid_entry["range_min"], grid_entry["range_max"]]
-	var power: String = str(move["power"]) if move["power"] != null else "-"
+	if not MoveRecipe.is_on_user_tile(recipe):
+		reach = "%d-%d" % [shape["range_min"], shape["range_max"]]
+	var power_value = MoveRecipe.damage_component(recipe).get("power")
+	var power: String = str(power_value) if power_value != null else "-"
 	return "%d  %s  %s  %s  %s  %d SR" % [
-		move_index + 1, move["english_name"], String(move["type"]).capitalize(), power, reach, grid_entry["sr_cost"]
+		move_index + 1, move["english_name"], String(recipe["type"]).capitalize(), power, reach, recipe["sr_cost"]
 	]

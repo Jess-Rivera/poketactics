@@ -74,14 +74,14 @@ static func _best_attack(battle: Battle, pack: PackData, unit: BattleUnit) -> Ch
 static func _options_from(battle: Battle, pack: PackData, unit: BattleUnit, stand_cell: Vector2i) -> Array[Choice]:
 	var options: Array[Choice] = []
 	for move_name in unit.move_names:
-		var grid_entry = pack.move(move_name).get("grid")
-		if grid_entry == null or not MoveUse.deals_damage(grid_entry):
+		var recipe := MoveRecipe.built(pack, unit, move_name)
+		if recipe.is_empty() or not MoveRecipe.deals_damage(recipe):
 			continue
-		if MoveUse.is_aimed(grid_entry):
+		if MoveRecipe.needs_aim(recipe):
 			for direction in Facing.ALL_DIRECTIONS:
 				options.append(_option(stand_cell, move_name, stand_cell, direction))
 			continue
-		for target_cell in MoveArea.target_cells(battle.grid, grid_entry, stand_cell):
+		for target_cell in MoveArea.target_cells(battle.grid, recipe, stand_cell):
 			var direction := unit.facing
 			if target_cell != stand_cell:
 				direction = Facing.direction_of_step(target_cell - stand_cell)
@@ -103,8 +103,8 @@ static func _option(
 ## The option's score: foes hit add, allies and the user subtract, a user that faints counts as knocked out, and
 ## knocking out every standing foe adds WIN_BONUS.
 static func _score(battle: Battle, pack: PackData, unit: BattleUnit, option: Choice) -> float:
-	var move := pack.move(option.move_name)
-	var chance := BattleStats.hit_chance(move)
+	var recipe := MoveRecipe.built(pack, unit, option.move_name)
+	var chance := BattleStats.hit_chance(recipe)
 	var total := 0.0
 	var foes_knocked_out := 0
 	for hit_unit in _units_hit_from(battle, pack, unit, option):
@@ -118,7 +118,7 @@ static func _score(battle: Battle, pack: PackData, unit: BattleUnit, option: Cho
 		total += value
 		if _knocks_out(hit_unit, damage):
 			foes_knocked_out += 1
-	if MoveUse.has_effect(move["grid"], MoveUse.EFFECT_USER_FAINTS):
+	if MoveRecipe.has_effect(recipe, MoveRecipe.EFFECT_FAINT):
 		total -= _damage_value(unit, unit.hit_points)
 	if foes_knocked_out > 0 and foes_knocked_out == _standing_foes(battle, unit).size():
 		total += chance * WIN_BONUS
@@ -142,11 +142,9 @@ static func _damage_value(unit: BattleUnit, damage: int) -> float:
 ## The units the option's footprint covers, as if the unit already stood on the option's cell: its start cell is
 ## empty and its stand cell holds it.
 static func _units_hit_from(battle: Battle, pack: PackData, unit: BattleUnit, option: Choice) -> Array[BattleUnit]:
-	var grid_entry: Dictionary = pack.move(option.move_name)["grid"]
+	var recipe := MoveRecipe.built(pack, unit, option.move_name)
 	var hit: Array[BattleUnit] = []
-	var footprint := MoveArea.footprint(
-		pack.shapes, grid_entry, option.stand_cell, option.target_cell, option.direction
-	)
+	var footprint := MoveArea.footprint(pack.shapes, recipe, option.stand_cell, option.target_cell, option.direction)
 	for cell in footprint:
 		var standing := _unit_seen_at(battle, unit, option.stand_cell, cell)
 		if standing != null and not hit.has(standing):

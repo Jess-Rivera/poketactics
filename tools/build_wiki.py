@@ -324,22 +324,30 @@ class Wiki:
                 chance = f" ({details['stat_chance']}%)" if details["stat_chance"] else ""
                 detail_rows.append(("Stat changes", changes + chance))
             sections.append("<h2>Battle details</h2><table class=\"facts\">" + "".join(f"<tr><th>{label}</th><td>{value}</td></tr>" for label, value in detail_rows) + "</table>")
-        grid = move["grid"]
-        if grid:
-            size = {"line": f"length {grid.get('length')}", "cone": f"radius {grid.get('radius')}, {grid.get('spread_degrees')} degrees",
-                    "circle": f"radius {grid.get('radius')}"}.get(grid["shape"], "one tile")
-            reach = "the user" if grid["target"] == "self" else f"{grid['range_min']} to {grid['range_max']} tiles"
-            effects = ", ".join(escape(words(effect["effect"])) for effect in grid["payload"]) or "-"
-            grid_rows = [
-                ("Shape", f"{escape(grid['shape'])} from {escape(grid['target'])}"),
-                ("Size", escape(size)),
-                ("Reach", escape(reach) + (" (half damage at 1)" if grid["close_penalty"] else "")),
-                ("Strike rank cost", f"{grid['sr_cost']} SR"),
-                ("Tile element", escape(grid["tile_element"]) if grid["tile_element"] else "-"),
-                ("Arcing", "yes" if grid["arcing"] else "no"),
-                ("Effects", effects),
+        recipe = move["recipe"]
+        if recipe:
+            shape = recipe["shape"]
+            if shape["kind"] == "square":
+                size = f"square {shape['length']} by {shape['width']}"
+            elif shape["angle"] < 360:
+                size = f"cone, radius {shape['radius']}, {shape['angle']} degrees"
+            else:
+                size = f"circle, radius {shape['radius']}"
+            on_user_tile = shape["range_max"] == 0
+            reach = "the user's tile" if on_user_tile else f"{shape['range_min']} to {shape['range_max']} tiles"
+            close_range = any(modifier["modifier"] == "close_range" for modifier in recipe["modifiers"])
+            components = ", ".join(
+                escape(words(component["effect"])) + (f" ({component['chance']}%)" if "chance" in component else "")
+                for component in recipe["components"]
+            ) or "-"
+            recipe_rows = [
+                ("Shape", escape(size) + f", {escape(shape['anchor'])}"),
+                ("Reach", escape(reach) + (" (half damage at 1)" if close_range else "")),
+                ("Strike rank cost", f"{recipe['sr_cost']} SR"),
+                ("Arcing", "yes" if recipe["arcing"] else "no"),
+                ("Components", components),
             ]
-            sections.append("<h2>On the grid</h2><table class=\"facts\">" + "".join(f"<tr><th>{label}</th><td>{value}</td></tr>" for label, value in grid_rows) + "</table>")
+            sections.append("<h2>On the grid</h2><table class=\"facts\">" + "".join(f"<tr><th>{label}</th><td>{value}</td></tr>" for label, value in recipe_rows) + "</table>")
         learners = self.learners_of_move.get(move_name, [])
         sections.append(f"<h2>Learned by ({len({name for name, _ in learners})} units)</h2>")
         by_method = defaultdict(list)

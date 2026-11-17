@@ -21,11 +21,49 @@
   "iron-tail": {},
   "knock-off": {},
   "moonblast": {},
-  "night-shade": {"payload": [{"effect": "fixed_damage", "amount": "user_level"}]},
+  "night-shade": {
+    "components": [
+      {
+        "amount": "user_level",
+        "effect": "fixed_damage",
+        "timing": "on_hit",
+        "touches": "units",
+        "who": "all"
+      },
+      {
+        "effect": "element",
+        "element": "ghost",
+        "timing": "on_use",
+        "touches": "tiles"
+      }
+    ]
+  },
   "rain-dance": {},
   "rock-blast": {},
   "scary-face": {},
-  "self-destruct": {"payload": [{"effect": "damage"}, {"effect": "user_faints"}]},
+  "self-destruct": {
+    "components": [
+      {
+        "effect": "damage",
+        "power": 200,
+        "timing": "on_hit",
+        "touches": "units",
+        "who": "all"
+      },
+      {
+        "effect": "faint",
+        "timing": "on_use",
+        "touches": "units",
+        "who": "self"
+      },
+      {
+        "effect": "element",
+        "element": "normal",
+        "timing": "on_use",
+        "touches": "tiles"
+      }
+    ]
+  },
   "shell-smash": {},
   "slash": {},
   "sleep-powder": {},

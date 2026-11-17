@@ -1,22 +1,19 @@
 class_name MoveArea
 extends RefCounted
-## Where a move reaches and which tiles and units it hits, read from the move's grid entry (data/moves.json, built
-## by tools/move_grid.py) and the shape table (data/shapes.json). Rulings: 2026-11-16-move-shapes-and-range.
-## Plan: docs/discussion-outputs/move-schema-opening.md (#9). Rules only: no nodes and no drawing.
+## Where a move reaches and which tiles and units it hits, read from the shape in the move's recipe (MoveRecipe,
+## data/moves.json) and the shape table (data/shapes.json). Rulings: 2026-11-17-move-recipe-structure,
+## 2026-11-16-move-shapes-and-range. Plan: docs/discussion-outputs/move-recipes-plan.md (#27). Rules only.
 ##
-## Shapes: single (one tile), line (a straight run, aimed), cone (aimed from the user), circle (around the user,
-## a unit or a tile). An area hits every unit standing in it, friend or foe. The shape table is aimed east; the
-## other directions are exact quarter turns, so no trigonometry runs in the game.
+## Shapes: a square (length along the aim, width across it) or a circle (a radius, and an angle under 360 for a
+## cone), centred on the aimed tile or running forward from it. A move with range 0 is aimed at the user's own
+## tile and leaves that tile out, unless it is a single tile. An area hits every unit standing in it, friend or
+## foe. The shape table is aimed east; the other directions are exact quarter turns, so no trigonometry runs.
 
-const SHAPE_SINGLE := "single"
-const SHAPE_LINE := "line"
-const SHAPE_CONE := "cone"
-const SHAPE_CIRCLE := "circle"
-const TARGET_SELF := "self"
 const TABLE_X := 0
 const TABLE_Y := 1
 const TABLE_SMALLEST_RADIUS := 2
 const TABLE_SMALLEST_SPREAD := 3
+const ANY_SPREAD := -1
 
 
 ## Grid steps between two cells, no diagonals (height is ignored until #17).
@@ -24,22 +21,21 @@ static func distance(from_cell: Vector2i, to_cell: Vector2i) -> int:
 	return absi(to_cell.x - from_cell.x) + absi(to_cell.y - from_cell.y)
 
 
-## Whether the user may choose this target cell. A self move only ever targets the user's own cell.
-static func can_reach(grid_entry: Dictionary, user_cell: Vector2i, target_cell: Vector2i) -> bool:
-	if grid_entry["target"] == TARGET_SELF:
-		return target_cell == user_cell
+## Whether the user may choose this target cell: within the shape's range (only its own cell at range 0).
+static func can_reach(recipe: Dictionary, user_cell: Vector2i, target_cell: Vector2i) -> bool:
+	var shape: Dictionary = recipe["shape"]
 	var steps := distance(user_cell, target_cell)
-	return steps >= int(grid_entry["range_min"]) and steps <= int(grid_entry["range_max"])
+	return steps >= int(shape["range_min"]) and steps <= int(shape["range_max"])
 
 
-## Every cell inside the grid the user may choose as the target (just its own cell for a self move).
-static func target_cells(grid: BattleGrid, grid_entry: Dictionary, user_cell: Vector2i) -> Array[Vector2i]:
+## Every cell inside the grid the user may choose as the target (just its own cell at range 0).
+static func target_cells(grid: BattleGrid, recipe: Dictionary, user_cell: Vector2i) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
-	var reach := int(grid_entry["range_max"])
+	var reach := int(recipe["shape"]["range_max"])
 	for step_y in range(-reach, reach + 1):
 		for step_x in range(-reach, reach + 1):
 			var cell := user_cell + Vector2i(step_x, step_y)
-			if grid.contains(cell) and can_reach(grid_entry, user_cell, cell):
+			if grid.contains(cell) and can_reach(recipe, user_cell, cell):
 				cells.append(cell)
 	return cells
 
@@ -57,33 +53,17 @@ static func turned(offset: Vector2i, direction: Facing.Direction) -> Vector2i:
 			return Vector2i(offset.y, -offset.x)
 
 
-## Every tile the move covers. target_cell is the chosen unit's or tile's cell (ignored by self moves, except a
-## line from a point, which starts there); direction aims lines and cones.
+## Every tile the move covers, in a fixed order. target_cell is the aimed tile (the user's own at range 0);
+## direction aims forward shapes and cones, and turns squares.
 static func footprint(
-	shapes: Dictionary, grid_entry: Dictionary, user_cell: Vector2i, target_cell: Vector2i, direction: Facing.Direction
+	shapes: Dictionary, recipe: Dictionary, user_cell: Vector2i, target_cell: Vector2i, direction: Facing.Direction
 ) -> Array[Vector2i]:
-	var from_self: bool = grid_entry["target"] == TARGET_SELF
-	var origin := user_cell if from_self else target_cell
-	var cells: Array[Vector2i] = []
-	match grid_entry["shape"]:
-		SHAPE_SINGLE:
-			cells.append(origin)
-		SHAPE_LINE:
-			var step := Facing.grid_step(direction)
-			# A line from the user starts on the next tile; a line from a point starts on that point.
-			var first := 1 if from_self else 0
-			for index in int(grid_entry["length"]):
-				cells.append(origin + step * (first + index))
-		SHAPE_CONE:
-			for offset in _table_offsets(shapes, int(grid_entry["radius"]), int(grid_entry["spread_degrees"])):
-				cells.append(origin + turned(offset, direction))
-		SHAPE_CIRCLE:
-			# A circle around the user leaves the user out; one around a unit or tile includes its centre.
-			if not from_self:
-				cells.append(origin)
-			for offset in _table_offsets(shapes, int(grid_entry["radius"]), -1):
-				cells.append(origin + offset)
-	return cells
+	var shape: Dictionary = recipe["shape"]
+	var anchor := user_cell if MoveRecipe.is_on_user_tile(recipe) else target_cell
+	var leaves_out_anchor := MoveRecipe.is_on_user_tile(recipe) and not _is_single_tile(shape)
+	if shape["kind"] == MoveRecipe.SHAPE_SQUARE:
+		return _square_cells(shape, anchor, leaves_out_anchor, direction)
+	return _circle_cells(shapes, shape, anchor, leaves_out_anchor, direction)
 
 
 ## Every unit standing on a covered tile inside the grid, friend or foe, in footprint order. Fainted units are
@@ -91,13 +71,13 @@ static func footprint(
 static func units_hit(
 	battle: Battle,
 	shapes: Dictionary,
-	grid_entry: Dictionary,
+	recipe: Dictionary,
 	user: BattleUnit,
 	target_cell: Vector2i,
 	direction: Facing.Direction
 ) -> Array[BattleUnit]:
 	var hit: Array[BattleUnit] = []
-	for cell in footprint(shapes, grid_entry, user.cell, target_cell, direction):
+	for cell in footprint(shapes, recipe, user.cell, target_cell, direction):
 		if not battle.grid.contains(cell):
 			continue
 		var standing := battle.unit_at(cell)
@@ -106,13 +86,55 @@ static func units_hit(
 	return hit
 
 
-## The east-aimed offsets within a radius and, when spread_degrees is not negative, within a cone spread.
+static func _is_single_tile(shape: Dictionary) -> bool:
+	return shape["kind"] == MoveRecipe.SHAPE_SQUARE and int(shape["length"]) == 1 and int(shape["width"]) == 1
+
+
+## A square's tiles, row by row along the aim. Centred squares sit on the anchor; forward ones start on it, or on
+## the next tile when the anchor (the user's own tile) is left out.
+static func _square_cells(
+	shape: Dictionary, anchor: Vector2i, leaves_out_anchor: bool, direction: Facing.Direction
+) -> Array[Vector2i]:
+	var length := int(shape["length"])
+	var half_width := (int(shape["width"]) - 1) / 2
+	var first_along := -(length - 1) / 2
+	if shape["anchor"] == MoveRecipe.ANCHOR_FORWARD:
+		first_along = 1 if leaves_out_anchor else 0
+	var cells: Array[Vector2i] = []
+	for along in range(first_along, first_along + length):
+		for across in range(-half_width, half_width + 1):
+			var offset := Vector2i(along, across)
+			if leaves_out_anchor and offset == Vector2i.ZERO:
+				continue
+			cells.append(anchor + turned(offset, direction))
+	return cells
+
+
+## A circle's tiles: the anchor first (unless left out), then the shape table's order. A cone (angle under 360)
+## is turned to the aim; a full circle needs no turn.
+static func _circle_cells(
+	shapes: Dictionary, shape: Dictionary, anchor: Vector2i, leaves_out_anchor: bool, direction: Facing.Direction
+) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	if not leaves_out_anchor:
+		cells.append(anchor)
+	var angle := int(shape["angle"])
+	if angle >= MoveRecipe.FULL_TURN_DEGREES:
+		for offset in _table_offsets(shapes, int(shape["radius"]), ANY_SPREAD):
+			cells.append(anchor + offset)
+		return cells
+	for offset in _table_offsets(shapes, int(shape["radius"]), angle):
+		cells.append(anchor + turned(offset, direction))
+	return cells
+
+
+## The east-aimed offsets within a radius and, unless spread_degrees is ANY_SPREAD, within a cone spread.
 static func _table_offsets(shapes: Dictionary, radius: int, spread_degrees: int) -> Array[Vector2i]:
 	var offsets: Array[Vector2i] = []
 	for row in shapes["tiles"]:
 		if int(row[TABLE_SMALLEST_RADIUS]) > radius:
 			continue
-		if spread_degrees >= 0 and int(row[TABLE_SMALLEST_SPREAD]) > spread_degrees:
+		if spread_degrees != ANY_SPREAD and int(row[TABLE_SMALLEST_SPREAD]) > spread_degrees:
 			continue
 		offsets.append(Vector2i(int(row[TABLE_X]), int(row[TABLE_Y])))
 	return offsets

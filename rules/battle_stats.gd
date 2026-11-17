@@ -80,12 +80,23 @@ static func damage(
 	return maxi(amount, 1)
 
 
-## Damage one unit's move does to another. Status moves, and moves with no power value, deal none here.
+## Damage one unit's move does to another, from the pack's move entry. Status moves, and moves with no power value,
+## deal none here.
 static func move_damage(
 	pack: PackData, attacker: BattleUnit, defender: BattleUnit, move_name: String, is_critical_hit: bool
 ) -> int:
 	var move := pack.move(move_name)
-	if move.is_empty() or move["damage_class"] == "status" or move["power"] == null:
+	if move.is_empty():
+		return 0
+	return power_damage(pack, attacker, defender, move, move["power"], is_critical_hit)
+
+
+## Damage at a given power from a move whose type and damage_class are read from move (a pack entry or a recipe).
+## Status moves, and a null power, deal none.
+static func power_damage(
+	pack: PackData, attacker: BattleUnit, defender: BattleUnit, move: Dictionary, power: Variant, is_critical_hit: bool
+) -> int:
+	if move["damage_class"] == "status" or power == null:
 		return 0
 	var is_physical: bool = move["damage_class"] == "physical"
 	var attack: int = attacker.stats["attack" if is_physical else "special_attack"]
@@ -93,7 +104,7 @@ static func move_damage(
 	var move_type: String = move["type"]
 	return damage(
 		attacker.level,
-		int(move["power"]),
+		int(power),
 		attack,
 		defense,
 		move_type in attacker.types,
@@ -129,6 +140,13 @@ static func rolls_hit(move: Dictionary, random: RandomNumberGenerator) -> bool:
 	if hit_chance(move) >= 1.0:
 		return true
 	return random.randi_range(1, ALWAYS_HITS_ACCURACY) <= int(move["accuracy"])
+
+
+## Whether a chance out of 100 comes up: one roll, or none at 100 or more.
+static func rolls_chance(chance_percent: int, random: RandomNumberGenerator) -> bool:
+	if chance_percent >= ALWAYS_HITS_ACCURACY:
+		return true
+	return random.randi_range(1, ALWAYS_HITS_ACCURACY) <= chance_percent
 
 
 ## Whether a hit is critical, from the crit stage (the move's critical_hit_stage, later plus other boosts).

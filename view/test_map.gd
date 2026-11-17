@@ -244,7 +244,7 @@ func _process(_delta: float) -> void:
 			_chosen_facing = facing
 			_refresh_marks()
 		return
-	if _mode == Mode.AIMING and MoveUse.is_aimed(_aimed_grid_entry()):
+	if _mode == Mode.AIMING and MoveRecipe.needs_aim(_aimed_recipe()):
 		var aim = _direction_under_mouse(_active_unit.cell, ray_origin, ray_direction)
 		if aim != null and aim != _aim_direction:
 			_aim_direction = aim
@@ -558,17 +558,18 @@ func _pick_move(move_index: int) -> void:
 	_refresh_marks()
 
 
-func _aimed_grid_entry() -> Dictionary:
-	return _pack.move(_active_unit.move_names[_aimed_move_index])["grid"]
+## The built recipe of the move being aimed (MoveRecipe.built).
+func _aimed_recipe() -> Dictionary:
+	return MoveRecipe.built(_pack, _active_unit, _active_unit.move_names[_aimed_move_index])
 
 
-## The use the mouse is aiming now: at the user for self moves, else at the hovered cell. Cones and lines take the
-## aim direction; other moves face their target.
+## The use the mouse is aiming now: at the user for range-0 moves, else at the hovered cell. Forward shapes and
+## cones take the aim direction; other moves face their target.
 func _aimed_move_use() -> MoveUse:
-	var grid_entry := _aimed_grid_entry()
-	var target_cell := _active_unit.cell if grid_entry["target"] == MoveArea.TARGET_SELF else _hovered_cell
+	var recipe := _aimed_recipe()
+	var target_cell := _active_unit.cell if MoveRecipe.is_on_user_tile(recipe) else _hovered_cell
 	var direction := _active_unit.facing
-	if MoveUse.is_aimed(grid_entry):
+	if MoveRecipe.needs_aim(recipe):
 		direction = _aim_direction
 	elif target_cell != _active_unit.cell:
 		direction = Facing.direction_of_step(target_cell - _active_unit.cell)
@@ -754,7 +755,7 @@ func _refresh_marks() -> void:
 	_tile_highlight.move_range_cells.clear()
 	_tile_highlight.move_area_cells.clear()
 	if _mode == Mode.AIMING:
-		_tile_highlight.move_range_cells = MoveArea.target_cells(_battle.grid, _aimed_grid_entry(), _active_unit.cell)
+		_tile_highlight.move_range_cells = MoveArea.target_cells(_battle.grid, _aimed_recipe(), _active_unit.cell)
 		var move_use := _aimed_move_use()
 		if move_use.is_allowed():
 			_tile_highlight.move_area_cells = move_use.footprint()
@@ -797,7 +798,7 @@ func _landing_preview(hovered_walk_cost: int) -> Vector2i:
 		Mode.CHOOSING_FACING:
 			return Vector2i(_walk_cost_to(_target_cell), 0)
 		Mode.AIMING:
-			return Vector2i(int(_aimed_grid_entry()["sr_cost"]), 0)
+			return Vector2i(int(_aimed_recipe()["sr_cost"]), 0)
 		Mode.WAITING:
 			return Vector2i(_wait_strike_ranks, 1)
 	return NO_LANDING

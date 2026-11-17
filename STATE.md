@@ -19,7 +19,7 @@ Updated 2026-11-17.
 - Turn order (#8, shipped): rules/turn_order.gd rounds by Speed, seeded ties; view/turn_bar.gd.
 - 6 a side (#16, shipped): wild, trainer, boss enemy counts (F1 to F3); portraits in assets/portraits/, shown
   in the turn bar.
-- Move schema (#9, built): grid entry for the 45 roster moves in data/moves.json, overrides in authored/,
+- Move schema (#9, shipped, 45 roster moves; the rest is #26): grid entry for the 45 roster moves in data/moves.json, overrides in authored/,
   footprints in data/shapes.json, rules/move_area.gd gives tiles hit.
 - Shipped, M1 done: use a move (#10, rules/move_use.gd), enemy AI (#11, rules/turn_ai.gd), rout and end screen (#12).
 - Hotseat (#15, shipped, M1b done): start menu, blind picks from 12 units, handover banner and camera turn.
@@ -27,7 +27,7 @@ Updated 2026-11-17.
 
 ## Next
 Design: game-design.md, battle-design.md. Roadmap: development-plan.md (M1, M1b hotseat, M2, M2b, M3 to M5).
-1. Next slice: M2 (development-plan.md) or #26; sub-grillings #20, #23 first. Jess closes #9.
+1. Next slice: M2 (development-plan.md) or #26; sub-grillings #20, #23 first.
 2. #25 (show the AI's choice) later, maybe inside M2 intent telegraphs.
 
 ## Open decisions
@@ -42,5 +42,5 @@ Design: game-design.md, battle-design.md. Roadmap: development-plan.md (M1, M1b 
 | Shipping sprite credits | First export slice | CC BY-NC needs source/spritecollab/CREDITS.md in builds; export includes data/*.json |
 
 ## Tracking
-Board: https://github.com/users/Jess-Rivera/projects/3. Open: M1 #9; UI #25; data #26; M2 #13, #17 to #22;
+Board: https://github.com/users/Jess-Rivera/projects/3. Open: UI #25; data #26; M2 #13, #17 to #22;
 sub-grillings #20, #23; M2b #24.

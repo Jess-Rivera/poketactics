@@ -128,3 +128,7 @@
 - New start menu (main scene) and blind pick screen; end screen gains Menu; labels and title come from the map.
 - Handover: banner plus the camera turning to the incoming player's home view (CameraRig.turn_to_view_step).
 - 6 new tests, 109 in all, pass; headless smoke runs of the menu, pick screen and a hotseat handover.
+
+## 2026-11-17, #15 closed, M1b done
+- Jess played hotseat: passed. #15 closed, board card Shipped. M1b is done.
+- Speed ties (Charmander and Alolan Vulpix at 65) interleave by the seeded tiebreak, as designed (#8).

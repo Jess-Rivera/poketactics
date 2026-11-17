@@ -22,12 +22,12 @@ Updated 2026-11-17.
 - Move schema (#9, built): grid entry for the 45 roster moves in data/moves.json, overrides in authored/,
   footprints in data/shapes.json, rules/move_area.gd gives tiles hit.
 - Shipped, M1 done: use a move (#10, rules/move_use.gd), enemy AI (#11, rules/turn_ai.gd), rout and end screen (#12).
-- Hotseat (#15, built): start menu, blind picks from 12 units, handover banner and camera turn. Feel test owed.
+- Hotseat (#15, shipped, M1b done): start menu, blind picks from 12 units, handover banner and camera turn.
 - Tests: 109 gdUnit4 tests plus the pack and portrait checks, `tools\run-tests.cmd` (see CONTEXT.md).
 
 ## Next
 Design: game-design.md, battle-design.md. Roadmap: development-plan.md (M1, M1b hotseat, M2, M2b, M3 to M5).
-1. Jess and a second player feel-test #15 (M1b done when it passes). Jess closes #9.
+1. Next slice: M2 (development-plan.md) or #26; sub-grillings #20, #23 first. Jess closes #9.
 2. Then M2; #26 widens the hotseat pool. #25 (show the AI's choice) later. Sub-grillings #20, #23 before M2.
 
 ## Open decisions
@@ -42,5 +42,5 @@ Design: game-design.md, battle-design.md. Roadmap: development-plan.md (M1, M1b 
 | Shipping sprite credits | First export slice | CC BY-NC needs source/spritecollab/CREDITS.md in builds; export includes data/*.json |
 
 ## Tracking
-Board: https://github.com/users/Jess-Rivera/projects/3. Open: M1 #9; UI #25; M1b #15; M2 #13, #17 to #22;
+Board: https://github.com/users/Jess-Rivera/projects/3. Open: M1 #9; UI #25; M2 #13, #17 to #22;
 sub-grillings #20, #23; M2b #24.

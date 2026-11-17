@@ -26,10 +26,10 @@ func units_on_side(unit_side: int) -> Array[BattleUnit]:
 	return on_side
 
 
-## The unit standing on a cell, or null.
+## The unit standing on a cell, or null. A fainted unit has left the map, so its cell is free.
 func unit_at(cell: Vector2i) -> BattleUnit:
 	for unit in units:
-		if unit.cell == cell:
+		if unit.cell == cell and not unit.has_fainted():
 			return unit
 	return null
 

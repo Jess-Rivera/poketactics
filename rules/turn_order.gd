@@ -3,7 +3,8 @@ extends RefCounted
 ## Who acts next (issue #8, docs/discussion-outputs/turn-order-plan.md): rounds in which every standing unit
 ## acts once, fastest first. Equal Speed is broken by a number drawn once per unit from the battle seed, so the
 ## order is stable and replayable. A round's order is fixed when it starts, so Speed changes count from the next
-## round. A turn holds at most one move, and ends with the unit turned to a chosen facing. Rules only, no nodes.
+## round. A turn holds at most one move and one action (a move used, #10), in either order, and ends with the unit
+## turned to a chosen facing. Rules only, no nodes.
 
 
 ## One forecast entry: a unit and the round it acts in.
@@ -23,6 +24,7 @@ var _tiebreak_by_unit := {}
 ## This round's units still to act, the active unit first.
 var _still_to_act: Array[BattleUnit] = []
 var _active_unit_has_moved := false
+var _active_unit_has_acted := false
 
 
 func _init(battle: Battle, random: RandomNumberGenerator) -> void:
@@ -56,6 +58,20 @@ func move_unit(unit: BattleUnit, path: Array[Vector2i], end_facing: Facing.Direc
 	return true
 
 
+func can_act(unit: BattleUnit) -> bool:
+	return unit != null and unit == active_unit() and not _active_unit_has_acted
+
+
+## Carries out a move use if its user is the active unit, has not acted this turn, and the use is allowed.
+## Returns whether it acted; the use then holds the outcomes.
+func use_move(move_use: MoveUse, random: RandomNumberGenerator) -> bool:
+	if not can_act(move_use.user) or not move_use.is_allowed():
+		return false
+	move_use.resolve(random)
+	_active_unit_has_acted = true
+	return true
+
+
 ## Turns the active unit to its end facing and passes the turn on, starting a new round when this one is done.
 func end_turn(end_facing: Facing.Direction) -> void:
 	var unit := active_unit()
@@ -64,6 +80,7 @@ func end_turn(end_facing: Facing.Direction) -> void:
 	unit.facing = end_facing
 	_still_to_act.pop_front()
 	_active_unit_has_moved = false
+	_active_unit_has_acted = false
 	_drop_fainted()
 	if _still_to_act.is_empty():
 		_start_round()
@@ -121,5 +138,6 @@ func _drop_fainted() -> void:
 	var active_now: BattleUnit = _still_to_act.front() if not _still_to_act.is_empty() else null
 	if active_now != was_active:
 		_active_unit_has_moved = false
+		_active_unit_has_acted = false
 	if _still_to_act.is_empty() and was_active != null:
 		_start_round()

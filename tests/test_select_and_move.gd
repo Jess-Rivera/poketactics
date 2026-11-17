@@ -14,6 +14,8 @@ func _flat_battle() -> Battle:
 
 func _add(battle: Battle, cell: Vector2i, side: int) -> BattleUnit:
 	var unit := BattleUnit.new(cell)
+	# A unit with no hit points has fainted and no longer stands on its cell.
+	unit.hit_points = 1
 	battle.add_unit(unit, side)
 	return unit
 

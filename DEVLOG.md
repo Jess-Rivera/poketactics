@@ -87,3 +87,10 @@
 - data/shapes.json holds circle and cone footprints; rules/move_area.gd returns tiles and units hit.
 - 8 relation tests, 79 in all, pass. Wiki move pages show the grid entry. Jess approved the review table.
 - Follow-up: Flamethrower as a line or cone (later move review). Relation 10 (0.5x at range 1) moved to #10.
+
+## 2026-11-16, #10 use a move (built)
+- Opening agreed (12 relations); ruling 2026-11-16-use-a-move-m1 (empty targets allowed, damage only in M1).
+- rules/move_use.gd: reach, footprint, per-unit accuracy and crit, damage (0.5x at range 1), Night Shade's level
+  damage, Self-Destruct; TurnOrder allows one move and one act per turn; fainted units free their cells.
+- View: move menu (keys 1 to 4), target and area tint, Attack and Hurt on the hit frame, floating numbers, HP bars,
+  fade on faint. Encounter restart moved to F1 to F3. 91 tests pass. Awaiting Jess's feel test.

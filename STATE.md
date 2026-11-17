@@ -4,8 +4,7 @@ Updated 2026-11-16.
 
 ## Where we are
 - Data: pokeapi raw CSVs in source/pokeapi/csv/ (187 files, pinned at db06b37dca).
-- Sprites: raw SpriteCollab in source/spritecollab/ (2,151 sets, pinned at 2f5d22b505), packed in
-  assets/pokemon/ (tools/pack_sprites.py). 265 wanted sets have no sprite upstream.
+- Sprites: raw SpriteCollab in source/spritecollab/ (2,151 sets, pinned at 2f5d22b505), packed in assets/pokemon/. 265 wanted sets have no sprite upstream.
 - Godot 4.6.2 at the repo root: Compatibility, 640x360 integer scaling, gdUnit4 v6.2.3. Isometric view, Q/E
   4-way rotation, 3D greybox blocks plus 2D sprites (#1).
 - Data pack in data/ (#2): units, moves, abilities, types keyed by name, from tools/export_pack.py. Offline
@@ -19,18 +18,18 @@ Updated 2026-11-16.
   highlight, zoom 1x to 3x.
 - Turn order (#8, shipped): rules/turn_order.gd rounds by Speed, seeded ties; view/turn_bar.gd;
   hotseat until #11.
-- 6 a side (#16, shipped): wild, trainer, boss enemy counts (keys 1 to 3); portraits packed one sheet per
-  emotion and colour in assets/portraits/ (tools/pack_portraits.py), shown in the turn bar.
+- 6 a side (#16, shipped): wild, trainer, boss enemy counts (F1 to F3); portraits in assets/portraits/, shown
+  in the turn bar.
 - Move schema (#9, built): grid entry for the 45 roster moves in data/moves.json, overrides in authored/,
   footprints in data/shapes.json, rules/move_area.gd gives tiles hit.
-- Tests: 79 gdUnit4 tests plus the pack and portrait rerun checks, `tools\run-tests.cmd` (needs Python 3; see CONTEXT.md).
+- Use a move (#10, built): rules/move_use.gd, keys 1 to 4, area preview, HP bars, faint.
+- Tests: 91 gdUnit4 tests plus the pack and portrait rerun checks, `tools\run-tests.cmd` (needs Python 3; see CONTEXT.md).
 
 ## Next
 Design: game-design.md (Kanto run roguelite), battle-design.md (strike rank clock, positioning, tiles).
 Roadmap: development-plan.md (M1, M1b hotseat, M2 battle depth, M2b mainline systems, M3 run layer, M4, M5).
-1. #10 use a move: opening drafted (use-a-move-opening.md), Jess approves goal, done-when, test.
-   #9 awaits Jess closing it.
-2. Then #11, #12, then #15 hotseat. Sub-grillings #20, #23 before their M2 slices.
+1. #10 built: Jess feel-tests it, and closes #9.
+2. Then #11, #12, then #15 hotseat. Sub-grillings #20, #23 before M2.
 
 ## Open decisions
 | Decision | Blocks | Note |

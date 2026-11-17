@@ -1,7 +1,8 @@
 class_name TileHighlight
 extends MeshInstance3D
 ## Flat marks drawn just above cell tops: the cells a selected unit can reach, the previewed path, the cursor
-## outline, the selected unit's cell, and (while choosing a facing) four arrows on the target cell. Set the fields,
+## outline, the selected unit's cell, (while choosing a facing) four arrows on the target cell, and (while aiming a
+## move, #10) the cells it can target and the area it would cover. Set the fields,
 ## then call refresh(). Unshaded and flat, so the marks stay pixel crisp.
 
 const LIFT_ABOVE_TOP := 0.02
@@ -14,6 +15,8 @@ const CURSOR_COLOUR := Color(1.0, 1.0, 1.0, 0.95)
 const SELECTED_COLOUR := Color(1.0, 0.85, 0.3, 0.95)
 const ARROW_COLOUR := Color(1.0, 1.0, 1.0, 0.45)
 const CHOSEN_ARROW_COLOUR := Color(1.0, 0.85, 0.3, 1.0)
+const MOVE_RANGE_COLOUR := Color(1.0, 0.35, 0.35, 0.3)
+const MOVE_AREA_COLOUR := Color(1.0, 0.3, 0.3, 0.75)
 ## Outline thickness: two sprite pixels.
 const OUTLINE_WIDTH := 2.0 / 24.0
 const FILL_INSET := 1.0 / 24.0
@@ -28,6 +31,9 @@ var inspecting := false
 var inspected_cell := CellPicker.NO_CELL
 var facing_target := CellPicker.NO_CELL
 var chosen_facing := Facing.Direction.SOUTH
+## Cells the aimed move may target, and the cells it would cover.
+var move_range_cells: Array[Vector2i] = []
+var move_area_cells: Array[Vector2i] = []
 
 
 func _ready() -> void:
@@ -46,6 +52,8 @@ func clear() -> void:
 	inspecting = false
 	inspected_cell = CellPicker.NO_CELL
 	facing_target = CellPicker.NO_CELL
+	move_range_cells.clear()
+	move_area_cells.clear()
 	refresh()
 
 
@@ -59,6 +67,14 @@ func refresh() -> void:
 			colour = INSPECT_COLOUR
 		_add_fill(surface, cell, colour)
 		drawn_anything = true
+	for cell in move_range_cells:
+		if not cell in move_area_cells:
+			_add_fill(surface, cell, MOVE_RANGE_COLOUR)
+			drawn_anything = true
+	for cell in move_area_cells:
+		if grid != null and grid.contains(cell):
+			_add_fill(surface, cell, MOVE_AREA_COLOUR)
+			drawn_anything = true
 	if grid != null and grid.contains(selected_cell):
 		_add_outline(surface, selected_cell, SELECTED_COLOUR)
 		drawn_anything = true

@@ -15,7 +15,8 @@ A move's grid entry holds:
   sr_cost          strike rank cost of using the move (placeholder PP bands, a tuning item)
   tile_element     the element the move leaves on tiles it hits, or null
   arcing           ignores units (not walls) for line of sight
-  payload          ordered effects; M1 runs only damage
+  payload          ordered effects; M1 runs damage, fixed_damage and user_faints
+                   fixed_damage: damage set by FIXED_DAMAGE_AMOUNTS, not the formula (Night Shade: the user's level)
 Only the moves named in authored/move_grid_overrides.json get an entry (Jess, #9: the 45 roster moves).
 """
 
@@ -31,7 +32,11 @@ ALLOWED_PAIRS = {
 SHAPE_FIELDS = {"single": set(), "line": {"length"}, "cone": {"radius", "spread_degrees"}, "circle": {"radius"}}
 COMMON_FIELDS = {"shape", "target", "range_min", "range_max", "close_penalty", "sr_cost", "tile_element", "arcing", "payload"}
 ALL_FIELDS = COMMON_FIELDS | {"length", "radius", "spread_degrees"}
-EFFECTS = {"damage", "ailment", "stat", "drain", "recoil", "heal", "multi_hit", "flinch", "user_faints", "needs_rule"}
+EFFECTS = {
+    "damage", "fixed_damage", "ailment", "stat", "drain", "recoil", "heal", "multi_hit", "flinch", "user_faints",
+    "needs_rule",
+}
+FIXED_DAMAGE_AMOUNTS = {"user_level"}
 EFFECT_SIDES = {"target", "user"}
 
 RADIUS_LIMIT = 50
@@ -164,6 +169,9 @@ def validation_problems(move_name, entry):
     for effect in entry.get("payload", []):
         if effect.get("effect") not in EFFECTS:
             problems.append(f"{move_name}: unknown effect {effect.get('effect')}")
+        if effect.get("effect") == "fixed_damage" and effect.get("amount") not in FIXED_DAMAGE_AMOUNTS:
+            allowed = ", ".join(sorted(FIXED_DAMAGE_AMOUNTS))
+            problems.append(f"{move_name}: fixed_damage amount must be one of {allowed}")
         if "side" in effect and effect["side"] not in EFFECT_SIDES:
             problems.append(f"{move_name}: unknown effect side {effect['side']}")
     return problems

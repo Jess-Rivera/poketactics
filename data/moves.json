@@ -16052,7 +16052,7 @@
       "arcing": false,
       "close_penalty": true,
       "payload": [
-        {"effect": "damage"}
+        {"amount": "user_level", "effect": "fixed_damage"}
       ],
       "range_max": 4,
       "range_min": 1,

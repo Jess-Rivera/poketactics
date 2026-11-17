@@ -21,7 +21,7 @@
   "iron-tail": {},
   "knock-off": {},
   "moonblast": {},
-  "night-shade": {},
+  "night-shade": {"payload": [{"effect": "fixed_damage", "amount": "user_level"}]},
   "rain-dance": {},
   "rock-blast": {},
   "scary-face": {},

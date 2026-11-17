@@ -13,6 +13,8 @@ const CRITICAL_HIT_BONUS := 1.5
 ## Mainline crit chance (Gen 6 on) by crit stage: 1 in 24, 1 in 8, 1 in 2, then always.
 const CRITICAL_HIT_ODDS_BY_STAGE := [24, 8, 2, 1]
 const ALWAYS_HITS_ACCURACY := 100
+## A ranged move that hits from range 1 does this share of its damage (2026-11-16-move-shapes-and-range).
+const CLOSE_RANGE_FACTOR := 0.5
 const LEVEL_UP := "level-up"
 
 
@@ -81,6 +83,19 @@ static func move_damage(
 		type_multiplier(pack, move_type, defender.types),
 		is_critical_hit
 	)
+
+
+## Damage from a ranged move used at range 1: CLOSE_RANGE_FACTOR of the full amount, rounded down, at least 1
+## unless the full amount was 0.
+static func close_range_damage(full_damage: int) -> int:
+	if full_damage <= 0:
+		return 0
+	return maxi(floori(full_damage * CLOSE_RANGE_FACTOR), 1)
+
+
+## Damage equal to the user's level (Night Shade), whatever the stats; only immunity stops it.
+static func level_damage(level: int, multiplier: float) -> int:
+	return 0 if multiplier == 0.0 else level
 
 
 ## Whether a move hits: no accuracy value or 100 always hits, otherwise one roll against its accuracy.

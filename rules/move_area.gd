@@ -32,6 +32,18 @@ static func can_reach(grid_entry: Dictionary, user_cell: Vector2i, target_cell: 
 	return steps >= int(grid_entry["range_min"]) and steps <= int(grid_entry["range_max"])
 
 
+## Every cell inside the grid the user may choose as the target (just its own cell for a self move).
+static func target_cells(grid: BattleGrid, grid_entry: Dictionary, user_cell: Vector2i) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	var reach := int(grid_entry["range_max"])
+	for step_y in range(-reach, reach + 1):
+		for step_x in range(-reach, reach + 1):
+			var cell := user_cell + Vector2i(step_x, step_y)
+			if grid.contains(cell) and can_reach(grid_entry, user_cell, cell):
+				cells.append(cell)
+	return cells
+
+
 ## An east-aimed offset turned to face a direction (grid y grows south, so south is a clockwise quarter turn).
 static func turned(offset: Vector2i, direction: Facing.Direction) -> Vector2i:
 	match direction:

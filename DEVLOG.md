@@ -106,3 +106,7 @@
 - Shared helpers: BattleStats.hit_chance, MoveUse.hit_damage, has_effect, deals_damage (behaviour unchanged).
 - View: enemy turns play out (think 0.4 s, walk, area preview 0.5 s, strike); F1 to F3 work at any time.
 - coding-principles skill rewritten for this repo. 6 new tests, 97 in all, pass. Awaiting Jess's feel test.
+
+## 2026-11-17, #11 closed
+- Jess feel-tested the enemy turn: passed. #11 closed, board card Shipped.
+- Follow-up #25: the player gets no clue what the AI chose (move name, target). Next: #12 opening.

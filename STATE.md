@@ -22,14 +22,14 @@ Updated 2026-11-17.
 - Move schema (#9, built): grid entry for the 45 roster moves in data/moves.json, overrides in authored/,
   footprints in data/shapes.json, rules/move_area.gd gives tiles hit.
 - Use a move (#10, shipped): rules/move_use.gd, keys 1 to 4, area preview, HP bars, faint.
-- Enemy turn (#11, built): rules/turn_ai.gd one-turn scorer; enemies play out with pauses. Feel test owed.
+- Enemy turn (#11, shipped): rules/turn_ai.gd one-turn scorer; enemies play out with pauses.
 - Tests: 97 gdUnit4 tests plus the pack and portrait checks, `tools\run-tests.cmd` (see CONTEXT.md).
 
 ## Next
 Design: game-design.md (Kanto run roguelite), battle-design.md (strike rank clock, positioning, tiles).
 Roadmap: development-plan.md (M1, M1b hotseat, M2 battle depth, M2b mainline systems, M3 run layer, M4, M5).
-1. Jess feel-tests #11 (pause lengths, sensible choices); closes #9.
-2. Then #12, then #15 hotseat. Sub-grillings #20, #23 before M2.
+1. #12 win, lose, restart: draft its opening. Jess closes #9.
+2. Then #15 hotseat. #25 (show the AI's choice) later. Sub-grillings #20, #23 before M2.
 
 ## Open decisions
 | Decision | Blocks | Note |
@@ -43,5 +43,5 @@ Roadmap: development-plan.md (M1, M1b hotseat, M2 battle depth, M2b mainline sys
 | Shipping sprite credits | First export slice | CC BY-NC needs source/spritecollab/CREDITS.md in builds; export includes data/*.json |
 
 ## Tracking
-Board: https://github.com/users/Jess-Rivera/projects/3. Open: M1 #9, #11, #12; M1b #15; M2 #13, #17 to #22;
+Board: https://github.com/users/Jess-Rivera/projects/3. Open: M1 #9, #12; UI #25; M1b #15; M2 #13, #17 to #22;
 sub-grillings #20, #23; M2b #24.

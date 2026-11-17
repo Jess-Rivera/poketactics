@@ -28,8 +28,8 @@ Updated 2026-11-16.
 ## Next
 Design: game-design.md (Kanto run roguelite), battle-design.md (strike rank clock, positioning, tiles).
 Roadmap: development-plan.md (M1, M1b hotseat, M2 battle depth, M2b mainline systems, M3 run layer, M4, M5).
-1. #11 enemy turn, simple AI: open it (goal, done-when, end-goal test). Jess closes #9.
-2. Then #11, #12, then #15 hotseat. Sub-grillings #20, #23 before M2.
+1. #11 enemy turn, simple AI: draft its opening. Jess closes #9.
+2. Then #12, then #15 hotseat. Sub-grillings #20, #23 before M2.
 
 ## Open decisions
 | Decision | Blocks | Note |

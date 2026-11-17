@@ -94,3 +94,7 @@
   damage, Self-Destruct; TurnOrder allows one move and one act per turn; fainted units free their cells.
 - View: move menu (keys 1 to 4), target and area tint, Attack and Hurt on the hit frame, floating numbers, HP bars,
   fade on faint. Encounter restart moved to F1 to F3. 91 tests pass. Awaiting Jess's feel test.
+
+## 2026-11-16, #10 closed
+- Jess feel-tested use a move: passed. #10 closed, board card Shipped. #9 left for Jess to close.
+- Open: whether fixed damage (Night Shade) should skip the 0.5x at range 1. Next: #11 opening.

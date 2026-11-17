@@ -21,7 +21,11 @@ Rulings: 2026-11-16-strike-rank-clock, 2026-11-17-size-bands, 2026-11-17-wait-ac
 | D4 | My exact segment rule: a new segment starts where the walk starts, and at each step that changes height after a flat step or after the opposite change. Each segment costs round up(tiles / 2) + climb levels + round up(drop levels / 2). Flat tiles after a change stay in that segment. | Accept. It gives all 5 of Jess's rows and stairs as one segment. | The rows and the stairs answer need one rule that covers both. |
 | D5 | How does the walk picker show cost? | The hovered cell shows its SR cost by the cursor, and the bar ghost moves to match; no number on every cell. | A number on every reachable cell (up to 12 SR away) clutters the map. |
 | D6 | How does a player Wait, and what does Space do now? | W or Space opens Wait: mouse wheel or arrow keys pick w (1 to n), the ghost shows the landing, click or Enter confirms, then facing. No free "end turn" without an action. | A turn is now always exactly one of three things. |
-| D7 | view/test_map.gd is 674 lines with two play modes; #13 adds a Wait mode and cost display. | Split it first as its own small slice (issue draft below), then build #13 on the split. | The coding-principles rule: a cleanup over about 20 lines is its own issue, not folded in. |
+| D7 | view/test_map.gd is 674 lines; #13 adds a Wait mode and cost display. Split it first? | No (Jess). | Length alone is not a reason to split; the map script holds one job (running the battle on screen), and Wait and cost display belong to it. |
+
+Answers (Jess, 2026-11-17): D1, D3, D4, D6 yes. D2: Speed at the unit's level, compared with the Speed a base
+100 or base 40 species has at the same level (the same stat formula), so the nudge holds at any level. D5: hover
+label. D7: no split.
 
 ## Flow of a turn after the change
 
@@ -135,13 +139,8 @@ test_win_lose. Their relations stay; only the setup changes (for example, a walk
 - The clock rewrite touches 7 test suites; I update their setup, never their expected relations.
 - Feel: walking is cheap next to moves (4 tiles is 2 SR, a move 3 to 6), so units may kite. The feel test decides;
   act costs are the knob.
-- test_map.gd grows unless D7 splits it first.
+- test_map.gd grows by the Wait mode and cost display; no split (D7), since it keeps one job.
 
 ## Touched-code cleanups
 - Header comments in movement.gd, turn_order.gd and turn_ai.gd name the rules they no longer follow (4 steps,
   move and act per turn); they get the new ruling names.
-
-## Issue draft (D7)
-**Split view/test_map.gd by job** (area:ui): move the hotseat handover and the AI turn playback out of the map
-script into their own nodes, with no change to behaviour. Done when the map script holds one job, all tests pass and
-Jess sees no difference in a feel test.
